@@ -11,6 +11,7 @@ func main(): void {
   d = true;
   e = [1, 2, 3];
   f = helper(a);
+  g = input();
 
   print(e[0]);
 
