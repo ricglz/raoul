@@ -1,0 +1,118 @@
+WHITESPACE = _{" " | NEWLINE}
+
+// Tokens
+
+DOT        = {"."}
+STR_MARK   = _{"\"" | "'"}
+COLON      = {":"}
+UNDERSCORE = {"_"}
+ASGN       = { "=" }
+COMMA      = _{","}
+SEMI_COLON = {";"}
+
+MINUS    = {"-"}
+SUM      = {"+"}
+ART_OPS  = {MINUS | SUM}
+DIV      = {"/"}
+TIMES    = {"*"}
+FACT_OPS = {DIV | TIMES}
+
+GT      = {">"}
+GTE     = {">="}
+LT      = {"<"}
+LTE     = {"<="}
+EQ      = {"=="}
+NE      = {"!="}
+COMP_OP = { EQ | NE }
+REL_OP  = { GT | GTE | LT | LTE }
+
+AND = {"AND"}
+OR  = {"OR"}
+NOT = {"NOT"}
+
+L_BRACKET = {"{"}
+R_BRACKET = {"}"}
+L_PAREN   = {"("}
+R_PAREN   = {")"}
+L_SQUARE  = {"["}
+R_SQUARE  = {"]"}
+
+ID = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | UNDERSCORE)* }
+
+BOOL_CTE     = @{"true" | "false"}
+INT_CTE      = @{ MINUS? ~ ASCII_DIGIT+ }
+FLOAT_CTE    = @{ INT_CTE ~ DOT ~ ASCII_DIGIT+ }
+STRING_VALUE = {(!PEEK ~ ANY)*}
+STRING_CTE   = _{ PUSH(STR_MARK) ~ STRING_VALUE ~ POP }
+ATOM_CTE     = _{BOOL_CTE | FLOAT_CTE | INT_CTE | STRING_CTE}
+ARRAY_CTE    = _{L_SQUARE ~ ATOM_CTE ~ (COMMA ~ ATOM_CTE)* ~ R_SQUARE}
+CTE          = { ARRAY_CTE | ATOM_CTE }
+VAR_VAL      = _{CTE | FUNC_CALL | ARR_VAL | ID}
+
+EXPR       = { AND_TERM ~ (OR ~ AND_TERM)* }
+AND_TERM   = { COMP_TERM ~ (AND ~ COMP_TERM)* }
+COMP_TERM  = { REL_TERM ~ (COMP_OP ~ REL_TERM)? }
+REL_TERM   = { ARTM_TERM ~ (REL_OP ~ ARTM_TERM)? }
+ARTM_TERM  = { FACT_TERM ~ (ART_OPS ~ FACT_TERM)* }
+FACT_TERM  = { OPERAND ~ (FACT_OPS ~ OPERAND)* }
+OPERAND = _{ NOT? ~ ( L_PAREN ~ EXPR ~ R_PAREN | VAR_VAL ) }
+EXPRESSIONS = { EXPR ~ (COMMA ~ EXPR)* }
+
+ARR_INDEX = {L_SQUARE ~ EXPR ~ R_SQUARE}
+ARR_VAL = { ID ~ ARR_INDEX{1,2} }
+
+BOOL      = {"bool"}
+FLOAT     = {"float"}
+INT       = {"int"}
+STRING    = {"string"}
+VOID      = {"void"}
+VAR_TYPES = { BOOL | FLOAT | INT | STRING }
+TYPES     = { VAR_TYPES | VOID}
+
+ASSIGNMENT = { ID ~ ASGN ~ EXPR }
+
+BLOCK = { L_BRACKET ~ STAMENT* ~ R_BRACKET }
+
+FUNC          = {"func"}
+MAIN          = {"main"}
+FUNC_ARG      = {ID ~ COLON ~ TYPES}
+FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
+FUNC_HEADER   = { FUNC ~ ID ~ L_PAREN ~ FUNC_ARGS ~ R_PAREN ~ COLON ~ TYPES }
+FUNCTION      = { FUNC_HEADER ~ BLOCK }
+MAIN_FUNCTION = { FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ VOID ~ BLOCK }
+FUNC_CALL     = { ID ~ L_PAREN ~ EXPRESSIONS ~ R_PAREN }
+
+IF         = {"if"}
+ELSE       = {"else"}
+COND_EXPR  = {L_PAREN ~ EXPR ~ R_PAREN }
+IF_BLOCK   = { IF ~ COND_EXPR ~ BLOCK }
+ELSE_BLOCK = { ELSE ~ (BLOCK | DECISION) }
+DECISION   = { IF_BLOCK ~ ELSE_BLOCK? }
+
+PRINT = {"print"}
+WRITE = {PRINT ~ L_PAREN ~ EXPRESSIONS ~ R_PAREN }
+
+WHILE = {"while"}
+WHILE_LOOP = {WHILE ~ COND_EXPR ~ BLOCK}
+
+FOR      = {"for"}
+TO       = {"to"}
+FOR_LOOP = {FOR ~ L_PAREN ~ ASSIGNMENT ~ TO ~ EXPR ~ R_PAREN ~ BLOCK}
+
+READ_CSV_EXTRA       = {(COMMA ~ ID){2}}
+READ_CSV             = {"read_csv" ~ L_PAREN ~ STRING_CTE ~ READ_CSV_EXTRA? ~ R_PAREN}
+OPTIONAL_COLUMN_FUNC = {L_PAREN ~ ID ~ (COMMA ~ STRING_CTE)? ~ R_PAREN}
+AVERAGE              = {"average" ~ OPTIONAL_COLUMN_FUNC}
+STD                  = {"std" ~ OPTIONAL_COLUMN_FUNC}
+MODE                 = {"mode" ~ OPTIONAL_COLUMN_FUNC}
+VARIANCE             = {"variance" ~ OPTIONAL_COLUMN_FUNC}
+DATAFRAME_OPS        = {READ_CSV ~ AVERAGE ~ STD ~ MODE ~ VARIANCE}
+
+RETURN = { "return" ~ EXPR }
+
+BLOCK_STATEMENT = { DECISION | WHILE_LOOP | FOR_LOOP | FUNC_CALL }
+INLINE_STATEMENT = { DATAFRAME_OPS | ASSIGNMENT | WRITE | RETURN }
+STAMENT_TYPE = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
+STAMENT      = { STAMENT_TYPE }
+
+PROGRAM = { SOI ~ FUNCTION* ~ MAIN_FUNCTION ~ EOI }
