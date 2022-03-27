@@ -1,0 +1,43 @@
+func helper(a: int): int {
+  return a;
+}
+
+func main(): void {
+  a = 1;
+  b = "abc";
+  c = 2.0;
+  d = true;
+  e = [1, 2, 3];
+  f = helper(a);
+
+  print(e[0]);
+
+  if (a < c) {
+    print(a);
+  } else if (a > c) {
+    print("same thing");
+  } else {
+    print(c);
+  }
+
+  for (i = 1 to 5) {
+    print(i);
+  }
+
+  while (a > 2) {
+    print(a);
+    a = a - 1;
+  }
+
+  dataframe = read_csv('file.csv', rows, cols);
+
+  print(average(dataframe));
+  print(std(dataframe));
+  print(mode(dataframe));
+  print(variance(dataframe));
+
+  print(average(dataframe, 'column'));
+  print(std(dataframe, 'column'));
+  print(mode(dataframe, 'column'));
+  print(variance(dataframe, 'column'));
+}
