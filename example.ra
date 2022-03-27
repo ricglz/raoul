@@ -1,8 +1,10 @@
 func helper(a: int): int {
-  return a;
+  return a * globalVariable;
 }
 
 func main(): void {
+  global globalVariable = 2;
+
   a = 1;
   b = "abc";
   c = 2.0;
