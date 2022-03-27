@@ -1,7 +1,6 @@
 WHITESPACE = _{" " | NEWLINE}
 
 // Tokens
-
 DOT        = {"."}
 STR_MARK   = _{"\"" | "'"}
 COLON      = {":"}
@@ -10,25 +9,17 @@ ASGN       = { "=" }
 COMMA      = _{","}
 SEMI_COLON = {";"}
 
-MINUS    = {"-"}
-SUM      = {"+"}
-ART_OPS  = {MINUS | SUM}
-DIV      = {"/"}
-TIMES    = {"*"}
-FACT_OPS = {DIV | TIMES}
+MINUS = {"-"}
+SUM   = {"+"}
+DIV   = {"/"}
+TIMES = {"*"}
 
-GT      = {">"}
-GTE     = {">="}
-LT      = {"<"}
-LTE     = {"<="}
-EQ      = {"=="}
-NE      = {"!="}
-COMP_OP = { EQ | NE }
-REL_OP  = { GT | GTE | LT | LTE }
-
-AND = {"AND"}
-OR  = {"OR"}
-NOT = {"NOT"}
+GT  = {">"}
+GTE = {">="}
+LT  = {"<"}
+LTE = {"<="}
+EQ  = {"=="}
+NE  = {"!="}
 
 L_BRACKET = {"{"}
 R_BRACKET = {"}"}
@@ -36,6 +27,33 @@ L_PAREN   = {"("}
 R_PAREN   = {")"}
 L_SQUARE  = {"["}
 R_SQUARE  = {"]"}
+
+AND = {"AND"}
+OR  = {"OR"}
+NOT = {"NOT"}
+
+BOOL   = {"bool"}
+FLOAT  = {"float"}
+INT    = {"int"}
+STRING = {"string"}
+VOID   = {"void"}
+
+FUNC  = {"func"}
+MAIN  = {"main"}
+IF    = {"if"}
+ELSE  = {"else"}
+PRINT = {"print"}
+WHILE = {"while"}
+FOR   = {"for"}
+TO    = {"to"}
+
+// Grammar
+
+ART_OPS  = {MINUS | SUM}
+FACT_OPS = {DIV | TIMES}
+
+COMP_OP = { EQ | NE }
+REL_OP  = { GT | GTE | LT | LTE }
 
 ID = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | UNDERSCORE)* }
 
@@ -61,11 +79,6 @@ EXPRESSIONS = { EXPR ~ (COMMA ~ EXPR)* }
 ARR_INDEX = {L_SQUARE ~ EXPR ~ R_SQUARE}
 ARR_VAL = { ID ~ ARR_INDEX{1,2} }
 
-BOOL      = {"bool"}
-FLOAT     = {"float"}
-INT       = {"int"}
-STRING    = {"string"}
-VOID      = {"void"}
 VAR_TYPES = { BOOL | FLOAT | INT | STRING }
 TYPES     = { VAR_TYPES | VOID}
 
@@ -73,8 +86,6 @@ ASSIGNMENT = { ID ~ ASGN ~ EXPR }
 
 BLOCK = { L_BRACKET ~ STAMENT* ~ R_BRACKET }
 
-FUNC          = {"func"}
-MAIN          = {"main"}
 FUNC_ARG      = {ID ~ COLON ~ TYPES}
 FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
 FUNC_HEADER   = { FUNC ~ ID ~ L_PAREN ~ FUNC_ARGS ~ R_PAREN ~ COLON ~ TYPES }
@@ -82,21 +93,15 @@ FUNCTION      = { FUNC_HEADER ~ BLOCK }
 MAIN_FUNCTION = { FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ VOID ~ BLOCK }
 FUNC_CALL     = { ID ~ L_PAREN ~ EXPRESSIONS ~ R_PAREN }
 
-IF         = {"if"}
-ELSE       = {"else"}
 COND_EXPR  = {L_PAREN ~ EXPR ~ R_PAREN }
 IF_BLOCK   = { IF ~ COND_EXPR ~ BLOCK }
 ELSE_BLOCK = { ELSE ~ (BLOCK | DECISION) }
 DECISION   = { IF_BLOCK ~ ELSE_BLOCK? }
 
-PRINT = {"print"}
 WRITE = {PRINT ~ L_PAREN ~ EXPRESSIONS ~ R_PAREN }
 
-WHILE = {"while"}
 WHILE_LOOP = {WHILE ~ COND_EXPR ~ BLOCK}
 
-FOR      = {"for"}
-TO       = {"to"}
 FOR_LOOP = {FOR ~ L_PAREN ~ ASSIGNMENT ~ TO ~ EXPR ~ R_PAREN ~ BLOCK}
 
 READ_CSV_EXTRA       = {(COMMA ~ ID){2}}
