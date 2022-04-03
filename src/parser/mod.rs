@@ -1,15 +1,52 @@
-use pest::Parser;
+use pest_consume::Parser;
+use pest_consume::match_nodes;
 
 #[derive(Parser)]
 #[grammar = "parser/grammar.pest"] // relative to src
-struct MyParser;
+struct LanguageParser;
 
-pub fn parse(filename: &str) {
-    let program = std::fs::read_to_string(filename).expect(filename);
-    println!("Testing {}", filename);
-    if let Err(err) = MyParser::parse(Rule::PROGRAM, &program) {
-        println!("{}", err);
-    } else {
-        println!("Is a valid program")
+use pest_consume::Error;
+type Result<T> = std::result::Result<T, Error<Rule>>;
+type Node<'i> = pest_consume::Node<'i, Rule, ()>;
+
+// This is the other half of the parser, using pest_consume.
+#[pest_consume::parser]
+impl LanguageParser {
+    fn EOI(_input: Node) -> Result<()> {
+        Ok(())
     }
+
+    fn void(_input: Node) -> crate::enums::Types {
+        crate::enums::Types::VOID
+    }
+
+    fn block(input: Node) {
+        println!("block: {:?}", input);
+    }
+
+    fn statement(input: Node) -> Result<()> {
+        println!("statetement: {:?}", input);
+        Ok(())
+    }
+
+    fn function(input: Node) -> Result<()> {
+        println!("function: {:?}", input);
+        Ok(())
+    }
+
+    fn program(input: Node) -> Result<()> {
+        Ok(match_nodes!(input.into_children();
+            [function(_)] => ()
+        ))
+    }
+}
+
+pub fn parse(filename: &str) -> Result<()> {
+    let file = std::fs::read_to_string(filename).expect(filename);
+    let inputs = LanguageParser::parse(Rule::program, &file)?;
+    // There should be a single root node in the parsed tree
+    let input = inputs.single()?;
+    let response = LanguageParser::program(input);
+    println!("Response: {:?}", response);
+    Ok(())
 }
