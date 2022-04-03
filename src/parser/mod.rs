@@ -16,27 +16,31 @@ impl LanguageParser {
         Ok(())
     }
 
-    fn void(_input: Node) -> crate::enums::Types {
-        crate::enums::Types::VOID
+    fn void(_input: Node) -> Result<crate::enums::Types> {
+        Ok(crate::enums::Types::VOID)
     }
 
-    fn block(input: Node) {
+    fn block(input: Node) -> Result<i32> {
         println!("block: {:?}", input);
+        Ok(42)
     }
 
-    fn statement(input: Node) -> Result<()> {
+    fn statement(input: Node) -> Result<i32> {
         println!("statetement: {:?}", input);
-        Ok(())
+        Ok(42)
     }
 
-    fn function(input: Node) -> Result<()> {
+    fn function(input: Node) -> Result<i32> {
         println!("function: {:?}", input);
-        Ok(())
+        Ok(42)
     }
 
     fn program(input: Node) -> Result<()> {
         Ok(match_nodes!(input.into_children();
-            [function(_)] => ()
+            [function(_)..] => (),
+            [block(_)] => (),
+            [void(_)] => (),
+            [EOI(_)] => (),
         ))
     }
 }
@@ -46,7 +50,5 @@ pub fn parse(filename: &str) -> Result<()> {
     let inputs = LanguageParser::parse(Rule::program, &file)?;
     // There should be a single root node in the parsed tree
     let input = inputs.single()?;
-    let response = LanguageParser::program(input);
-    println!("Response: {:?}", response);
-    Ok(())
+    LanguageParser::program(input)
 }
