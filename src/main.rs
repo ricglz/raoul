@@ -2,22 +2,13 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-use pest::Parser;
+mod parser;
+mod args;
 
-#[derive(Parser)]
-#[grammar = "grammar.pest"] // relative to src
-struct MyParser;
-
-pub fn parse(filename: &str) {
-    let program = std::fs::read_to_string(filename).expect(filename);
-    println!("Testing {}", filename);
-    if let Err(err) = MyParser::parse(Rule::PROGRAM, &program) {
-        println!("{}", err);
-    } else {
-        println!("Is a valid program")
-    }
-}
+use crate::parser::parse;
+use crate::args::parse_args;
 
 fn main() {
-    parse("./example.ra");
+    let matches = parse_args();
+    parse(matches.value_of("file").expect("required"));
 }
