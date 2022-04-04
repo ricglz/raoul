@@ -10,9 +10,15 @@ use crate::args::parse_args;
 fn main() {
     let matches = parse_args();
     let filename = matches.value_of("file").expect("required");
-    if let Err(error) = parse(filename) {
+    let verbose = matches.is_present("verbose");
+    if verbose {
+        println!("Starting parsing");
+    }
+    if let Err(error) = parse(filename, verbose) {
         println!("Parsing error {}", error.to_string());
         exit(1);
     }
-    println!("Successful parsing!")
+    if verbose {
+        println!("Parsing ended sucessfully");
+    }
 }

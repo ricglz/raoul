@@ -9,7 +9,7 @@ struct LanguageParser;
 
 use pest_consume::Error;
 type Result<T> = std::result::Result<T, Error<Rule>>;
-type Node<'i> = pest_consume::Node<'i, Rule, ()>;
+type Node<'i> = pest_consume::Node<'i, Rule, bool>;
 
 // This is the other half of the parser, using pest_consume.
 #[pest_consume::parser]
@@ -88,6 +88,10 @@ impl LanguageParser {
     }
 
     fn operand_value(input: Node) -> Result<()> {
+        // TODO: Still misses some conditions
+        if *input.user_data() {
+            println!("operand_value");
+        }
         Ok(match_nodes!(input.into_children();
             [expr(_)] => (),
             [int_cte(_)] => (),
@@ -114,6 +118,10 @@ impl LanguageParser {
     }
 
     fn statement(input: Node) -> Result<()> {
+        // TODO: Still misses some conditions
+        if *input.user_data() {
+            println!("statement");
+        }
         Ok(match_nodes!(input.into_children();
             [assignment(_)] => (),
             [write(_)] => (),
@@ -127,7 +135,14 @@ impl LanguageParser {
     }
 
     fn function(input: Node) -> Result<()> {
-        Ok(())
+        // TODO: Still misses some conditions
+        if *input.user_data() {
+            println!("function");
+        }
+        Ok(match_nodes!(input.into_children();
+            [assignment(_)] => (),
+            [write(_)] => (),
+        ))
     }
 
     fn program(input: Node) -> Result<()> {
@@ -138,9 +153,9 @@ impl LanguageParser {
     }
 }
 
-pub fn parse(filename: &str) -> Result<()> {
+pub fn parse(filename: &str, verbose: bool) -> Result<()> {
     let file = std::fs::read_to_string(filename).expect(filename);
-    let inputs = LanguageParser::parse(Rule::program, &file)?;
+    let inputs = LanguageParser::parse_with_userdata(Rule::program, &file, verbose)?;
     // There should be a single root node in the parsed tree
     let input = inputs.single()?;
     LanguageParser::program(input)
