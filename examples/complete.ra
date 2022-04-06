@@ -34,13 +34,13 @@ func main(): void {
 
   dataframe = read_csv('file.csv', rows, cols);
 
-  print(average(dataframe));
-  print(std(dataframe));
-  print(mode(dataframe));
-  print(variance(dataframe));
-
   print(average(dataframe, 'column'));
   print(std(dataframe, 'column'));
   print(mode(dataframe, 'column'));
   print(variance(dataframe, 'column'));
+
+  print(correlation(dataframe, 'column1', 'column2'));
+
+  plot(dataframe, 'column1', 'column2');
+  histogram(dataframe, 'column1', 10);
 }
