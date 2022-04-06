@@ -32,11 +32,12 @@ AND = {"AND"}
 OR  = {"OR"}
 not = {"not"}
 
-BOOL   = {"bool"}
-FLOAT  = {"float"}
-INT    = {"int"}
-STRING = {"string"}
-void   = {"void"}
+BOOL      = {"bool"}
+FLOAT     = {"float"}
+INT       = {"int"}
+STRING    = {"string"}
+DATAFRAME = {"Dataframe"}
+void      = {"void"}
 
 FUNC   = _{"func"}
 MAIN   = _{"main"}
@@ -124,10 +125,11 @@ operand       = { not? ~ operand_value }
 operand_value = { L_PAREN ~ expr ~ R_PAREN | VAR_VAL }
 exprs         = { expr ~ (COMMA ~ expr)* }
 
-ATOMIC_TYPES = _{ BOOL | FLOAT | INT | STRING }
-ARR_TYPES    = { L_SQUARE ~ (ATOMIC_TYPES | ARR_TYPES) ~ R_SQUARE }
-VAR_TYPES    = _{ ARR_TYPES | ATOMIC_TYPES }
-TYPES        = _{ VAR_TYPES | void}
+ATOMIC_TYPES   = _{ BOOL | FLOAT | INT | STRING }
+ARR_TYPES      = { L_SQUARE ~ (ATOMIC_TYPES | ARR_TYPES) ~ R_SQUARE }
+SIMPLE_TYPES   = _{ ARR_TYPES | ATOMIC_TYPES }
+COMPOSED_TYPES = _{ SIMPLE_TYPES | DATAFRAME }
+TYPES          = _{ SIMPLE_TYPES | void}
 
 READ = { INPUT ~ L_PAREN ~ R_PAREN }
 
@@ -136,7 +138,7 @@ assignment     = { GLOBAL? ~ id ~ ASGN ~ ASSIGNMENT_EXP }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
-FUNC_ARG      = { id ~ COLON ~ VAR_TYPES }
+FUNC_ARG      = { id ~ COLON ~ SIMPLE_TYPES }
 FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
 FUNC_HEADER   = { FUNC ~ id ~ L_PAREN ~ FUNC_ARGS? ~ R_PAREN ~ COLON ~ TYPES }
 function      = { FUNC_HEADER ~ block }
@@ -162,6 +164,10 @@ AVERAGE              = {AVERAGE_KEY ~ OPTIONAL_COLUMN_FUNC}
 STD                  = {STD_KEY ~ OPTIONAL_COLUMN_FUNC}
 MODE                 = {MODE_KEY ~ OPTIONAL_COLUMN_FUNC}
 VARIANCE             = {VARIANCE_KEY ~ OPTIONAL_COLUMN_FUNC}
+TWO_COLUMNS_FUNC      = {L_PAREN ~ id ~ (COMMA ~ POSSIBLE_STR){2} ~ R_PAREN}
+CORRELATION          = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
+PLOT                 = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
+HISTOGRAM            = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ R_PAREN}
 DATAFRAME_OPS        = _{READ_CSV | AVERAGE | STD | MODE | VARIANCE}
 
 RETURN = { RETURN_KEY ~ expr }
