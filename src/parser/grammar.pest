@@ -58,6 +58,9 @@ AVERAGE_KEY  = _{"average"}
 STD_KEY      = _{"std"}
 MODE_KEY     = _{"mode"}
 VARIANCE_KEY = _{"variance"}
+CORRELATION_KEY = {"correlation"}
+PLOT_KEY = {"plot"}
+HISTOGRAM_KEY = {"histogram"}
 
 RETURN_KEY = _{"return"}
 
@@ -70,31 +73,34 @@ COMP_OP = _{ EQ | NE }
 REL_OP  = _{ GT | GTE | LT | LTE }
 
 KEYWORD_TYPE = _{
-  AND          |
-  OR           |
-  not          |
-  BOOL         |
-  FLOAT        |
-  INT          |
-  STRING       |
-  void         |
-  FUNC         |
-  MAIN         |
-  IF           |
-  ELSE         |
-  PRINT        |
-  WHILE        |
-  FOR          |
-  TO           |
-  GLOBAL       |
-  INPUT        |
-  TRUE         |
-  FALSE        |
-  READ_CSV_KEY |
-  AVERAGE_KEY  |
-  STD_KEY      |
-  MODE_KEY     |
-  VARIANCE_KEY |
+  AND             |
+  OR              |
+  not             |
+  BOOL            |
+  FLOAT           |
+  INT             |
+  STRING          |
+  void            |
+  FUNC            |
+  MAIN            |
+  IF              |
+  ELSE            |
+  PRINT           |
+  WHILE           |
+  FOR             |
+  TO              |
+  GLOBAL          |
+  INPUT           |
+  TRUE            |
+  FALSE           |
+  READ_CSV_KEY    |
+  AVERAGE_KEY     |
+  STD_KEY         |
+  MODE_KEY        |
+  VARIANCE_KEY    |
+  CORRELATION_KEY |
+  PLOT_KEY        |
+  HISTOGRAM_KEY   |
   RETURN_KEY
 }
 KEYWORD = _{ KEYWORD_TYPE ~ !ID_SUFFIX }
@@ -167,7 +173,7 @@ VARIANCE            = {VARIANCE_KEY ~ ONE_COLUMN_FUNC}
 TWO_COLUMNS_FUNC    = {L_PAREN ~ id ~ (COMMA ~ POSSIBLE_STR){2} ~ R_PAREN}
 CORRELATION         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
 PLOT                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
-HISTOGRAM           = {HISTOGRAM_KEY ~ ONE_COLUMN_FUNC}
+HISTOGRAM           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ COMMA ~ expr ~ R_PAREN}
 DATAFRAME_VALUE_OPS = _{AVERAGE | STD | MODE | VARIANCE | CORRELATION}
 DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
 

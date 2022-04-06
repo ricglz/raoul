@@ -1,11 +1,13 @@
 mod args;
 mod enums;
-mod parser;
+mod test_parser;
+#[macro_use]
+extern crate pest_derive;
 
 use std::process::exit;
 
-use crate::parser::parse;
 use crate::args::parse_args;
+use crate::test_parser::parse;
 
 fn main() {
     let matches = parse_args();
