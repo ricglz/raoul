@@ -140,7 +140,7 @@ TYPES          = _{ SIMPLE_TYPES | void}
 READ = { INPUT ~ L_PAREN ~ R_PAREN }
 
 ASSIGNMENT_EXP = _{ READ | READ_CSV | expr }
-assignment     = { GLOBAL? ~ id ~ ASGN ~ ASSIGNMENT_EXP }
+assignment     = { GLOBAL? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
