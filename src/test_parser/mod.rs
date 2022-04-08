@@ -20,3 +20,20 @@ pub fn parse_file(filename: &str, debug: bool) -> Result<(), Error<Rule>> {
     }
     parse(&program)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read_dir;
+
+    use super::*;
+
+    #[test]
+    fn example_files() {
+        let paths = read_dir("examples").unwrap();
+        for path in paths {
+            let file_path = path.expect("File must exist").path();
+            let file = file_path.to_str().unwrap();
+            assert!(parse_file(file, true).is_ok());
+        }
+    }
+}
