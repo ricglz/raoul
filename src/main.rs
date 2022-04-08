@@ -6,8 +6,8 @@ extern crate pest_derive;
 
 use std::process::exit;
 
-use crate::args::parse_args;
-use crate::test_parser::parse;
+use args::parse_args;
+use test_parser::parse_file;
 
 fn main() {
     let matches = parse_args();
@@ -16,7 +16,7 @@ fn main() {
     if debug {
         println!("Starting parsing");
     }
-    if let Err(error) = parse(filename, debug) {
+    if let Err(error) = parse_file(filename, debug) {
         println!("Parsing error {}", error.to_string());
         exit(1);
     }
