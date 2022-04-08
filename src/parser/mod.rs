@@ -1,5 +1,5 @@
-use pest_consume::Parser;
 use pest_consume::match_nodes;
+use pest_consume::Parser;
 
 use crate::enums::{Operations, Types};
 
@@ -153,10 +153,14 @@ impl LanguageParser {
     }
 }
 
-pub fn parse(filename: &str, verbose: bool) -> Result<()> {
-    let file = std::fs::read_to_string(filename).expect(filename);
-    let inputs = LanguageParser::parse_with_userdata(Rule::program, &file, verbose)?;
+fn parse(source: &str, debug: bool) -> Result<()> {
+    let inputs = LanguageParser::parse_with_userdata(Rule::program, &source, debug)?;
     // There should be a single root node in the parsed tree
     let input = inputs.single()?;
     LanguageParser::program(input)
+}
+
+pub fn parse_file(filename: &str, debug: bool) -> Result<()> {
+    let file = std::fs::read_to_string(filename).expect(filename);
+    parse(file, debug)
 }

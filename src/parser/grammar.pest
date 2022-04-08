@@ -32,11 +32,12 @@ AND = {"AND"}
 OR  = {"OR"}
 not = {"not"}
 
-BOOL   = {"bool"}
-FLOAT  = {"float"}
-INT    = {"int"}
-STRING = {"string"}
-void   = {"void"}
+BOOL      = {"bool"}
+FLOAT     = {"float"}
+INT       = {"int"}
+STRING    = {"string"}
+DATAFRAME = {"Dataframe"}
+void      = {"void"}
 
 FUNC   = _{"func"}
 MAIN   = _{"main"}
@@ -57,6 +58,9 @@ AVERAGE_KEY  = _{"average"}
 STD_KEY      = _{"std"}
 MODE_KEY     = _{"mode"}
 VARIANCE_KEY = _{"variance"}
+CORRELATION_KEY = {"correlation"}
+PLOT_KEY = {"plot"}
+HISTOGRAM_KEY = {"histogram"}
 
 RETURN_KEY = _{"return"}
 
@@ -69,31 +73,34 @@ COMP_OP = _{ EQ | NE }
 REL_OP  = _{ GT | GTE | LT | LTE }
 
 KEYWORD_TYPE = _{
-  AND          |
-  OR           |
-  not          |
-  BOOL         |
-  FLOAT        |
-  INT          |
-  STRING       |
-  void         |
-  FUNC         |
-  MAIN         |
-  IF           |
-  ELSE         |
-  PRINT        |
-  WHILE        |
-  FOR          |
-  TO           |
-  GLOBAL       |
-  INPUT        |
-  TRUE         |
-  FALSE        |
-  READ_CSV_KEY |
-  AVERAGE_KEY  |
-  STD_KEY      |
-  MODE_KEY     |
-  VARIANCE_KEY |
+  AND             |
+  OR              |
+  not             |
+  BOOL            |
+  FLOAT           |
+  INT             |
+  STRING          |
+  void            |
+  FUNC            |
+  MAIN            |
+  IF              |
+  ELSE            |
+  PRINT           |
+  WHILE           |
+  FOR             |
+  TO              |
+  GLOBAL          |
+  INPUT           |
+  TRUE            |
+  FALSE           |
+  READ_CSV_KEY    |
+  AVERAGE_KEY     |
+  STD_KEY         |
+  MODE_KEY        |
+  VARIANCE_KEY    |
+  CORRELATION_KEY |
+  PLOT_KEY        |
+  HISTOGRAM_KEY   |
   RETURN_KEY
 }
 KEYWORD = _{ KEYWORD_TYPE ~ !ID_SUFFIX }
@@ -111,7 +118,7 @@ ARR_CTE      = { L_SQUARE ~ exprs? ~ R_SQUARE }
 CTE          = _{ ARR_CTE | ATOM_CTE }
 ARR_INDEX    = { L_SQUARE ~ expr ~ R_SQUARE }
 ARR_VAL      = { id ~ ARR_INDEX{1,2} }
-NON_CTE      = _{ DATAFRAME_OPS | FUNC_CALL | ARR_VAL | id }
+NON_CTE      = _{ DATAFRAME_VALUE_OPS | FUNC_CALL | ARR_VAL | id }
 VAR_VAL      = _{ CTE | NON_CTE }
 
 expr          = { and_term ~ (OR ~ and_term)* }
@@ -124,19 +131,20 @@ operand       = { not? ~ operand_value }
 operand_value = { L_PAREN ~ expr ~ R_PAREN | VAR_VAL }
 exprs         = { expr ~ (COMMA ~ expr)* }
 
-ATOMIC_TYPES = _{ BOOL | FLOAT | INT | STRING }
-ARR_TYPES    = { L_SQUARE ~ (ATOMIC_TYPES | ARR_TYPES) ~ R_SQUARE }
-VAR_TYPES    = _{ ARR_TYPES | ATOMIC_TYPES }
-TYPES        = _{ VAR_TYPES | void}
+ATOMIC_TYPES   = _{ BOOL | FLOAT | INT | STRING }
+ARR_TYPES      = { L_SQUARE ~ (ATOMIC_TYPES | ARR_TYPES) ~ R_SQUARE }
+SIMPLE_TYPES   = _{ ARR_TYPES | ATOMIC_TYPES }
+COMPOSED_TYPES = _{ SIMPLE_TYPES | DATAFRAME }
+TYPES          = _{ SIMPLE_TYPES | void}
 
 READ = { INPUT ~ L_PAREN ~ R_PAREN }
 
-ASSIGNMENT_EXP = _{ READ | expr }
-assignment     = { GLOBAL? ~ id ~ ASGN ~ ASSIGNMENT_EXP }
+ASSIGNMENT_EXP = _{ READ | READ_CSV | expr }
+assignment     = { GLOBAL? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
-FUNC_ARG      = { id ~ COLON ~ VAR_TYPES }
+FUNC_ARG      = { id ~ COLON ~ SIMPLE_TYPES }
 FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
 FUNC_HEADER   = { FUNC ~ id ~ L_PAREN ~ FUNC_ARGS? ~ R_PAREN ~ COLON ~ TYPES }
 function      = { FUNC_HEADER ~ block }
@@ -154,20 +162,25 @@ WHILE_LOOP = {WHILE ~ COND_EXPR ~ block}
 
 FOR_LOOP = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
 
-POSSIBLE_STR         = {STRING_CTE | NON_CTE}
-READ_CSV_EXTRA       = {(COMMA ~ id){2}}
-READ_CSV             = {READ_CSV_KEY ~ L_PAREN ~ POSSIBLE_STR ~ READ_CSV_EXTRA? ~ R_PAREN}
-OPTIONAL_COLUMN_FUNC = {L_PAREN ~ id ~ (COMMA ~ POSSIBLE_STR)? ~ R_PAREN}
-AVERAGE              = {AVERAGE_KEY ~ OPTIONAL_COLUMN_FUNC}
-STD                  = {STD_KEY ~ OPTIONAL_COLUMN_FUNC}
-MODE                 = {MODE_KEY ~ OPTIONAL_COLUMN_FUNC}
-VARIANCE             = {VARIANCE_KEY ~ OPTIONAL_COLUMN_FUNC}
-DATAFRAME_OPS        = _{READ_CSV | AVERAGE | STD | MODE | VARIANCE}
+POSSIBLE_STR        = {STRING_CTE | NON_CTE}
+READ_CSV_EXTRA      = {(COMMA ~ id){2}}
+READ_CSV            = {READ_CSV_KEY ~ L_PAREN ~ POSSIBLE_STR ~ READ_CSV_EXTRA? ~ R_PAREN}
+ONE_COLUMN_FUNC     = {L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ R_PAREN}
+AVERAGE             = {AVERAGE_KEY ~ ONE_COLUMN_FUNC}
+STD                 = {STD_KEY ~ ONE_COLUMN_FUNC}
+MODE                = {MODE_KEY ~ ONE_COLUMN_FUNC}
+VARIANCE            = {VARIANCE_KEY ~ ONE_COLUMN_FUNC}
+TWO_COLUMNS_FUNC    = {L_PAREN ~ id ~ (COMMA ~ POSSIBLE_STR){2} ~ R_PAREN}
+CORRELATION         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
+PLOT                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
+HISTOGRAM           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ COMMA ~ expr ~ R_PAREN}
+DATAFRAME_VALUE_OPS = _{AVERAGE | STD | MODE | VARIANCE | CORRELATION}
+DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
 
 RETURN = { RETURN_KEY ~ expr }
 
 BLOCK_STATEMENT  = _{ DECISION | WHILE_LOOP | FOR_LOOP }
-INLINE_STATEMENT = _{ DATAFRAME_OPS | assignment | write | RETURN | FUNC_CALL }
+INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | RETURN | FUNC_CALL }
 statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
 
 program = { SOI ~ function* ~ MAIN_FUNCTION ~ EOI }

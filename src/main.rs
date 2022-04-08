@@ -1,24 +1,26 @@
 mod args;
 mod enums;
-mod parser;
+mod test_parser;
+#[macro_use]
+extern crate pest_derive;
 
 use std::process::exit;
 
-use crate::parser::parse;
-use crate::args::parse_args;
+use args::parse_args;
+use test_parser::parse_file;
 
 fn main() {
     let matches = parse_args();
     let filename = matches.value_of("file").expect("required");
-    let verbose = matches.is_present("verbose");
-    if verbose {
+    let debug = matches.is_present("debug");
+    if debug {
         println!("Starting parsing");
     }
-    if let Err(error) = parse(filename, verbose) {
+    if let Err(error) = parse_file(filename, debug) {
         println!("Parsing error {}", error.to_string());
         exit(1);
     }
-    if verbose {
+    if debug {
         println!("Parsing ended sucessfully");
     }
 }
