@@ -47,7 +47,7 @@ PRINT  = _{"print"}
 WHILE  = _{"while"}
 FOR    = _{"for"}
 TO     = _{"to"}
-GLOBAL = _{"global"}
+global = {"global"}
 INPUT  = _{"input"}
 
 TRUE  = _{"true"}
@@ -89,7 +89,7 @@ KEYWORD_TYPE = _{
   WHILE           |
   FOR             |
   TO              |
-  GLOBAL          |
+  global          |
   INPUT           |
   TRUE            |
   FALSE           |
@@ -140,13 +140,13 @@ TYPES          = _{ SIMPLE_TYPES | void}
 READ = { INPUT ~ L_PAREN ~ R_PAREN }
 
 ASSIGNMENT_EXP = _{ READ | READ_CSV | expr }
-assignment     = { GLOBAL? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
+assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
 FUNC_ARG      = { id ~ COLON ~ SIMPLE_TYPES }
 FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
-FUNC_HEADER   = { FUNC ~ id ~ L_PAREN ~ FUNC_ARGS? ~ R_PAREN ~ COLON ~ TYPES }
+FUNC_HEADER   = _{ FUNC ~ id ~ L_PAREN ~ FUNC_ARGS? ~ R_PAREN ~ COLON ~ TYPES }
 function      = { FUNC_HEADER ~ block }
 MAIN_FUNCTION = _{ FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ void ~ block }
 FUNC_CALL     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }

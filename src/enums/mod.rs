@@ -1,7 +1,8 @@
 pub enum Types {
-    VOID
+    VOID,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum Operations {
-    NOT
+    NOT,
 }
