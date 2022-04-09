@@ -132,10 +132,10 @@ operand_value = { L_PAREN ~ expr ~ R_PAREN | VAR_VAL }
 exprs         = { expr ~ (COMMA ~ expr)* }
 
 ATOMIC_TYPES   = _{ BOOL | FLOAT | INT | STRING }
-ARR_TYPES      = { L_SQUARE ~ (ATOMIC_TYPES | ARR_TYPES) ~ R_SQUARE }
-SIMPLE_TYPES   = _{ ARR_TYPES | ATOMIC_TYPES }
-COMPOSED_TYPES = _{ SIMPLE_TYPES | DATAFRAME }
-TYPES          = _{ SIMPLE_TYPES | void}
+ARR_TYPES      = { L_SQUARE ~ ATOMIC_TYPES ~ R_SQUARE }
+MAT_TYPES      = { L_SQUARE ~ ARR_TYPES ~ R_SQUARE }
+COMPOSED_TYPES = _{ ATOMIC_TYPES | DATAFRAME | ARR_TYPES | MAT_TYPES  }
+TYPES          = _{ ATOMIC_TYPES | void}
 
 READ = { INPUT ~ L_PAREN ~ R_PAREN }
 
@@ -144,7 +144,7 @@ assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
-FUNC_ARG      = { id ~ COLON ~ SIMPLE_TYPES }
+FUNC_ARG      = { id ~ COLON ~ ATOMIC_TYPES }
 FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
 FUNC_HEADER   = _{ FUNC ~ id ~ L_PAREN ~ FUNC_ARGS? ~ R_PAREN ~ COLON ~ TYPES }
 function      = { FUNC_HEADER ~ block }
