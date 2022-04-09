@@ -12,7 +12,7 @@ pub fn parse_args() -> ArgMatches {
                 .required(true),
         )
         .arg(
-            Arg::new("verbose")
+            Arg::new("debug")
                 .short('d')
                 .long("debug")
                 .value_name("DEBUG")
