@@ -2,6 +2,7 @@ mod args;
 
 // ANCHOR: Actual parser
 mod ast;
+mod dir_func;
 mod enums;
 mod parser;
 use parser::parse;

@@ -1,4 +1,6 @@
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Types {
+    INTEGER,
     VOID,
 }
 
