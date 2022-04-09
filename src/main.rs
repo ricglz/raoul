@@ -7,10 +7,9 @@ mod parser;
 use parser::parse;
 
 // ANCHOR: Testing the examples
-// mod test_parser;
-// #[macro_use]
-// extern crate pest_derive;
-// use test_parser::parse_file;
+mod test_parser;
+#[macro_use]
+extern crate pest_derive;
 
 use std::process::exit;
 

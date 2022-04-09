@@ -13,6 +13,7 @@ fn parse(source: &str) -> Result<(), Error<Rule>> {
     }
 }
 
+#[allow(dead_code)]
 pub fn parse_file(filename: &str, debug: bool) -> Result<(), Error<Rule>> {
     let program = std::fs::read_to_string(filename).expect(filename);
     if debug {
@@ -20,6 +21,7 @@ pub fn parse_file(filename: &str, debug: bool) -> Result<(), Error<Rule>> {
     }
     parse(&program)
 }
+#[deny(dead_code)]
 
 #[cfg(test)]
 mod tests {
