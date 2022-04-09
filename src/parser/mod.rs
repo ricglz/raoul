@@ -1,6 +1,8 @@
+use pest::iterators::Pair;
 use pest_consume::match_nodes;
 use pest_consume::Parser;
 
+use crate::ast::AstNode;
 use crate::enums::{Operations, Types};
 
 #[derive(Parser)]
@@ -10,12 +12,18 @@ struct LanguageParser;
 use pest_consume::Error;
 type Result<T> = std::result::Result<T, Error<Rule>>;
 type Node<'i> = pest_consume::Node<'i, Rule, bool>;
+pub type Statement<'a> = (AstNode<'a>, Pair<'a, Rule>);
+pub type Statements<'a> = Vec<Statement<'a>>;
 
 // This is the other half of the parser, using pest_consume.
 #[pest_consume::parser]
 impl LanguageParser {
     // Extra
     fn EOI(_input: Node) -> Result<()> {
+        Ok(())
+    }
+
+    fn global(_input: Node) -> Result<()> {
         Ok(())
     }
 
@@ -30,137 +38,135 @@ impl LanguageParser {
     }
 
     // Values
-    fn int_cte(input: Node) -> Result<i64> {
-        input
+    fn int_cte(input: Node) -> Result<AstNode> {
+        let value = input
             .as_str()
             .parse::<i64>()
-            // `input.error` links the error to the location in the input file where it occurred.
             .map_err(|e| input.error(e))
+            .unwrap();
+        Ok(AstNode::Integer(value))
     }
 
     // ID
-    fn id(input: Node) -> Result<&str> {
-        Ok(input.as_str())
+    fn id(input: Node) -> Result<AstNode> {
+        Ok(AstNode::Id(String::from(input.as_str())))
     }
 
     // Grammar
-    fn expr(input: Node) -> Result<()> {
+    fn expr(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [and_term(_)] => (),
+            [and_term(value)] => value,
         ))
     }
 
-    fn and_term(input: Node) -> Result<()> {
+    fn and_term(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [comp_term(_)] => (),
+            [comp_term(value)] => value,
         ))
     }
 
-    fn comp_term(input: Node) -> Result<()> {
+    fn comp_term(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [rel_term(_)] => (),
+            [rel_term(value)] => value,
         ))
     }
 
-    fn rel_term(input: Node) -> Result<()> {
+    fn rel_term(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [art_term(_)] => (),
+            [art_term(value)] => value,
         ))
     }
 
-    fn art_term(input: Node) -> Result<()> {
+    fn art_term(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [fact_term(_)] => (),
+            [fact_term(value)] => value,
         ))
     }
 
-    fn fact_term(input: Node) -> Result<()> {
+    fn fact_term(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [operand(_)] => (),
+            [operand(value)] => value,
         ))
     }
 
-    fn operand(input: Node) -> Result<()> {
+    fn operand(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [operand_value(_)] => (),
-            [not(_), operand_value(_)] => (),
+            [operand_value(value)] => value,
+            [not(operation), operand_value(operand)] => AstNode::UnaryOperation { operation: operation, operand: Box::new(operand) }
         ))
     }
 
-    fn operand_value(input: Node) -> Result<()> {
+    fn operand_value(input: Node) -> Result<AstNode> {
         // TODO: Still misses some conditions
         if *input.user_data() {
             println!("operand_value");
         }
         Ok(match_nodes!(input.into_children();
-            [expr(_)] => (),
-            [int_cte(_)] => (),
-            [id(_)] => (),
+            [expr(expr)] => expr,
+            [int_cte(number)] => number,
+            [id(id)] => id,
         ))
     }
 
-    fn exprs(input: Node) -> Result<()> {
+    fn exprs(input: Node) -> Result<Vec<AstNode>> {
         Ok(match_nodes!(input.into_children();
-            [expr(_)..] => (),
+            [expr(exprs)..] => exprs.collect(),
         ))
     }
 
-    fn assignment(input: Node) -> Result<()> {
+    fn assignment(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [id(_), expr(_)] => (),
+            [global(_), id(id), expr(value)] => AstNode::Assignment { global: true, name: String::from(id), value: Box::new(value) },
+            [id(id), expr(value)] => AstNode::Assignment { global: false, name: String::from(id), value: Box::new(value) },
         ))
     }
 
-    fn write(input: Node) -> Result<()> {
+    fn write(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [exprs(_)] => (),
+            [exprs(exprs)] => AstNode::Write { exprs: exprs },
         ))
     }
 
-    fn statement(input: Node) -> Result<()> {
+    fn statement<'a>(input: Node<'a>) -> Result<Statement<'a>> {
         // TODO: Still misses some conditions
         if *input.user_data() {
             println!("statement");
         }
+        let pair = input.as_pair().clone();
         Ok(match_nodes!(input.into_children();
-            [assignment(_)] => (),
-            [write(_)] => (),
+            [assignment(node)] => (node, pair),
+            [write(node)] => (node, pair),
         ))
     }
 
-    fn block(input: Node) -> Result<()> {
+    fn block<'a>(input: Node<'a>) -> Result<Statements<'a>> {
         Ok(match_nodes!(input.into_children();
-            [statement(_statements)..] => (),
+            [statement(statements)..] => statements.collect(),
         ))
     }
 
-    fn function(input: Node) -> Result<()> {
+    fn function(input: Node) -> Result<AstNode> {
         // TODO: Still misses some conditions
         if *input.user_data() {
             println!("function");
         }
         Ok(match_nodes!(input.into_children();
-            [assignment(_)] => (),
-            [write(_)] => (),
+            [id(id), _, block(body)] => {
+                AstNode::Function {name: String::from(id), body: body}
+            },
         ))
     }
 
-    fn program(input: Node) -> Result<()> {
+    fn program(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
-            [function(_).., _, block(_), _] => (),
-            [_, block(_), _] => (),
+            [function(functions).., _, block(body), _] => AstNode::Main { functions: functions.collect(), body: body },
         ))
     }
 }
 
-fn parse(source: &str, debug: bool) -> Result<()> {
+pub fn parse<'a>(source: &'a str, debug: bool) -> Result<AstNode<'a>> {
     let inputs = LanguageParser::parse_with_userdata(Rule::program, &source, debug)?;
     // There should be a single root node in the parsed tree
     let input = inputs.single()?;
     LanguageParser::program(input)
-}
-
-pub fn parse_file(filename: &str, debug: bool) -> Result<()> {
-    let file = std::fs::read_to_string(filename).expect(filename);
-    parse(file, debug)
 }

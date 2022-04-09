@@ -1,13 +1,20 @@
 mod args;
+
+// ANCHOR: Actual parser
+mod ast;
 mod enums;
-mod test_parser;
-#[macro_use]
-extern crate pest_derive;
+mod parser;
+use parser::parse;
+
+// ANCHOR: Testing the examples
+// mod test_parser;
+// #[macro_use]
+// extern crate pest_derive;
+// use test_parser::parse_file;
 
 use std::process::exit;
 
 use args::parse_args;
-use test_parser::parse_file;
 
 fn main() {
     let matches = parse_args();
@@ -16,11 +23,15 @@ fn main() {
     if debug {
         println!("Starting parsing");
     }
-    if let Err(error) = parse_file(filename, debug) {
+    let file = std::fs::read_to_string(filename).expect(filename);
+    let parsing_response = parse(&file, debug);
+    if let Err(error) = parsing_response {
         println!("Parsing error {}", error.to_string());
         exit(1);
     }
+    let ast = parsing_response.unwrap();
     if debug {
         println!("Parsing ended sucessfully");
+        println!("AST:\n{:?}", ast);
     }
 }
