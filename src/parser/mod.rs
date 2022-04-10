@@ -246,3 +246,6 @@ pub fn parse<'a>(source: &'a str, debug: bool) -> Result<AstNode<'a>> {
     let input = inputs.single()?;
     LanguageParser::program(input)
 }
+
+#[cfg(test)]
+mod tests;
