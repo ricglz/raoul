@@ -50,11 +50,17 @@ impl LanguageParser {
 
     fn atomic_types(input: Node) -> Result<Types> {
         Ok(match_nodes!(input.into_children();
-            [void(value)] => value,
             [int(value)] => value,
             [float(value)] => value,
             [string(value)] => value,
             [bool(value)] => value,
+        ))
+    }
+
+    fn types(input: Node) -> Result<Types> {
+        Ok(match_nodes!(input.into_children();
+            [void(value)] => value,
+            [atomic_types(value)] => value,
         ))
     }
 
@@ -218,11 +224,11 @@ impl LanguageParser {
             println!("function");
         }
         Ok(match_nodes!(input.into_children();
-            [id(id), func_args(arguments), void(return_type), block(body)] => {
+            [id(id), func_args(arguments), types(return_type), block(body)] => {
                 AstNode::Function {arguments, name: String::from(id), body, return_type}
             },
-            [id(id), func_args(arguments), atomic_types(return_type), block(body)] => {
-                AstNode::Function {arguments, name: String::from(id), body, return_type}
+            [id(id), types(return_type), block(body)] => {
+                AstNode::Function {arguments: Vec::new(), name: String::from(id), body, return_type}
             },
         ))
     }
