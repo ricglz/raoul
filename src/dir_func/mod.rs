@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ast::AstNode;
+use crate::{ast::AstNode, error::Result};
 
 use self::function::Function;
 
@@ -24,19 +24,20 @@ impl DirFunc {
         self.functions.insert(function.name.clone(), function);
     }
 
-    fn insert_function_from_node(&mut self, node: &AstNode) {
-        let function = Function::from(node.to_owned());
-        self.insert_function(function);
+    fn insert_function_from_node(&mut self, node: &AstNode) -> Result<()> {
+        let function = Function::try_from(node.to_owned())?;
+        Ok(self.insert_function(function))
     }
 }
 
-pub fn build_dir_func(dir_func: &mut DirFunc, node: AstNode) {
+pub fn build_dir_func(dir_func: &mut DirFunc, node: AstNode) -> Result<()> {
     match node {
         AstNode::Main { ref functions, .. } => {
-            dir_func.insert_function_from_node(&node);
+            dir_func.insert_function_from_node(&node)?;
             for function in functions {
-                dir_func.insert_function_from_node(&function);
+                dir_func.insert_function_from_node(&function)?;
             }
+            Ok(())
         }
         _ => unreachable!(),
     }

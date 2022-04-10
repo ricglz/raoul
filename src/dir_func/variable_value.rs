@@ -1,4 +1,8 @@
-use crate::{ast::AstNode, enums::Types};
+use crate::{
+    ast::AstNode,
+    enums::Types,
+    error::{RaoulError, Result},
+};
 
 use super::function::VariablesTable;
 
@@ -21,20 +25,20 @@ impl From<VariableValue> for Types {
     }
 }
 
-pub fn build_variable_value(v: AstNode, variables: &VariablesTable) -> VariableValue {
+pub fn build_variable_value(v: AstNode, variables: &VariablesTable) -> Result<VariableValue> {
     match v {
-        AstNode::Integer(value) => VariableValue::Integer(value),
-        AstNode::Float(value) => VariableValue::Float(value),
-        AstNode::String(value) => VariableValue::String(value.clone()),
-        AstNode::Bool(value) => VariableValue::Bool(value),
+        AstNode::Integer(value) => Ok(VariableValue::Integer(value)),
+        AstNode::Float(value) => Ok(VariableValue::Float(value)),
+        AstNode::String(value) => Ok(VariableValue::String(value.clone())),
+        AstNode::Bool(value) => Ok(VariableValue::Bool(value)),
         AstNode::Id(name) => {
-            let variable = variables.get(&name).unwrap();
-            variable.value.clone()
+            if let Some(variable) = variables.get(&name) {
+                Ok(variable.value.clone())
+            } else {
+                Err(RaoulError::UndeclaredId { name })
+            }
         }
         AstNode::UnaryOperation { .. } => todo!(),
-        _ => unreachable!(
-            "Node {:?}, was attempted to be parsed to a VariableValue",
-            v
-        ),
+        _ => Err(RaoulError::Invalid),
     }
 }

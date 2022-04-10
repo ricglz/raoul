@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use crate::{ast::AstNode, enums::Types};
+use crate::{
+    ast::AstNode,
+    enums::Types,
+    error::{RaoulError, Result},
+};
 
 use super::variable::{build_variable, Variable};
 
@@ -26,14 +30,20 @@ impl Function {
         self.variables.insert(variable.name.clone(), variable);
     }
 
-    fn insert_variable_from_node(&mut self, node: AstNode) {
-        let variable = build_variable(node, &self.variables);
-        self.insert_variable(variable);
+    fn insert_variable_from_node(&mut self, node: AstNode) -> Result<()> {
+        match build_variable(node, &self.variables) {
+            Ok(variable) => Ok(self.insert_variable(variable)),
+            Err(error) => match error {
+                RaoulError::UndeclaredId { .. } => Err(error),
+                _ => Ok(()),
+            },
+        }
     }
 }
 
-impl From<AstNode<'_>> for Function {
-    fn from(v: AstNode) -> Self {
+impl TryFrom<AstNode<'_>> for Function {
+    type Error = RaoulError;
+    fn try_from(v: AstNode) -> Result<Self> {
         match v {
             AstNode::Function {
                 name,
@@ -43,19 +53,19 @@ impl From<AstNode<'_>> for Function {
             } => {
                 let mut function = Function::new(name, return_type);
                 for node in arguments {
-                    function.insert_variable_from_node(node);
+                    function.insert_variable_from_node(node)?;
                 }
                 for tuple in body {
-                    function.insert_variable_from_node(tuple.0);
+                    function.insert_variable_from_node(tuple.0)?;
                 }
-                function
+                Ok(function)
             }
             AstNode::Main { body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::VOID);
                 for tuple in body {
-                    function.insert_variable_from_node(tuple.0);
+                    function.insert_variable_from_node(tuple.0)?;
                 }
-                function
+                Ok(function)
             }
             _ => unreachable!(),
         }

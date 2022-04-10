@@ -1,4 +1,8 @@
-use crate::{ast::AstNode, enums::Types};
+use crate::{
+    ast::AstNode,
+    enums::Types,
+    error::{RaoulError, Result},
+};
 
 use super::{
     function::VariablesTable,
@@ -12,32 +16,28 @@ pub struct Variable {
     pub value: VariableValue,
 }
 
-pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Variable {
+pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<Variable> {
     match v {
         AstNode::Assignment {
             name,
             value: node_value,
             ..
         } => {
-            let value = build_variable_value(*node_value, variables);
-            let data_type = Types::from(value.clone());
-            Variable {
-                data_type,
+            let value = build_variable_value(*node_value, variables)?;
+            Ok(Variable {
+                data_type: Types::from(value.clone()),
                 name,
                 value,
-            }
+            })
         }
         AstNode::Argument {
             arg_type: data_type,
             name,
-        } => Variable {
+        } => Ok(Variable {
             data_type,
             name,
             value: VariableValue::Bool(false),
-        },
-        _ => unreachable!(
-            "Node {:?}, was attempted to be parsed to a VariableValue",
-            v
-        ),
+        }),
+        _ => Err(RaoulError::Invalid),
     }
 }

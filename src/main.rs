@@ -4,6 +4,7 @@ mod args;
 mod ast;
 mod dir_func;
 mod enums;
+mod error;
 mod parser;
 use dir_func::{build_dir_func, DirFunc};
 use parser::parse;
@@ -36,9 +37,12 @@ fn main() {
         println!("AST:\n{:?}", ast);
     }
     let mut dir_func = DirFunc::new();
-    build_dir_func(&mut dir_func, ast);
+    if let Err(error) = build_dir_func(&mut dir_func, ast) {
+        println!("DirFunc error {:?}", error);
+        exit(1);
+    }
     if debug {
         println!("Dir func created sucessfully");
-        println!("DirFunc:\n{:?}", dir_func);
+        println!("DirFunc:\n{:#?}", dir_func);
     }
 }
