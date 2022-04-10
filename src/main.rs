@@ -43,6 +43,6 @@ fn main() {
     }
     if debug {
         println!("Dir func created sucessfully");
-        println!("DirFunc:\n{:#?}", dir_func);
+        println!("{:#?}", dir_func);
     }
 }

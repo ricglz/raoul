@@ -33,9 +33,13 @@ pub fn build_variable_value(v: AstNode, variables: &VariablesTable) -> Result<Va
         AstNode::Bool(value) => Ok(VariableValue::Bool(value)),
         AstNode::Id(name) => {
             if let Some(variable) = variables.get(&name) {
-                Ok(variable.value.clone())
+                if let Some(value) = &variable.value {
+                    Ok(value.to_owned())
+                } else {
+                    Err(RaoulError::UnitializedVar { name })
+                }
             } else {
-                Err(RaoulError::UndeclaredId { name })
+                Err(RaoulError::UndeclaredVar { name })
             }
         }
         AstNode::UnaryOperation { .. } => todo!(),

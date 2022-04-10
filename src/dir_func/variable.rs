@@ -13,7 +13,7 @@ use super::{
 pub struct Variable {
     data_type: Types,
     pub name: String,
-    pub value: VariableValue,
+    pub value: Option<VariableValue>,
 }
 
 pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<Variable> {
@@ -27,7 +27,7 @@ pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<Variable
             Ok(Variable {
                 data_type: Types::from(value.clone()),
                 name,
-                value,
+                value: Some(value),
             })
         }
         AstNode::Argument {
@@ -36,7 +36,7 @@ pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<Variable
         } => Ok(Variable {
             data_type,
             name,
-            value: VariableValue::Bool(false),
+            value: None,
         }),
         _ => Err(RaoulError::Invalid),
     }

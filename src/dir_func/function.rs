@@ -34,7 +34,7 @@ impl Function {
         match build_variable(node, &self.variables) {
             Ok(variable) => Ok(self.insert_variable(variable)),
             Err(error) => match error {
-                RaoulError::UndeclaredId { .. } => Err(error),
+                RaoulError::UndeclaredVar { .. } => Err(error),
                 _ => Ok(()),
             },
         }
