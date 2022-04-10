@@ -108,12 +108,12 @@ KEYWORD = _{ KEYWORD_TYPE ~ !ID_SUFFIX }
 ID_SUFFIX = _{ ASCII_ALPHANUMERIC | UNDERSCORE }
 id = @{ !KEYWORD ~ ASCII_ALPHA ~ ID_SUFFIX* }
 
-BOOL_CTE     = @{ TRUE | FALSE }
+bool_cte     = @{ TRUE | FALSE }
 int_cte      = @{ MINUS? ~ ASCII_DIGIT+ }
-FLOAT_CTE    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
-STRING_VALUE = { (!PEEK ~ ANY)* }
-STRING_CTE   = _{ PUSH(STR_MARK) ~ STRING_VALUE ~ POP }
-ATOM_CTE     = _{ BOOL_CTE | FLOAT_CTE | int_cte | STRING_CTE }
+float_cte    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
+string_value = { (!PEEK ~ ANY)* }
+STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
+ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
 ARR_CTE      = { L_SQUARE ~ exprs? ~ R_SQUARE }
 CTE          = _{ ARR_CTE | ATOM_CTE }
 ARR_INDEX    = { L_SQUARE ~ expr ~ R_SQUARE }

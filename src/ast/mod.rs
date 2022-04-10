@@ -7,6 +7,9 @@ use crate::parser::Statements;
 pub enum AstNode<'a> {
     Id(String),
     Integer(i64),
+    Float(f64),
+    String(String),
+    Bool(bool),
     Assignment {
         global: bool,
         name: String,
@@ -46,6 +49,9 @@ impl fmt::Debug for AstNode<'_> {
         match &self {
             AstNode::Id(s) => write!(f, "Id({})", s),
             AstNode::Integer(n) => write!(f, "Integer({})", n),
+            AstNode::Float(n) => write!(f, "Float({})", n),
+            AstNode::String(s) => write!(f, "String({})", s),
+            AstNode::Bool(s) => write!(f, "Bool({})", s),
             AstNode::Assignment {
                 global,
                 name,

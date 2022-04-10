@@ -47,9 +47,31 @@ impl LanguageParser {
         Ok(AstNode::Integer(value))
     }
 
+    fn float_cte(input: Node) -> Result<AstNode> {
+        let value = input
+            .as_str()
+            .parse::<f64>()
+            .map_err(|e| input.error(e))
+            .unwrap();
+        Ok(AstNode::Float(value))
+    }
+
+    fn string_value(input: Node) -> Result<AstNode> {
+        Ok(AstNode::String(input.as_str().to_owned()))
+    }
+
+    fn bool_cte(input: Node) -> Result<AstNode> {
+        let value = input
+            .as_str()
+            .parse::<bool>()
+            .map_err(|e| input.error(e))
+            .unwrap();
+        Ok(AstNode::Bool(value))
+    }
+
     // ID
     fn id(input: Node) -> Result<AstNode> {
-        Ok(AstNode::Id(String::from(input.as_str())))
+        Ok(AstNode::Id(input.as_str().to_owned()))
     }
 
     // Grammar
@@ -104,6 +126,9 @@ impl LanguageParser {
         Ok(match_nodes!(input.into_children();
             [expr(expr)] => expr,
             [int_cte(number)] => number,
+            [float_cte(number)] => number,
+            [string_value(string)] => string,
+            [bool_cte(value)] => value,
             [id(id)] => id,
         ))
     }
