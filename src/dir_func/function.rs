@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     ast::AstNode,
     enums::Types,
-    error::{RaoulError, Result},
+    error::{RaoulError, Result, Results},
 };
 
 use super::variable::{build_variable, Variable};
@@ -33,17 +33,17 @@ impl Function {
     fn insert_variable_from_node(&mut self, node: AstNode) -> Result<()> {
         match build_variable(node, &self.variables) {
             Ok(variable) => Ok(self.insert_variable(variable)),
-            Err(error) => match error {
-                RaoulError::UndeclaredVar { .. } => Err(error),
-                _ => Ok(()),
+            Err(error) => match error.is_invalid() {
+                true => Ok(()),
+                false => Err(error),
             },
         }
     }
 }
 
 impl TryFrom<AstNode<'_>> for Function {
-    type Error = RaoulError;
-    fn try_from(v: AstNode) -> Result<Self> {
+    type Error = Vec<RaoulError>;
+    fn try_from(v: AstNode) -> Results<Function> {
         match v {
             AstNode::Function {
                 name,
@@ -52,20 +52,29 @@ impl TryFrom<AstNode<'_>> for Function {
                 arguments,
             } => {
                 let mut function = Function::new(name, return_type);
-                for node in arguments {
-                    function.insert_variable_from_node(node)?;
+                let args_iter = arguments.clone().into_iter();
+                let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
+                let errors: Vec<RaoulError> = args_iter
+                    .chain(body_iter)
+                    .filter_map(|node| function.insert_variable_from_node(node).err())
+                    .collect();
+                if errors.is_empty() {
+                    Ok(function)
+                } else {
+                    Err(errors)
                 }
-                for tuple in body {
-                    function.insert_variable_from_node(tuple.0)?;
-                }
-                Ok(function)
             }
             AstNode::Main { body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::VOID);
-                for tuple in body {
-                    function.insert_variable_from_node(tuple.0)?;
+                let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
+                let errors: Vec<RaoulError> = body_iter
+                    .filter_map(|node| function.insert_variable_from_node(node).err())
+                    .collect();
+                if errors.is_empty() {
+                    Ok(function)
+                } else {
+                    Err(errors)
                 }
-                Ok(function)
             }
             _ => unreachable!(),
         }
