@@ -10,7 +10,7 @@ enum VariableValue {
 impl From<VariableValue> for Types {
     fn from(v: VariableValue) -> Self {
         match v {
-            VariableValue::Integer(_) => Types::INTEGER,
+            VariableValue::Integer(_) => Types::INT,
         }
     }
 }

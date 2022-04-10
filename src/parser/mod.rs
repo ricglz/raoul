@@ -32,6 +32,32 @@ impl LanguageParser {
         Ok(Types::VOID)
     }
 
+    fn int(_input: Node) -> Result<Types> {
+        Ok(Types::INT)
+    }
+
+    fn float(_input: Node) -> Result<Types> {
+        Ok(Types::FLOAT)
+    }
+
+    fn string(_input: Node) -> Result<Types> {
+        Ok(Types::STRING)
+    }
+
+    fn bool(_input: Node) -> Result<Types> {
+        Ok(Types::BOOL)
+    }
+
+    fn atomic_types(input: Node) -> Result<Types> {
+        Ok(match_nodes!(input.into_children();
+            [void(value)] => value,
+            [int(value)] => value,
+            [float(value)] => value,
+            [string(value)] => value,
+            [bool(value)] => value,
+        ))
+    }
+
     // Operations
     fn not(_input: Node) -> Result<Operations> {
         Ok(Operations::NOT)
@@ -74,7 +100,7 @@ impl LanguageParser {
         Ok(AstNode::Id(input.as_str().to_owned()))
     }
 
-    // Grammar
+    // Expressions
     fn expr(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
             [and_term(value)] => value,
@@ -139,6 +165,7 @@ impl LanguageParser {
         ))
     }
 
+    // Inline statements
     fn assignment(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
             [global(_), id(id), expr(value)] => AstNode::Assignment { global: true, name: String::from(id), value: Box::new(value) },
@@ -170,14 +197,32 @@ impl LanguageParser {
         ))
     }
 
+    fn func_arg(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [id(id), atomic_types(arg_type)] => {
+                AstNode::Argument { arg_type, name: String::from(id) }
+            },
+        ))
+    }
+
+    fn func_args(input: Node) -> Result<Vec<AstNode>> {
+        Ok(match_nodes!(input.into_children();
+            [func_arg(args)..] => args.collect(),
+        ))
+    }
+
+    // Function
     fn function(input: Node) -> Result<AstNode> {
         // TODO: Still misses some conditions
         if *input.user_data() {
             println!("function");
         }
         Ok(match_nodes!(input.into_children();
-            [id(id), _, block(body)] => {
-                AstNode::Function {name: String::from(id), body: body}
+            [id(id), func_args(arguments), void(return_type), block(body)] => {
+                AstNode::Function {arguments, name: String::from(id), body, return_type}
+            },
+            [id(id), func_args(arguments), atomic_types(return_type), block(body)] => {
+                AstNode::Function {arguments, name: String::from(id), body, return_type}
             },
         ))
     }

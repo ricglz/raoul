@@ -1,7 +1,10 @@
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Types {
-    INTEGER,
+    INT,
     VOID,
+    FLOAT,
+    STRING,
+    BOOL,
 }
 
 #[derive(PartialEq, Debug)]
