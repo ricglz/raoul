@@ -1,0 +1,9 @@
+func helper(a: int, b: float, c: string, d: bool): void {}
+
+func main(): void {
+  a = 1;
+  b = 1.0;
+  c = "my string";
+  d = false;
+  print(a, b, c, d);
+}
