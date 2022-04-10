@@ -38,7 +38,7 @@ fn main() {
     }
     let mut dir_func = DirFunc::new();
     if let Err(error) = build_dir_func(&mut dir_func, ast) {
-        println!("DirFunc error {:?}", error);
+        println!("{:?}", error);
         exit(1);
     }
     if debug {
