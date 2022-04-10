@@ -7,7 +7,7 @@ pub enum Types {
     BOOL,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Operations {
     NOT,
 }

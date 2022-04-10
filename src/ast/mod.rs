@@ -3,7 +3,7 @@ use std::fmt;
 use crate::enums::{Operations, Types};
 use crate::parser::Statements;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum AstNode<'a> {
     Id(String),
     Integer(i64),

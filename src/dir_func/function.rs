@@ -7,8 +7,8 @@ use super::variable::{build_variable, Variable};
 pub type VariablesTable = HashMap<String, Variable>;
 
 #[derive(PartialEq, Debug)]
-struct Function {
-    name: String,
+pub struct Function {
+    pub name: String,
     return_type: Types,
     variables: VariablesTable,
 }

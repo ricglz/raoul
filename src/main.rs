@@ -5,6 +5,7 @@ mod ast;
 mod dir_func;
 mod enums;
 mod parser;
+use dir_func::{build_dir_func, DirFunc};
 use parser::parse;
 
 // ANCHOR: Testing the examples
@@ -33,5 +34,11 @@ fn main() {
     if debug {
         println!("Parsing ended sucessfully");
         println!("AST:\n{:?}", ast);
+    }
+    let mut dir_func = DirFunc::new();
+    build_dir_func(&mut dir_func, ast);
+    if debug {
+        println!("Dir func created sucessfully");
+        println!("DirFunc:\n{:?}", dir_func);
     }
 }
