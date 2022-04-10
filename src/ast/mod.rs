@@ -41,9 +41,9 @@ pub enum AstNode<'a> {
 impl<'a> From<AstNode<'a>> for String {
     fn from(val: AstNode) -> Self {
         match val {
-            AstNode::Function { name, .. } => String::from(name),
             AstNode::Integer(n) => n.to_string(),
             AstNode::Id(s) => s.to_string(),
+            AstNode::String(s) => s.to_string(),
             node => unreachable!("Node {:?}, cannot be a string", node),
         }
     }
