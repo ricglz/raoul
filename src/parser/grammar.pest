@@ -32,10 +32,10 @@ AND = {"AND"}
 OR  = {"OR"}
 not = {"not"}
 
-BOOL      = {"bool"}
-FLOAT     = {"float"}
-INT       = {"int"}
-STRING    = {"string"}
+bool      = {"bool"}
+float     = {"float"}
+int       = {"int"}
+string    = {"string"}
 DATAFRAME = {"Dataframe"}
 void      = {"void"}
 
@@ -76,10 +76,10 @@ KEYWORD_TYPE = _{
   AND             |
   OR              |
   not             |
-  BOOL            |
-  FLOAT           |
-  INT             |
-  STRING          |
+  bool            |
+  float           |
+  int             |
+  string          |
   void            |
   FUNC            |
   MAIN            |
@@ -108,12 +108,12 @@ KEYWORD = _{ KEYWORD_TYPE ~ !ID_SUFFIX }
 ID_SUFFIX = _{ ASCII_ALPHANUMERIC | UNDERSCORE }
 id = @{ !KEYWORD ~ ASCII_ALPHA ~ ID_SUFFIX* }
 
-BOOL_CTE     = @{ TRUE | FALSE }
+bool_cte     = @{ TRUE | FALSE }
 int_cte      = @{ MINUS? ~ ASCII_DIGIT+ }
-FLOAT_CTE    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
-STRING_VALUE = { (!PEEK ~ ANY)* }
-STRING_CTE   = _{ PUSH(STR_MARK) ~ STRING_VALUE ~ POP }
-ATOM_CTE     = _{ BOOL_CTE | FLOAT_CTE | int_cte | STRING_CTE }
+float_cte    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
+string_value = { (!PEEK ~ ANY)* }
+STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
+ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
 ARR_CTE      = { L_SQUARE ~ exprs? ~ R_SQUARE }
 CTE          = _{ ARR_CTE | ATOM_CTE }
 ARR_INDEX    = { L_SQUARE ~ expr ~ R_SQUARE }
@@ -131,11 +131,11 @@ operand       = { not? ~ operand_value }
 operand_value = { L_PAREN ~ expr ~ R_PAREN | VAR_VAL }
 exprs         = { expr ~ (COMMA ~ expr)* }
 
-ATOMIC_TYPES   = _{ BOOL | FLOAT | INT | STRING }
-ARR_TYPES      = { L_SQUARE ~ (ATOMIC_TYPES | ARR_TYPES) ~ R_SQUARE }
-SIMPLE_TYPES   = _{ ARR_TYPES | ATOMIC_TYPES }
-COMPOSED_TYPES = _{ SIMPLE_TYPES | DATAFRAME }
-TYPES          = _{ SIMPLE_TYPES | void}
+atomic_types   = { bool | float | int | string }
+ARR_TYPES      = { L_SQUARE ~ atomic_types ~ R_SQUARE }
+MAT_TYPES      = { L_SQUARE ~ ARR_TYPES ~ R_SQUARE }
+COMPOSED_TYPES = _{ atomic_types | DATAFRAME | ARR_TYPES | MAT_TYPES  }
+types          = { atomic_types | void}
 
 READ = { INPUT ~ L_PAREN ~ R_PAREN }
 
@@ -144,9 +144,9 @@ assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
-FUNC_ARG      = { id ~ COLON ~ SIMPLE_TYPES }
-FUNC_ARGS     = { FUNC_ARG ~ (COMMA ~ FUNC_ARG)* }
-FUNC_HEADER   = _{ FUNC ~ id ~ L_PAREN ~ FUNC_ARGS? ~ R_PAREN ~ COLON ~ TYPES }
+func_arg      = { id ~ COLON ~ atomic_types }
+func_args     = { func_arg ~ (COMMA ~ func_arg)* }
+FUNC_HEADER   = _{ FUNC ~ id ~ L_PAREN ~ func_args? ~ R_PAREN ~ COLON ~ types }
 function      = { FUNC_HEADER ~ block }
 MAIN_FUNCTION = _{ FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ void ~ block }
 FUNC_CALL     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }
