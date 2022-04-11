@@ -10,7 +10,7 @@ use super::variable::{build_variable, Variable};
 
 pub type VariablesTable = HashMap<String, Variable>;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Function {
     pub name: String,
     return_type: Types,
@@ -42,6 +42,22 @@ impl Function {
             },
         }
     }
+
+    fn insert_variable_from_nodes(
+        &mut self,
+        nodes: Vec<AstNode>,
+        global_fn: &mut Function,
+    ) -> Results<Self> {
+        let errors: Vec<RaoulError> = nodes
+            .into_iter()
+            .filter_map(|node| self.insert_variable_from_node(node, global_fn).err())
+            .collect();
+        if errors.is_empty() {
+            Ok(self.to_owned())
+        } else {
+            Err(errors)
+        }
+    }
 }
 
 impl TryFrom<(AstNode<'_>, &mut Function)> for Function {
@@ -58,27 +74,12 @@ impl TryFrom<(AstNode<'_>, &mut Function)> for Function {
                 let mut function = Function::new(name, return_type);
                 let args_iter = arguments.clone().into_iter();
                 let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
-                let errors: Vec<RaoulError> = args_iter
-                    .chain(body_iter)
-                    .filter_map(|node| function.insert_variable_from_node(node, global_fn).err())
-                    .collect();
-                if errors.is_empty() {
-                    Ok(function)
-                } else {
-                    Err(errors)
-                }
+                function.insert_variable_from_nodes(args_iter.chain(body_iter).collect(), global_fn)
             }
             AstNode::Main { body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::VOID);
                 let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
-                let errors: Vec<RaoulError> = body_iter
-                    .filter_map(|node| function.insert_variable_from_node(node, global_fn).err())
-                    .collect();
-                if errors.is_empty() {
-                    Ok(function)
-                } else {
-                    Err(errors)
-                }
+                function.insert_variable_from_nodes(body_iter.collect(), global_fn)
             }
             _ => unreachable!(),
         }
