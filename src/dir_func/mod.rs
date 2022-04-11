@@ -14,11 +14,13 @@ mod variable_value;
 #[derive(PartialEq, Debug)]
 pub struct DirFunc {
     functions: HashMap<String, Function>,
+    global_fn: Function,
 }
 
 impl DirFunc {
     pub fn new() -> Self {
         Self {
+            global_fn: Function::new("global".to_string(), crate::enums::Types::VOID),
             functions: HashMap::new(),
         }
     }
@@ -28,7 +30,7 @@ impl DirFunc {
     }
 
     fn insert_function_from_node(&mut self, node: &AstNode) -> Results<()> {
-        let function = Function::try_from(node.to_owned())?;
+        let function = Function::try_from((node.to_owned(), &mut self.global_fn))?;
         Ok(self.insert_function(function))
     }
 }

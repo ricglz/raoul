@@ -16,28 +16,34 @@ pub struct Variable {
     pub value: Option<VariableValue>,
 }
 
-pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<Variable> {
+pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<(Variable, bool)> {
     match v {
         AstNode::Assignment {
             name,
             value: node_value,
-            ..
+            global,
         } => {
             let value = build_variable_value(*node_value, variables)?;
-            Ok(Variable {
-                data_type: Types::from(value.clone()),
-                name,
-                value: Some(value),
-            })
+            Ok((
+                Variable {
+                    data_type: Types::from(value.clone()),
+                    name,
+                    value: Some(value),
+                },
+                global,
+            ))
         }
         AstNode::Argument {
             arg_type: data_type,
             name,
-        } => Ok(Variable {
-            data_type,
-            name,
-            value: None,
-        }),
+        } => Ok((
+            Variable {
+                data_type,
+                name,
+                value: None,
+            },
+            false,
+        )),
         _ => Err(RaoulError::Invalid),
     }
 }

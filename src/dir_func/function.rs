@@ -30,9 +30,12 @@ impl Function {
         self.variables.insert(variable.name.clone(), variable);
     }
 
-    fn insert_variable_from_node(&mut self, node: AstNode) -> Result<()> {
+    fn insert_variable_from_node(&mut self, node: AstNode, global_fn: &mut Function) -> Result<()> {
         match build_variable(node, &self.variables) {
-            Ok(variable) => Ok(self.insert_variable(variable)),
+            Ok((variable, global)) => Ok(match global {
+                true => global_fn.insert_variable(variable),
+                false => self.insert_variable(variable),
+            }),
             Err(error) => match error.is_invalid() {
                 true => Ok(()),
                 false => Err(error),
@@ -41,9 +44,10 @@ impl Function {
     }
 }
 
-impl TryFrom<AstNode<'_>> for Function {
+impl TryFrom<(AstNode<'_>, &mut Function)> for Function {
     type Error = Vec<RaoulError>;
-    fn try_from(v: AstNode) -> Results<Function> {
+    fn try_from(tuple: (AstNode, &mut Function)) -> Results<Function> {
+        let (v, global_fn) = tuple;
         match v {
             AstNode::Function {
                 name,
@@ -56,7 +60,7 @@ impl TryFrom<AstNode<'_>> for Function {
                 let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
                 let errors: Vec<RaoulError> = args_iter
                     .chain(body_iter)
-                    .filter_map(|node| function.insert_variable_from_node(node).err())
+                    .filter_map(|node| function.insert_variable_from_node(node, global_fn).err())
                     .collect();
                 if errors.is_empty() {
                     Ok(function)
@@ -68,7 +72,7 @@ impl TryFrom<AstNode<'_>> for Function {
                 let mut function = Function::new("main".to_string(), Types::VOID);
                 let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
                 let errors: Vec<RaoulError> = body_iter
-                    .filter_map(|node| function.insert_variable_from_node(node).err())
+                    .filter_map(|node| function.insert_variable_from_node(node, global_fn).err())
                     .collect();
                 if errors.is_empty() {
                     Ok(function)
