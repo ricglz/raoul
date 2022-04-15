@@ -1,13 +1,8 @@
 mod ast_kind;
 
-use std::fmt;
-
-use pest::Span;
-
-use crate::enums::{Operations, Types};
-use crate::parser::Statements;
-
 use self::ast_kind::AstNodeKind;
+use pest::Span;
+use std::fmt;
 
 #[derive(PartialEq, Clone)]
 pub struct AstNode<'a> {

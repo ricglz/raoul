@@ -1,8 +1,6 @@
-use std::fmt;
-
-use crate::enums::{Operations, Types};
-
 use super::AstNode;
+use crate::enums::{Operations, Types};
+use std::fmt;
 
 #[derive(PartialEq, Clone)]
 pub enum AstNodeKind<'a> {

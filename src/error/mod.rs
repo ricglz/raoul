@@ -1,27 +1,31 @@
+mod error_kind;
+
 use core::fmt;
 
+use pest::error::{Error, ErrorVariant};
+use pest::Span;
+
+use self::error_kind::RaoulErrorKind;
+
 #[derive(PartialEq, Eq, Clone)]
-pub enum RaoulError {
-    Invalid,
-    UndeclaredVar { name: String },
-    UnitializedVar { name: String },
+pub struct RaoulError<'a> {
+    kind: RaoulErrorKind,
+    span: Span<'a>,
 }
 
-impl RaoulError {
-    pub fn is_invalid(&self) -> bool {
-        return self.to_owned() == RaoulError::Invalid;
-    }
-}
-
-pub type Result<T> = std::result::Result<T, RaoulError>;
-pub type Results<T> = std::result::Result<T, Vec<RaoulError>>;
-
-impl fmt::Debug for RaoulError {
+impl fmt::Debug for RaoulError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self {
-            RaoulError::Invalid => unreachable!(),
-            RaoulError::UndeclaredVar { name } => write!(f, "Variable \"{}\" is undeclared", name),
-            RaoulError::UnitializedVar { name } => write!(f, "Variable \"{}\" is undeclared", name),
-        }
+        let message = format!("{:?}", self.kind);
+        let error = Error::new_from_span(ErrorVariant::CustomError { message }, self.span);
+        write!(f, "{}", error)
     }
 }
+
+impl RaoulError<'_> {
+    pub fn is_invalid(&self) -> bool {
+        return self.kind.to_owned() == RaoulErrorKind::Invalid;
+    }
+}
+
+pub type Result<'a, T> = std::result::Result<T, RaoulError<'a>>;
+pub type Results<'a, T> = std::result::Result<T, Vec<RaoulError<'a>>>;
