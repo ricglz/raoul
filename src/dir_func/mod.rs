@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    ast::ast_kind::AstNodeKind,
     ast::AstNode,
     error::{RaoulError, Results},
 };
@@ -29,27 +30,28 @@ impl DirFunc {
         self.functions.insert(function.name.clone(), function);
     }
 
-    fn insert_function_from_node(&mut self, node: &AstNode) -> Results<()> {
-        let function = Function::try_from((node.to_owned(), &mut self.global_fn))?;
+    fn insert_function_from_node<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
+        let function = Function::try_create((node, &mut self.global_fn))?;
         Ok(self.insert_function(function))
     }
-}
 
-pub fn build_dir_func(dir_func: &mut DirFunc, node: AstNode) -> Results<()> {
-    match node {
-        AstNode::Main { ref functions, .. } => {
-            let errors: Vec<RaoulError> = functions
-                .iter()
-                .chain(Some(&node))
-                .filter_map(|node| dir_func.insert_function_from_node(node).err())
-                .flatten()
-                .collect();
-            if errors.is_empty() {
-                Ok(())
-            } else {
-                Err(errors)
+    pub fn build_dir_func<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
+        let clone = node.clone();
+        match node.kind {
+            AstNodeKind::Main { functions, .. } => {
+                let errors: Vec<RaoulError> = functions
+                    .into_iter()
+                    .chain(Some(clone))
+                    .filter_map(|node| self.insert_function_from_node(node).err())
+                    .flatten()
+                    .collect();
+                if errors.is_empty() {
+                    Ok(())
+                } else {
+                    Err(errors)
+                }
             }
+            _ => unreachable!(),
         }
-        _ => unreachable!(),
     }
 }

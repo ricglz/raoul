@@ -1,7 +1,7 @@
-use pest::iterators::Pair;
 use pest_consume::match_nodes;
 use pest_consume::Parser;
 
+use crate::ast::ast_kind::AstNodeKind;
 use crate::ast::AstNode;
 use crate::enums::{Operations, Types};
 
@@ -12,8 +12,6 @@ struct LanguageParser;
 use pest_consume::Error;
 type Result<T> = std::result::Result<T, Error<Rule>>;
 type Node<'i> = pest_consume::Node<'i, Rule, bool>;
-pub type Statement<'a> = (AstNode<'a>, Pair<'a, Rule>);
-pub type Statements<'a> = Vec<Statement<'a>>;
 
 // This is the other half of the parser, using pest_consume.
 #[pest_consume::parser]
@@ -76,7 +74,11 @@ impl LanguageParser {
             .parse::<i64>()
             .map_err(|e| input.error(e))
             .unwrap();
-        Ok(AstNode::Integer(value))
+        let kind = AstNodeKind::Integer(value);
+        Ok(AstNode {
+            kind,
+            span: input.as_span(),
+        })
     }
 
     fn float_cte(input: Node) -> Result<AstNode> {
@@ -85,11 +87,17 @@ impl LanguageParser {
             .parse::<f64>()
             .map_err(|e| input.error(e))
             .unwrap();
-        Ok(AstNode::Float(value))
+        Ok(AstNode {
+            kind: AstNodeKind::Float(value),
+            span: input.as_span(),
+        })
     }
 
     fn string_value(input: Node) -> Result<AstNode> {
-        Ok(AstNode::String(input.as_str().to_owned()))
+        Ok(AstNode {
+            kind: AstNodeKind::String(input.as_str().to_owned()),
+            span: input.as_span(),
+        })
     }
 
     fn bool_cte(input: Node) -> Result<AstNode> {
@@ -98,12 +106,18 @@ impl LanguageParser {
             .parse::<bool>()
             .map_err(|e| input.error(e))
             .unwrap();
-        Ok(AstNode::Bool(value))
+        Ok(AstNode {
+            kind: AstNodeKind::Bool(value),
+            span: input.as_span(),
+        })
     }
 
     // ID
     fn id(input: Node) -> Result<AstNode> {
-        Ok(AstNode::Id(input.as_str().to_owned()))
+        Ok(AstNode {
+            kind: AstNodeKind::Id(input.as_str().to_owned()),
+            span: input.as_span(),
+        })
     }
 
     // Expressions
@@ -144,9 +158,13 @@ impl LanguageParser {
     }
 
     fn operand(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [operand_value(value)] => value,
-            [not(operation), operand_value(operand)] => AstNode::UnaryOperation { operation: operation, operand: Box::new(operand) }
+            [not(operation), operand_value(operand)] => {
+                let kind = AstNodeKind::UnaryOperation { operation: operation, operand: Box::new(operand) };
+                AstNode { kind, span }
+            }
         ))
     }
 
@@ -173,40 +191,51 @@ impl LanguageParser {
 
     // Inline statements
     fn assignment(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [global(_), id(id), expr(value)] => AstNode::Assignment { global: true, name: String::from(id), value: Box::new(value) },
-            [id(id), expr(value)] => AstNode::Assignment { global: false, name: String::from(id), value: Box::new(value) },
+            [global(_), id(id), expr(value)] => {
+                let kind = AstNodeKind::Assignment { global: true, name: String::from(id), value: Box::new(value) };
+                AstNode { kind, span }
+            },
+            [id(id), expr(value)] => {
+                let kind = AstNodeKind::Assignment { global: false, name: String::from(id), value: Box::new(value) };
+                AstNode { kind, span }
+            },
         ))
     }
 
     fn write(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [exprs(exprs)] => AstNode::Write { exprs: exprs },
+            [exprs(exprs)] => {
+                AstNode { kind: AstNodeKind::Write { exprs: exprs }, span }
+            },
         ))
     }
 
-    fn statement<'a>(input: Node<'a>) -> Result<Statement<'a>> {
+    fn statement(input: Node) -> Result<AstNode> {
         // TODO: Still misses some conditions
         if *input.user_data() {
             println!("statement");
         }
-        let pair = input.as_pair().clone();
         Ok(match_nodes!(input.into_children();
-            [assignment(node)] => (node, pair),
-            [write(node)] => (node, pair),
+            [assignment(node)] => node,
+            [write(node)] => node,
         ))
     }
 
-    fn block<'a>(input: Node<'a>) -> Result<Statements<'a>> {
+    fn block<'a>(input: Node<'a>) -> Result<Vec<AstNode<'a>>> {
         Ok(match_nodes!(input.into_children();
             [statement(statements)..] => statements.collect(),
         ))
     }
 
     fn func_arg(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [id(id), atomic_types(arg_type)] => {
-                AstNode::Argument { arg_type, name: String::from(id) }
+                let kind = AstNodeKind::Argument { arg_type, name: String::from(id) };
+                AstNode { kind, span }
             },
         ))
     }
@@ -223,19 +252,26 @@ impl LanguageParser {
         if *input.user_data() {
             println!("function");
         }
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [id(id), func_args(arguments), types(return_type), block(body)] => {
-                AstNode::Function {arguments, name: String::from(id), body, return_type}
+                let kind = AstNodeKind::Function {arguments, name: String::from(id), body, return_type};
+                AstNode { kind, span }
             },
             [id(id), types(return_type), block(body)] => {
-                AstNode::Function {arguments: Vec::new(), name: String::from(id), body, return_type}
+                let kind = AstNodeKind::Function {arguments: Vec::new(), name: String::from(id), body, return_type};
+                AstNode { kind, span }
             },
         ))
     }
 
     fn program(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [function(functions).., _, block(body), _] => AstNode::Main { functions: functions.collect(), body: body },
+            [function(functions).., _, block(body), _] => {
+                let kind = AstNodeKind::Main { functions: functions.collect(), body: body };
+                AstNode { kind, span }
+            },
         ))
     }
 }
