@@ -12,10 +12,10 @@ impl fmt::Debug for RaoulErrorKind {
         match &self {
             RaoulErrorKind::Invalid => unreachable!(),
             RaoulErrorKind::UndeclaredVar { name } => {
-                write!(f, "Variable \"{}\" is undeclared", name)
+                write!(f, "Variable \"{}\" was not declared", name)
             }
             RaoulErrorKind::UnitializedVar { name } => {
-                write!(f, "Variable \"{}\" is undeclared", name)
+                write!(f, "Variable \"{}\" was not initialized", name)
             }
         }
     }
