@@ -1,9 +1,12 @@
-mod error_kind;
+pub mod error_kind;
 
 use core::fmt;
 
 use pest::error::{Error, ErrorVariant};
 use pest::Span;
+
+use crate::ast::AstNode;
+use crate::parser::Rule;
 
 use self::error_kind::RaoulErrorKind;
 
@@ -16,12 +19,20 @@ pub struct RaoulError<'a> {
 impl fmt::Debug for RaoulError<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let message = format!("{:?}", self.kind);
-        let error = Error::new_from_span(ErrorVariant::CustomError { message }, self.span);
+        let error: Error<Rule> =
+            Error::new_from_span(ErrorVariant::CustomError { message }, self.span.clone());
         write!(f, "{}", error)
     }
 }
 
 impl RaoulError<'_> {
+    pub fn new<'a>(node: AstNode<'a>, kind: RaoulErrorKind) -> RaoulError<'a> {
+        RaoulError {
+            kind,
+            span: node.span.clone(),
+        }
+    }
+
     pub fn is_invalid(&self) -> bool {
         return self.kind.to_owned() == RaoulErrorKind::Invalid;
     }

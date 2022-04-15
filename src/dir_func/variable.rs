@@ -1,6 +1,8 @@
 use crate::{
+    ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
+    error::error_kind::RaoulErrorKind,
     error::{RaoulError, Result},
 };
 
@@ -16,9 +18,12 @@ pub struct Variable {
     pub value: Option<VariableValue>,
 }
 
-pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<(Variable, bool)> {
-    match v {
-        AstNode::Assignment {
+pub fn build_variable<'a>(
+    v: AstNode<'a>,
+    variables: &VariablesTable,
+) -> Result<'a, (Variable, bool)> {
+    match v.kind {
+        AstNodeKind::Assignment {
             name,
             value: node_value,
             global,
@@ -33,7 +38,7 @@ pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<(Variabl
                 global,
             ))
         }
-        AstNode::Argument {
+        AstNodeKind::Argument {
             arg_type: data_type,
             name,
         } => Ok((
@@ -44,6 +49,6 @@ pub fn build_variable(v: AstNode, variables: &VariablesTable) -> Result<(Variabl
             },
             false,
         )),
-        _ => Err(RaoulError::Invalid),
+        _ => Err(RaoulError::new(v, RaoulErrorKind::Invalid)),
     }
 }

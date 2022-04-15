@@ -1,4 +1,4 @@
-mod ast_kind;
+pub mod ast_kind;
 
 use self::ast_kind::AstNodeKind;
 use pest::Span;
@@ -6,8 +6,8 @@ use std::fmt;
 
 #[derive(PartialEq, Clone)]
 pub struct AstNode<'a> {
-    kind: AstNodeKind<'a>,
-    span: Span<'a>,
+    pub kind: AstNodeKind<'a>,
+    pub span: Span<'a>,
 }
 
 impl<'a> From<AstNode<'a>> for String {

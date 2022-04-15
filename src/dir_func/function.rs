@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
     error::{RaoulError, Result, Results},
@@ -30,7 +31,11 @@ impl Function {
         self.variables.insert(variable.name.clone(), variable);
     }
 
-    fn insert_variable_from_node(&mut self, node: AstNode, global_fn: &mut Function) -> Result<()> {
+    fn insert_variable_from_node<'a>(
+        &mut self,
+        node: AstNode<'a>,
+        global_fn: &mut Function,
+    ) -> Result<'a, ()> {
         match build_variable(node, &self.variables) {
             Ok((variable, global)) => Ok(match global {
                 true => global_fn.insert_variable(variable),
@@ -43,11 +48,11 @@ impl Function {
         }
     }
 
-    fn insert_variable_from_nodes(
+    fn insert_variable_from_nodes<'a>(
         &mut self,
-        nodes: Vec<AstNode>,
+        nodes: Vec<AstNode<'a>>,
         global_fn: &mut Function,
-    ) -> Results<Self> {
+    ) -> Results<'a, Self> {
         let errors: Vec<RaoulError> = nodes
             .into_iter()
             .filter_map(|node| self.insert_variable_from_node(node, global_fn).err())
@@ -58,14 +63,11 @@ impl Function {
             Err(errors)
         }
     }
-}
 
-impl TryFrom<(AstNode<'_>, &mut Function)> for Function {
-    type Error = Vec<RaoulError>;
-    fn try_from(tuple: (AstNode, &mut Function)) -> Results<Function> {
+    pub fn try_create<'a>(tuple: (AstNode<'a>, &mut Function)) -> Results<'a, Function> {
         let (v, global_fn) = tuple;
-        match v {
-            AstNode::Function {
+        match v.kind {
+            AstNodeKind::Function {
                 name,
                 return_type,
                 body,
@@ -73,12 +75,12 @@ impl TryFrom<(AstNode<'_>, &mut Function)> for Function {
             } => {
                 let mut function = Function::new(name, return_type);
                 let args_iter = arguments.clone().into_iter();
-                let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
+                let body_iter = body.clone().into_iter();
                 function.insert_variable_from_nodes(args_iter.chain(body_iter).collect(), global_fn)
             }
-            AstNode::Main { body, .. } => {
+            AstNodeKind::Main { body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::VOID);
-                let body_iter = body.clone().into_iter().map(|tuple| tuple.0);
+                let body_iter = body.clone().into_iter();
                 function.insert_variable_from_nodes(body_iter.collect(), global_fn)
             }
             _ => unreachable!(),

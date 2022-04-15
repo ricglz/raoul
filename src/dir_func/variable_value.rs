@@ -1,6 +1,8 @@
 use crate::{
+    ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
+    error::error_kind::RaoulErrorKind,
     error::{RaoulError, Result},
 };
 
@@ -25,24 +27,34 @@ impl From<VariableValue> for Types {
     }
 }
 
-pub fn build_variable_value(v: AstNode, variables: &VariablesTable) -> Result<VariableValue> {
-    match v {
-        AstNode::Integer(value) => Ok(VariableValue::Integer(value)),
-        AstNode::Float(value) => Ok(VariableValue::Float(value)),
-        AstNode::String(value) => Ok(VariableValue::String(value.clone())),
-        AstNode::Bool(value) => Ok(VariableValue::Bool(value)),
-        AstNode::Id(name) => {
+pub fn build_variable_value<'a>(
+    v: AstNode<'a>,
+    variables: &VariablesTable,
+) -> Result<'a, VariableValue> {
+    let clone = v.clone();
+    match v.kind {
+        AstNodeKind::Integer(value) => Ok(VariableValue::Integer(value)),
+        AstNodeKind::Float(value) => Ok(VariableValue::Float(value)),
+        AstNodeKind::String(value) => Ok(VariableValue::String(value.clone())),
+        AstNodeKind::Bool(value) => Ok(VariableValue::Bool(value)),
+        AstNodeKind::Id(name) => {
             if let Some(variable) = variables.get(&name) {
                 if let Some(value) = &variable.value {
                     Ok(value.to_owned())
                 } else {
-                    Err(RaoulError::UnitializedVar { name })
+                    Err(RaoulError::new(
+                        clone,
+                        RaoulErrorKind::UnitializedVar { name },
+                    ))
                 }
             } else {
-                Err(RaoulError::UndeclaredVar { name })
+                Err(RaoulError::new(
+                    clone,
+                    RaoulErrorKind::UndeclaredVar { name },
+                ))
             }
         }
-        AstNode::UnaryOperation { .. } => todo!(),
-        _ => Err(RaoulError::Invalid),
+        AstNodeKind::UnaryOperation { .. } => todo!(),
+        _ => Err(RaoulError::new(clone, RaoulErrorKind::Invalid)),
     }
 }
