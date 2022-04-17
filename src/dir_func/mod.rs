@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use crate::{
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
+    enums::Types,
     error::{RaoulError, Results},
 };
 
-use self::function::Function;
+use self::{function::Function, variable::Variable};
 
 mod function;
 mod variable;
@@ -32,6 +33,10 @@ impl DirFunc {
 
     fn insert_function_from_node<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let function = Function::try_create((node, &mut self.global_fn))?;
+        if function.return_type != Types::VOID {
+            self.global_fn
+                .insert_variable(Variable::from(function.clone()))
+        }
         Ok(self.insert_function(function))
     }
 

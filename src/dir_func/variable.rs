@@ -7,7 +7,7 @@ use crate::{
 };
 
 use super::{
-    function::VariablesTable,
+    function::{Function, VariablesTable},
     variable_value::{build_variable_value, VariableValue},
 };
 
@@ -16,6 +16,16 @@ pub struct Variable {
     data_type: Types,
     pub name: String,
     pub value: Option<VariableValue>,
+}
+
+impl From<Function> for Variable {
+    fn from(function: Function) -> Self {
+        Variable {
+            data_type: function.return_type,
+            name: function.name,
+            value: None,
+        }
+    }
 }
 
 pub fn build_variable<'a>(

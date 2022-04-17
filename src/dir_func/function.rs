@@ -14,7 +14,7 @@ pub type VariablesTable = HashMap<String, Variable>;
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
     pub name: String,
-    return_type: Types,
+    pub return_type: Types,
     variables: VariablesTable,
 }
 
@@ -27,7 +27,7 @@ impl Function {
         }
     }
 
-    fn insert_variable(&mut self, variable: Variable) {
+    pub fn insert_variable(&mut self, variable: Variable) {
         self.variables.insert(variable.name.clone(), variable);
     }
 
