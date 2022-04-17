@@ -22,7 +22,6 @@ pub fn parse_file(filename: &str, debug: bool) -> Result<(), Error<Rule>> {
     parse(&program)
 }
 #[deny(dead_code)]
-
 #[cfg(test)]
 mod tests {
     use std::fs::read_dir;
@@ -30,12 +29,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn example_files() {
-        let paths = read_dir("examples").unwrap();
+    fn valid_files() {
+        let paths = read_dir("examples/valid").unwrap();
         for path in paths {
             let file_path = path.expect("File must exist").path();
             let file = file_path.to_str().unwrap();
             assert!(parse_file(file, true).is_ok());
         }
+    }
+
+    #[test]
+    fn invalid_file() {
+        let filename = "examples/invalid/syntax-error.ra";
+        assert!(parse_file(&filename, true).is_err());
     }
 }

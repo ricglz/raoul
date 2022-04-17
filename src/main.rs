@@ -48,3 +48,6 @@ fn main() {
         println!("{:#?}", dir_func);
     }
 }
+
+#[cfg(test)]
+mod tests;

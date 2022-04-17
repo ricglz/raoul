@@ -1,0 +1,7 @@
+fn myFunction(v: integer): void {
+  f = 1
+}
+
+func main(): void {
+  myFunction(1);
+}
