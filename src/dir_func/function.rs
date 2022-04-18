@@ -11,6 +11,10 @@ use super::variable::{build_variable, Variable};
 
 pub type VariablesTable = HashMap<String, Variable>;
 
+pub trait Scope {
+    fn insert_variable(&mut self, variable: Variable);
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
     pub name: String,
@@ -19,7 +23,7 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(name: String, return_type: Types) -> Self {
+    fn new(name: String, return_type: Types) -> Self {
         Self {
             name,
             return_type,
@@ -27,14 +31,10 @@ impl Function {
         }
     }
 
-    pub fn insert_variable(&mut self, variable: Variable) {
-        self.variables.insert(variable.name.clone(), variable);
-    }
-
     fn insert_variable_from_node<'a>(
         &mut self,
         node: AstNode<'a>,
-        global_fn: &mut Function,
+        global_fn: &mut GlobalScope,
     ) -> Result<'a, ()> {
         match build_variable(node, &self.variables) {
             Ok((variable, global)) => Ok(match global {
@@ -51,7 +51,7 @@ impl Function {
     fn insert_variable_from_nodes<'a>(
         &mut self,
         nodes: Vec<AstNode<'a>>,
-        global_fn: &mut Function,
+        global_fn: &mut GlobalScope,
     ) -> Results<'a, Self> {
         let errors: Vec<RaoulError> = nodes
             .into_iter()
@@ -64,8 +64,7 @@ impl Function {
         }
     }
 
-    pub fn try_create<'a>(tuple: (AstNode<'a>, &mut Function)) -> Results<'a, Function> {
-        let (v, global_fn) = tuple;
+    pub fn try_create<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
         match v.kind {
             AstNodeKind::Function {
                 name,
@@ -85,5 +84,30 @@ impl Function {
             }
             _ => unreachable!(),
         }
+    }
+}
+
+impl Scope for Function {
+    fn insert_variable(&mut self, variable: Variable) {
+        self.variables.insert(variable.name.clone(), variable);
+    }
+}
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct GlobalScope {
+    variables: VariablesTable,
+}
+
+impl GlobalScope {
+    pub fn new() -> Self {
+        Self {
+            variables: HashMap::new(),
+        }
+    }
+}
+
+impl Scope for GlobalScope {
+    fn insert_variable(&mut self, variable: Variable) {
+        self.variables.insert(variable.name.clone(), variable);
     }
 }

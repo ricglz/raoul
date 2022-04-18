@@ -2,27 +2,30 @@ use std::{cmp::Ordering, collections::HashMap};
 
 use crate::enums::Types;
 
-type AddressCounter = HashMap<Types, i32>;
+type AddressCounter = HashMap<Types, usize>;
 
 struct AddressManager {
-    base: i32,
+    base: usize,
     counter: AddressCounter,
 }
 
-const THRESHOLD: i32 = 250;
+const THRESHOLD: usize = 250;
+const COUNTER_SIZE: usize = 4;
+pub const TOTAL_SIZE: usize = THRESHOLD * COUNTER_SIZE;
 
 impl AddressManager {
-    pub fn new(base: i32) -> Self {
+    pub fn new(base: usize) -> Self {
         let counter = HashMap::from([
             (Types::INT, 0),
             (Types::FLOAT, 0),
             (Types::STRING, 0),
             (Types::BOOL, 0),
         ]);
+        debug_assert_eq!(counter.len(), COUNTER_SIZE);
         AddressManager { base, counter }
     }
 
-    fn get_type_base(&self, data_type: Types) -> i32 {
+    fn get_type_base(&self, data_type: Types) -> usize {
         match data_type {
             Types::INT => 0,
             Types::FLOAT => THRESHOLD,
@@ -32,7 +35,7 @@ impl AddressManager {
         }
     }
 
-    pub fn get_address(&mut self, data_type: Types) -> Option<i32> {
+    pub fn get_address(&mut self, data_type: Types) -> Option<usize> {
         let type_counter = self
             .counter
             .get_mut(&data_type)

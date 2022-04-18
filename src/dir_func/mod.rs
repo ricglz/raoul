@@ -7,7 +7,10 @@ use crate::{
     error::{RaoulError, Results},
 };
 
-use self::{function::Function, variable::Variable};
+use self::{
+    function::{Function, GlobalScope, Scope},
+    variable::Variable,
+};
 
 mod function;
 mod variable;
@@ -16,13 +19,13 @@ mod variable_value;
 #[derive(PartialEq, Debug)]
 pub struct DirFunc {
     functions: HashMap<String, Function>,
-    global_fn: Function,
+    global_fn: GlobalScope,
 }
 
 impl DirFunc {
     pub fn new() -> Self {
         Self {
-            global_fn: Function::new("global".to_string(), crate::enums::Types::VOID),
+            global_fn: GlobalScope::new(),
             functions: HashMap::new(),
         }
     }
@@ -32,7 +35,7 @@ impl DirFunc {
     }
 
     fn insert_function_from_node<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
-        let function = Function::try_create((node, &mut self.global_fn))?;
+        let function = Function::try_create(node, &mut self.global_fn)?;
         if function.return_type != Types::VOID {
             self.global_fn
                 .insert_variable(Variable::from(function.clone()))
