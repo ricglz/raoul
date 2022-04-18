@@ -14,7 +14,7 @@ use self::{
 
 pub mod function;
 mod variable;
-mod variable_value;
+pub mod variable_value;
 
 #[derive(PartialEq, Debug)]
 pub struct DirFunc {
