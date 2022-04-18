@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
 use crate::{
+    address::{AddressManager, TOTAL_SIZE},
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
     error::{RaoulError, Result, Results},
 };
 
-use super::variable::{build_variable, Variable};
+use super::variable::Variable;
 
 pub type VariablesTable = HashMap<String, Variable>;
 
@@ -19,14 +20,18 @@ pub trait Scope {
 pub struct Function {
     pub name: String,
     pub return_type: Types,
-    variables: VariablesTable,
+    pub local_addresses: AddressManager,
+    temp_addresses: AddressManager,
+    pub variables: VariablesTable,
 }
 
 impl Function {
     fn new(name: String, return_type: Types) -> Self {
         Self {
+            local_addresses: AddressManager::new(TOTAL_SIZE),
             name,
             return_type,
+            temp_addresses: AddressManager::new(TOTAL_SIZE * 2),
             variables: HashMap::new(),
         }
     }
@@ -36,7 +41,7 @@ impl Function {
         node: AstNode<'a>,
         global_fn: &mut GlobalScope,
     ) -> Result<'a, ()> {
-        match build_variable(node, &self.variables) {
+        match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => Ok(match global {
                 true => global_fn.insert_variable(variable),
                 false => self.insert_variable(variable),
@@ -95,12 +100,14 @@ impl Scope for Function {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct GlobalScope {
-    variables: VariablesTable,
+    pub addresses: AddressManager,
+    pub variables: VariablesTable,
 }
 
 impl GlobalScope {
     pub fn new() -> Self {
         Self {
+            addresses: AddressManager::new(0),
             variables: HashMap::new(),
         }
     }

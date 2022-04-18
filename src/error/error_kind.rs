@@ -5,6 +5,8 @@ pub enum RaoulErrorKind {
     Invalid,
     UndeclaredVar { name: String },
     UnitializedVar { name: String },
+    RedeclaredFunction { name: String },
+    MemoryExceded,
 }
 
 impl fmt::Debug for RaoulErrorKind {
@@ -16,6 +18,12 @@ impl fmt::Debug for RaoulErrorKind {
             }
             RaoulErrorKind::UnitializedVar { name } => {
                 write!(f, "Variable \"{}\" was not initialized", name)
+            }
+            RaoulErrorKind::RedeclaredFunction { name } => {
+                write!(f, "Function \"{}\" was already declared before", name)
+            }
+            RaoulErrorKind::MemoryExceded => {
+                write!(f, "Memory was exceded")
             }
         }
     }

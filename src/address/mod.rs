@@ -4,7 +4,8 @@ use crate::enums::Types;
 
 type AddressCounter = HashMap<Types, usize>;
 
-struct AddressManager {
+#[derive(PartialEq, Clone, Debug)]
+pub struct AddressManager {
     base: usize,
     counter: AddressCounter,
 }

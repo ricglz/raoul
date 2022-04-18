@@ -6,59 +6,81 @@ use crate::{
     error::{RaoulError, Result},
 };
 
-use super::{
-    function::{Function, VariablesTable},
-    variable_value::{build_variable_value, VariableValue},
-};
+use super::function::{Function, GlobalScope};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Variable {
-    data_type: Types,
+    pub data_type: Types,
     pub name: String,
-    pub value: Option<VariableValue>,
+    pub address: usize,
 }
 
-impl From<Function> for Variable {
-    fn from(function: Function) -> Self {
-        Variable {
-            data_type: function.return_type,
-            name: function.name,
-            value: None,
+impl Variable {
+    pub fn from_node<'a>(
+        v: AstNode<'a>,
+        current_function: &mut Function,
+        global_fn: &mut GlobalScope,
+    ) -> Result<'a, (Variable, bool)> {
+        let node = v.clone();
+        match v.kind {
+            AstNodeKind::Assignment {
+                name,
+                value: node_value,
+                global,
+            } => {
+                let data_type = Types::from_node(
+                    *node_value,
+                    &current_function.variables,
+                    &global_fn.variables,
+                )?;
+                let address = match global {
+                    true => global_fn.addresses.get_address(data_type),
+                    false => current_function.local_addresses.get_address(data_type),
+                };
+                match address {
+                    Some(address) => Ok((
+                        Variable {
+                            data_type,
+                            name,
+                            address,
+                        },
+                        global,
+                    )),
+                    None => {
+                        let kind = RaoulErrorKind::MemoryExceded;
+                        Err(RaoulError::new(node, kind))
+                    }
+                }
+            }
+            AstNodeKind::Argument {
+                arg_type: data_type,
+                name,
+            } => {
+                let address = current_function.local_addresses.get_address(data_type);
+                match address {
+                    Some(address) => Ok((
+                        Variable {
+                            data_type,
+                            name,
+                            address,
+                        },
+                        false,
+                    )),
+                    None => {
+                        let kind = RaoulErrorKind::MemoryExceded;
+                        Err(RaoulError::new(node, kind))
+                    }
+                }
+            }
+            _ => Err(RaoulError::new(v, RaoulErrorKind::Invalid)),
         }
     }
-}
 
-pub fn build_variable<'a>(
-    v: AstNode<'a>,
-    variables: &VariablesTable,
-) -> Result<'a, (Variable, bool)> {
-    match v.kind {
-        AstNodeKind::Assignment {
-            name,
-            value: node_value,
-            global,
-        } => {
-            let value = build_variable_value(*node_value, variables)?;
-            Ok((
-                Variable {
-                    data_type: Types::from(value.clone()),
-                    name,
-                    value: Some(value),
-                },
-                global,
-            ))
+    pub fn from_function(function: Function, address: usize) -> Self {
+        Variable {
+            address,
+            data_type: function.return_type,
+            name: function.name,
         }
-        AstNodeKind::Argument {
-            arg_type: data_type,
-            name,
-        } => Ok((
-            Variable {
-                data_type,
-                name,
-                value: None,
-            },
-            false,
-        )),
-        _ => Err(RaoulError::new(v, RaoulErrorKind::Invalid)),
     }
 }

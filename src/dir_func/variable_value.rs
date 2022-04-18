@@ -1,12 +1,4 @@
-use crate::{
-    ast::ast_kind::AstNodeKind,
-    ast::AstNode,
-    enums::Types,
-    error::error_kind::RaoulErrorKind,
-    error::{RaoulError, Result},
-};
-
-use super::function::VariablesTable;
+use crate::{ast::ast_kind::AstNodeKind, enums::Types};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum VariableValue {
@@ -27,34 +19,14 @@ impl From<VariableValue> for Types {
     }
 }
 
-pub fn build_variable_value<'a>(
-    v: AstNode<'a>,
-    variables: &VariablesTable,
-) -> Result<'a, VariableValue> {
-    let clone = v.clone();
-    match v.kind {
-        AstNodeKind::Integer(value) => Ok(VariableValue::Integer(value)),
-        AstNodeKind::Float(value) => Ok(VariableValue::Float(value)),
-        AstNodeKind::String(value) => Ok(VariableValue::String(value.clone())),
-        AstNodeKind::Bool(value) => Ok(VariableValue::Bool(value)),
-        AstNodeKind::Id(name) => {
-            if let Some(variable) = variables.get(&name) {
-                if let Some(value) = &variable.value {
-                    Ok(value.to_owned())
-                } else {
-                    Err(RaoulError::new(
-                        clone,
-                        RaoulErrorKind::UnitializedVar { name },
-                    ))
-                }
-            } else {
-                Err(RaoulError::new(
-                    clone,
-                    RaoulErrorKind::UndeclaredVar { name },
-                ))
-            }
+impl From<AstNodeKind<'_>> for Option<VariableValue> {
+    fn from(v: AstNodeKind) -> Self {
+        match v {
+            AstNodeKind::Integer(value) => Some(VariableValue::Integer(value)),
+            AstNodeKind::Float(value) => Some(VariableValue::Float(value)),
+            AstNodeKind::String(value) => Some(VariableValue::String(value.clone())),
+            AstNodeKind::Bool(value) => Some(VariableValue::Bool(value)),
+            _ => None,
         }
-        AstNodeKind::UnaryOperation { .. } => todo!(),
-        _ => Err(RaoulError::new(clone, RaoulErrorKind::Invalid)),
     }
 }
