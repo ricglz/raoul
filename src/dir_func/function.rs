@@ -1,42 +1,47 @@
 use std::collections::HashMap;
 
 use crate::{
+    address::{AddressManager, TOTAL_SIZE},
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
     error::{RaoulError, Result, Results},
 };
 
-use super::variable::{build_variable, Variable};
+use super::variable::Variable;
 
 pub type VariablesTable = HashMap<String, Variable>;
+
+pub trait Scope {
+    fn insert_variable(&mut self, variable: Variable);
+}
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
     pub name: String,
     pub return_type: Types,
-    variables: VariablesTable,
+    pub local_addresses: AddressManager,
+    temp_addresses: AddressManager,
+    pub variables: VariablesTable,
 }
 
 impl Function {
-    pub fn new(name: String, return_type: Types) -> Self {
+    fn new(name: String, return_type: Types) -> Self {
         Self {
+            local_addresses: AddressManager::new(TOTAL_SIZE),
             name,
             return_type,
+            temp_addresses: AddressManager::new(TOTAL_SIZE * 2),
             variables: HashMap::new(),
         }
-    }
-
-    pub fn insert_variable(&mut self, variable: Variable) {
-        self.variables.insert(variable.name.clone(), variable);
     }
 
     fn insert_variable_from_node<'a>(
         &mut self,
         node: AstNode<'a>,
-        global_fn: &mut Function,
+        global_fn: &mut GlobalScope,
     ) -> Result<'a, ()> {
-        match build_variable(node, &self.variables) {
+        match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => Ok(match global {
                 true => global_fn.insert_variable(variable),
                 false => self.insert_variable(variable),
@@ -51,7 +56,7 @@ impl Function {
     fn insert_variable_from_nodes<'a>(
         &mut self,
         nodes: Vec<AstNode<'a>>,
-        global_fn: &mut Function,
+        global_fn: &mut GlobalScope,
     ) -> Results<'a, Self> {
         let errors: Vec<RaoulError> = nodes
             .into_iter()
@@ -64,8 +69,7 @@ impl Function {
         }
     }
 
-    pub fn try_create<'a>(tuple: (AstNode<'a>, &mut Function)) -> Results<'a, Function> {
-        let (v, global_fn) = tuple;
+    pub fn try_create<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
         match v.kind {
             AstNodeKind::Function {
                 name,
@@ -85,5 +89,32 @@ impl Function {
             }
             _ => unreachable!(),
         }
+    }
+}
+
+impl Scope for Function {
+    fn insert_variable(&mut self, variable: Variable) {
+        self.variables.insert(variable.name.clone(), variable);
+    }
+}
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct GlobalScope {
+    pub addresses: AddressManager,
+    pub variables: VariablesTable,
+}
+
+impl GlobalScope {
+    pub fn new() -> Self {
+        Self {
+            addresses: AddressManager::new(0),
+            variables: HashMap::new(),
+        }
+    }
+}
+
+impl Scope for GlobalScope {
+    fn insert_variable(&mut self, variable: Variable) {
+        self.variables.insert(variable.name.clone(), variable);
     }
 }

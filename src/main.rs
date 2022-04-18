@@ -1,6 +1,7 @@
 mod args;
 
 // ANCHOR: Actual parser
+mod address;
 mod ast;
 mod dir_func;
 mod enums;
