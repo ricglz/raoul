@@ -36,10 +36,10 @@ impl AddressManager {
         AddressManager { base, counter }
     }
 
-    pub fn get_address(&mut self, data_type: Types) -> Option<usize> {
+    pub fn get_address(&mut self, data_type: &Types) -> Option<usize> {
         let type_counter = self
             .counter
-            .get_mut(&data_type)
+            .get_mut(data_type)
             .expect(format!("Get address received {:?}", data_type).as_str());
         let type_counter_clone = type_counter.clone();
         if type_counter.to_owned().cmp(&THRESHOLD) == Ordering::Equal {

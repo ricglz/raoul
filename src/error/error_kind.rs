@@ -1,11 +1,14 @@
 use core::fmt;
 
+use crate::enums::Types;
+
 #[derive(PartialEq, Eq, Clone)]
 pub enum RaoulErrorKind {
     Invalid,
     UndeclaredVar { name: String },
     RedeclaredFunction { name: String },
     RedefinedType { name: String },
+    InvalidCast { from: Types, to: Types },
     MemoryExceded,
 }
 
@@ -25,6 +28,9 @@ impl fmt::Debug for RaoulErrorKind {
                     "Type from variable \"{}\" was already defined. Don't change it.",
                     name
                 )
+            }
+            RaoulErrorKind::InvalidCast { from, to } => {
+                write!(f, "Cannot cast from {:?} to {:?}", from, to)
             }
             RaoulErrorKind::MemoryExceded => {
                 write!(f, "Memory was exceded")

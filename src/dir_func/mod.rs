@@ -18,8 +18,8 @@ pub mod variable_value;
 
 #[derive(PartialEq, Debug)]
 pub struct DirFunc {
-    functions: HashMap<String, Function>,
-    global_fn: GlobalScope,
+    pub functions: HashMap<String, Function>,
+    pub global_fn: GlobalScope,
 }
 
 impl DirFunc {
@@ -48,7 +48,7 @@ impl DirFunc {
         let node_clone = node.clone();
         let function = Function::try_create(node, &mut self.global_fn)?;
         if function.return_type != Types::VOID {
-            let address = self.global_fn.addresses.get_address(function.return_type);
+            let address = self.global_fn.addresses.get_address(&function.return_type);
             match address {
                 Some(address) => {
                     let result = self

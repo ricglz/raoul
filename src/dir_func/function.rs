@@ -22,7 +22,7 @@ pub struct Function {
     pub name: String,
     pub return_type: Types,
     pub local_addresses: AddressManager,
-    temp_addresses: AddressManager,
+    pub temp_addresses: AddressManager,
     pub variables: VariablesTable,
 }
 
