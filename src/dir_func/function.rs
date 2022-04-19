@@ -5,15 +5,16 @@ use crate::{
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
-    error::{RaoulError, Result, Results},
+    error::{error_kind::RaoulErrorKind, RaoulError, Result, Results},
 };
 
 use super::variable::Variable;
 
 pub type VariablesTable = HashMap<String, Variable>;
+type InsertResult = std::result::Result<(), RaoulErrorKind>;
 
 pub trait Scope {
-    fn insert_variable(&mut self, variable: Variable);
+    fn insert_variable(&mut self, variable: Variable) -> InsertResult;
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -41,11 +42,18 @@ impl Function {
         node: AstNode<'a>,
         global_fn: &mut GlobalScope,
     ) -> Result<'a, ()> {
+        let clone = node.clone();
         match Variable::from_node(node, self, global_fn) {
-            Ok((variable, global)) => Ok(match global {
-                true => global_fn.insert_variable(variable),
-                false => self.insert_variable(variable),
-            }),
+            Ok((variable, global)) => {
+                let result = match global {
+                    true => global_fn.insert_variable(variable),
+                    false => self.insert_variable(variable),
+                };
+                match result {
+                    Ok(_) => Ok(()),
+                    Err(kind) => Err(RaoulError::new(clone, kind)),
+                }
+            }
             Err(error) => match error.is_invalid() {
                 true => Ok(()),
                 false => Err(error),
@@ -93,8 +101,18 @@ impl Function {
 }
 
 impl Scope for Function {
-    fn insert_variable(&mut self, variable: Variable) {
-        self.variables.insert(variable.name.clone(), variable);
+    fn insert_variable(&mut self, variable: Variable) -> InsertResult {
+        let name = variable.name.clone();
+        match self.variables.get(&name) {
+            None => {
+                self.variables.insert(variable.name.clone(), variable);
+                Ok(())
+            }
+            Some(stored_var) => match stored_var.data_type == variable.data_type {
+                true => Ok(()),
+                false => Err(RaoulErrorKind::RedefinedType { name }),
+            },
+        }
     }
 }
 
@@ -114,7 +132,17 @@ impl GlobalScope {
 }
 
 impl Scope for GlobalScope {
-    fn insert_variable(&mut self, variable: Variable) {
-        self.variables.insert(variable.name.clone(), variable);
+    fn insert_variable(&mut self, variable: Variable) -> InsertResult {
+        let name = variable.name.clone();
+        match self.variables.get(&name) {
+            None => {
+                self.variables.insert(variable.name.clone(), variable);
+                Ok(())
+            }
+            Some(stored_var) => match stored_var.data_type == variable.data_type {
+                true => Ok(()),
+                false => Err(RaoulErrorKind::RedefinedType { name }),
+            },
+        }
     }
 }

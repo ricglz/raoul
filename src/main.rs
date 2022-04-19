@@ -7,6 +7,8 @@ mod dir_func;
 mod enums;
 mod error;
 mod parser;
+mod quadruple;
+
 use dir_func::DirFunc;
 use parser::parse;
 

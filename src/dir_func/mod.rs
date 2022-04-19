@@ -50,9 +50,14 @@ impl DirFunc {
         if function.return_type != Types::VOID {
             let address = self.global_fn.addresses.get_address(function.return_type);
             match address {
-                Some(address) => self
-                    .global_fn
-                    .insert_variable(Variable::from_function(function.clone(), address)),
+                Some(address) => {
+                    let result = self
+                        .global_fn
+                        .insert_variable(Variable::from_function(function.clone(), address));
+                    if let Err(kind) = result {
+                        return Err(vec![RaoulError::new(node_clone, kind)]);
+                    }
+                }
                 None => {
                     let kind = RaoulErrorKind::MemoryExceded;
                     return Err(vec![RaoulError::new(node_clone, kind)]);

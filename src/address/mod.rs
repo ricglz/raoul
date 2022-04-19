@@ -14,7 +14,7 @@ const THRESHOLD: usize = 250;
 const COUNTER_SIZE: usize = 4;
 pub const TOTAL_SIZE: usize = THRESHOLD * COUNTER_SIZE;
 
-fn get_type_base(data_type: Types) -> usize {
+fn get_type_base(data_type: &Types) -> usize {
     match data_type {
         Types::INT => 0,
         Types::FLOAT => THRESHOLD,
@@ -46,7 +46,7 @@ impl AddressManager {
             return None;
         }
         *type_counter = *type_counter + 1;
-        let type_base = get_type_base(data_type);
+        let type_base = get_type_base(&data_type);
         Some(self.base + type_counter_clone + type_base)
     }
 }
@@ -73,10 +73,10 @@ impl ConstantMemory {
         }
     }
 
-    fn get_address(&mut self, data_type: Types, value: VariableValue) -> Option<usize> {
+    fn get_address(&mut self, data_type: &Types, value: VariableValue) -> Option<usize> {
         let type_memory = self
             .memory
-            .get_mut(&data_type)
+            .get_mut(data_type)
             .expect(format!("Get address received {:?}", data_type).as_str());
         let type_base = get_type_base(data_type);
         match type_memory.into_iter().position(|x| x.to_owned() == value) {
@@ -92,8 +92,10 @@ impl ConstantMemory {
         }
     }
 
-    fn add(&mut self, data_type: Types, value: VariableValue) -> Option<usize> {
-        self.get_address(data_type, value)
+    pub fn add(&mut self, value: VariableValue) -> Option<(usize, Types)> {
+        let data_type = Types::from(&value);
+        let address = self.get_address(&data_type, value)?;
+        Some((address, data_type))
     }
 
     fn get(&self, address: usize) -> Option<VariableValue> {
