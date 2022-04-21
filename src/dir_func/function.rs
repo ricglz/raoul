@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    address::{AddressManager, TOTAL_SIZE},
+    address::{AddressManager, TempAddressManager, TOTAL_SIZE},
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
@@ -22,7 +22,7 @@ pub struct Function {
     pub name: String,
     pub return_type: Types,
     pub local_addresses: AddressManager,
-    pub temp_addresses: AddressManager,
+    pub temp_addresses: TempAddressManager,
     pub variables: VariablesTable,
 }
 
@@ -32,7 +32,7 @@ impl Function {
             local_addresses: AddressManager::new(TOTAL_SIZE),
             name,
             return_type,
-            temp_addresses: AddressManager::new(TOTAL_SIZE * 2),
+            temp_addresses: TempAddressManager::new(),
             variables: HashMap::new(),
         }
     }

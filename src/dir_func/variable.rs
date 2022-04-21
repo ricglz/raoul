@@ -1,4 +1,5 @@
 use crate::{
+    address::GenericAddressManager,
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,

@@ -1,5 +1,6 @@
 use crate::{
     address::ConstantMemory,
+    address::GenericAddressManager,
     ast::{ast_kind::AstNodeKind, AstNode},
     dir_func::{function::Function, variable_value::VariableValue, DirFunc},
     enums::{Operator, Types},
