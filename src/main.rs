@@ -1,5 +1,15 @@
 mod args;
+
+// ANCHOR: Actual parser
+mod ast;
+mod dir_func;
 mod enums;
+mod error;
+mod parser;
+use dir_func::DirFunc;
+use parser::parse;
+
+// ANCHOR: Testing the examples
 mod test_parser;
 #[macro_use]
 extern crate pest_derive;
@@ -7,7 +17,6 @@ extern crate pest_derive;
 use std::process::exit;
 
 use args::parse_args;
-use test_parser::parse_file;
 
 fn main() {
     let matches = parse_args();
@@ -16,11 +25,29 @@ fn main() {
     if debug {
         println!("Starting parsing");
     }
-    if let Err(error) = parse_file(filename, debug) {
+    let file = std::fs::read_to_string(filename).expect(filename);
+    let parsing_response = parse(&file, debug);
+    if let Err(error) = parsing_response {
         println!("Parsing error {}", error.to_string());
         exit(1);
     }
+    let ast = parsing_response.unwrap();
     if debug {
         println!("Parsing ended sucessfully");
+        println!("AST:\n{:?}", ast);
+    }
+    let mut dir_func = DirFunc::new();
+    if let Err(errors) = dir_func.build_dir_func(ast) {
+        for error in errors {
+            println!("{:?}", error);
+        }
+        exit(1);
+    }
+    if debug {
+        println!("Dir func created sucessfully");
+        println!("{:#?}", dir_func);
     }
 }
+
+#[cfg(test)]
+mod tests;
