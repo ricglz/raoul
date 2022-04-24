@@ -2,7 +2,11 @@ use crate::{
     address::ConstantMemory,
     address::GenericAddressManager,
     ast::{ast_kind::AstNodeKind, AstNode},
-    dir_func::{function::Function, variable_value::VariableValue, DirFunc},
+    dir_func::{
+        function::{Function, VariablesTable},
+        variable_value::VariableValue,
+        DirFunc,
+    },
     enums::{Operator, Types},
     error::{error_kind::RaoulErrorKind, RaoulError, Result, Results},
 };
@@ -19,7 +23,7 @@ pub struct Quadruple {
 pub struct QuadrupleManager<'a> {
     dir_func: &'a mut DirFunc,
     function_name: String,
-    memory: ConstantMemory,
+    pub memory: ConstantMemory,
     pub quad_list: Vec<Quadruple>,
 }
 
@@ -40,10 +44,18 @@ impl QuadrupleManager<'_> {
             .expect(&self.function_name)
     }
 
+    fn function_variables(&self) -> &VariablesTable {
+        &self.function().variables
+    }
+
+    fn global_variables(&self) -> &VariablesTable {
+        &self.dir_func.global_fn.variables
+    }
+
     fn get_variable_address(&self, global: bool, name: &str) -> usize {
         let variables = match global {
-            true => &self.dir_func.global_fn.variables,
-            false => &self.function().variables,
+            true => self.global_variables(),
+            false => self.function_variables(),
         };
         variables.get(name).expect(name).address
     }
@@ -90,6 +102,7 @@ impl QuadrupleManager<'_> {
                             return Err(RaoulError::new(node_clone, kind));
                         }
                     },
+                    _ => unreachable!(),
                 };
                 let result = self.add_temp(&res_type);
                 let res = self.safe_address(result, node_clone)?;
@@ -102,22 +115,72 @@ impl QuadrupleManager<'_> {
                 self.quad_list.push(quad);
                 Ok((res, res_type))
             }
-            _ => unreachable!(),
+            AstNodeKind::Id(name) => {
+                match self
+                    .function_variables()
+                    .get(&name)
+                    .or(self.global_variables().get(&name))
+                {
+                    Some(variable) => Ok((variable.address, variable.data_type)),
+                    None => unreachable!(),
+                }
+            }
+            _ => {
+                println!("{:?}", node_clone);
+                unreachable!()
+            }
         }
     }
 
-    fn parse_function<'a>(&mut self, node: AstNode<'a>) -> Result<'a, ()> {
+    fn parse_function<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         match node.kind {
             AstNodeKind::Assignment {
                 global,
                 ref name,
                 value,
             } => {
-                let (value_addr, _) = self.parse_expr(*value)?;
+                let result = self.parse_expr(*value);
+                if let Err(error) = result {
+                    return Err(vec![error]);
+                }
+                let (value_addr, _) = result.unwrap();
                 let variable_address = self.get_variable_address(global, name);
-                todo!("Add the ASGN operator for this");
+                self.quad_list.push(Quadruple {
+                    operator: Operator::ASSIGNMENT,
+                    op_1: Some(value_addr),
+                    op_2: None,
+                    res: Some(variable_address),
+                });
+                Ok(())
             }
-            AstNodeKind::Write { .. } => todo!("Add the WRITE operator for this"),
+            AstNodeKind::Write { exprs } => {
+                let (addresses, errors): (Vec<_>, Vec<_>) = exprs
+                    .into_iter()
+                    .map(|node| self.parse_expr(node))
+                    .partition(Result::is_ok);
+                let errors: Vec<_> = errors.into_iter().map(Result::unwrap_err).collect();
+                if !errors.is_empty() {
+                    return Err(errors);
+                }
+                addresses
+                    .into_iter()
+                    .map(Result::unwrap)
+                    .for_each(|(address, _)| {
+                        self.quad_list.push(Quadruple {
+                            operator: Operator::PRINT,
+                            op_1: Some(address),
+                            op_2: None,
+                            res: None,
+                        })
+                    });
+                self.quad_list.push(Quadruple {
+                    operator: Operator::PRINTNL,
+                    op_1: None,
+                    op_2: None,
+                    res: None,
+                });
+                Ok(())
+            }
             _ => unreachable!(),
         }
     }
@@ -129,6 +192,7 @@ impl QuadrupleManager<'_> {
                 let errors: Vec<RaoulError> = body
                     .into_iter()
                     .filter_map(|node| self.parse_function(node).err())
+                    .flatten()
                     .collect();
                 if errors.is_empty() {
                     Ok(())

@@ -60,7 +60,8 @@ fn main() {
     }
     if debug {
         println!("Quads created sucessfully");
-        println!("{:#?}", quad_manager);
+        println!("{:#?}", quad_manager.memory);
+        println!("{:#?}", quad_manager.quad_list);
     }
 }
 
