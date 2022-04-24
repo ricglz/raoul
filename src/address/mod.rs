@@ -81,7 +81,7 @@ impl fmt::Debug for AddressManager {
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone)]
 pub struct TempAddressManager {
     address_manager: AddressManager,
     released: HashMap<Types, Vec<usize>>,
@@ -132,6 +132,12 @@ impl GenericAddressManager for TempAddressManager {
         self.type_released_addresses(data_type)
             .pop()
             .or(self.address_manager.get_address(data_type))
+    }
+}
+
+impl fmt::Debug for TempAddressManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "TempAddressManager({:#?})", self.released)
     }
 }
 
