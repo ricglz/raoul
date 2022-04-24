@@ -1,14 +1,14 @@
 func main(): void {
   a = true OR false;
-  b = true AND true;
+  b = 1 AND true;
   c = 1 <= 2;
-  d = 1 < 2;
+  d = "1" < 2;
   e = 2 >= 1;
   f = 2 > 1;
   e = 3 == 3;
   f = 3 != 2;
-  g = 2 + 2;
-  h = 2 - 2;
+  g = "2" + 2.0;
+  h = 2 - 2.0;
   i = 4 * 4;
   j = 4 / 4;
   k = NOT false;
