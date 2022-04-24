@@ -35,6 +35,7 @@ impl Types {
                     ))
                 }
             }
+            AstNodeKind::Read => Ok(Types::STRING),
             _ => unreachable!(),
         }
     }
@@ -46,4 +47,5 @@ pub enum Operator {
     Assignment,
     Print,
     PrintNl,
+    Read,
 }

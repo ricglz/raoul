@@ -35,6 +35,7 @@ pub enum AstNodeKind<'a> {
     Write {
         exprs: Vec<AstNode<'a>>,
     },
+    Read,
 }
 
 impl<'a> From<AstNodeKind<'a>> for String {
@@ -86,6 +87,7 @@ impl fmt::Debug for AstNodeKind<'_> {
                 )
             }
             AstNodeKind::Write { exprs } => write!(f, "Write({:?})", exprs),
+            AstNodeKind::Read => write!(f, "Read"),
         }
     }
 }

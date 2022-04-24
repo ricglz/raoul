@@ -189,15 +189,33 @@ impl LanguageParser {
         ))
     }
 
+    fn read(input: Node) -> Result<AstNode> {
+        Ok(AstNode {
+            kind: AstNodeKind::Read,
+            span: input.as_span().clone(),
+        })
+    }
+
+    fn assignment_exp(input: Node) -> Result<AstNode> {
+        // TODO: Still misses some conditions
+        if *input.user_data() {
+            println!("assignment_exp");
+        }
+        Ok(match_nodes!(input.into_children();
+            [expr(value)] => value,
+            [read(value)] => value,
+        ))
+    }
+
     // Inline statements
     fn assignment(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [global(_), id(id), expr(value)] => {
+            [global(_), id(id), assignment_exp(value)] => {
                 let kind = AstNodeKind::Assignment { global: true, name: String::from(id), value: Box::new(value) };
                 AstNode { kind, span }
             },
-            [id(id), expr(value)] => {
+            [id(id), assignment_exp(value)] => {
                 let kind = AstNodeKind::Assignment { global: false, name: String::from(id), value: Box::new(value) };
                 AstNode { kind, span }
             },

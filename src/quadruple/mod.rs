@@ -125,10 +125,19 @@ impl QuadrupleManager<'_> {
                     None => unreachable!(),
                 }
             }
-            _ => {
-                println!("{:?}", node_clone);
-                unreachable!()
+            AstNodeKind::Read => {
+                let data_type = Types::STRING;
+                let result = self.add_temp(&data_type);
+                let res = self.safe_address(result, node_clone)?;
+                self.quad_list.push(Quadruple {
+                    operator: Operator::Read,
+                    op_1: None,
+                    op_2: None,
+                    res: Some(res),
+                });
+                Ok((res, data_type))
             }
+            kind => unreachable!("{:?}", kind),
         }
     }
 
