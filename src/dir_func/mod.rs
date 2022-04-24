@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    address::GenericAddressManager,
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
@@ -18,8 +19,8 @@ pub mod variable_value;
 
 #[derive(PartialEq, Debug)]
 pub struct DirFunc {
-    functions: HashMap<String, Function>,
-    global_fn: GlobalScope,
+    pub functions: HashMap<String, Function>,
+    pub global_fn: GlobalScope,
 }
 
 impl DirFunc {
@@ -48,11 +49,16 @@ impl DirFunc {
         let node_clone = node.clone();
         let function = Function::try_create(node, &mut self.global_fn)?;
         if function.return_type != Types::VOID {
-            let address = self.global_fn.addresses.get_address(function.return_type);
+            let address = self.global_fn.addresses.get_address(&function.return_type);
             match address {
-                Some(address) => self
-                    .global_fn
-                    .insert_variable(Variable::from_function(function.clone(), address)),
+                Some(address) => {
+                    let result = self
+                        .global_fn
+                        .insert_variable(Variable::from_function(function.clone(), address));
+                    if let Err(kind) = result {
+                        return Err(vec![RaoulError::new(node_clone, kind)]);
+                    }
+                }
                 None => {
                     let kind = RaoulErrorKind::MemoryExceded;
                     return Err(vec![RaoulError::new(node_clone, kind)]);

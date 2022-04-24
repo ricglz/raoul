@@ -1,4 +1,5 @@
 use crate::{
+    address::GenericAddressManager,
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
@@ -34,8 +35,8 @@ impl Variable {
                     &global_fn.variables,
                 )?;
                 let address = match global {
-                    true => global_fn.addresses.get_address(data_type),
-                    false => current_function.local_addresses.get_address(data_type),
+                    true => global_fn.addresses.get_address(&data_type),
+                    false => current_function.local_addresses.get_address(&data_type),
                 };
                 match address {
                     Some(address) => Ok((
@@ -56,7 +57,7 @@ impl Variable {
                 arg_type: data_type,
                 name,
             } => {
-                let address = current_function.local_addresses.get_address(data_type);
+                let address = current_function.local_addresses.get_address(&data_type);
                 match address {
                     Some(address) => Ok((
                         Variable {

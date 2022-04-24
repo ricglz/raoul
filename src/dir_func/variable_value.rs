@@ -8,8 +8,8 @@ pub enum VariableValue {
     Bool(bool),
 }
 
-impl From<VariableValue> for Types {
-    fn from(v: VariableValue) -> Self {
+impl From<&VariableValue> for Types {
+    fn from(v: &VariableValue) -> Self {
         match v {
             VariableValue::Integer(_) => Types::INT,
             VariableValue::Float(_) => Types::FLOAT,
@@ -19,14 +19,14 @@ impl From<VariableValue> for Types {
     }
 }
 
-impl From<AstNodeKind<'_>> for Option<VariableValue> {
+impl From<AstNodeKind<'_>> for VariableValue {
     fn from(v: AstNodeKind) -> Self {
         match v {
-            AstNodeKind::Integer(value) => Some(VariableValue::Integer(value)),
-            AstNodeKind::Float(value) => Some(VariableValue::Float(value)),
-            AstNodeKind::String(value) => Some(VariableValue::String(value.clone())),
-            AstNodeKind::Bool(value) => Some(VariableValue::Bool(value)),
-            _ => None,
+            AstNodeKind::Integer(value) => VariableValue::Integer(value),
+            AstNodeKind::Float(value) => VariableValue::Float(value),
+            AstNodeKind::String(value) => VariableValue::String(value.clone()),
+            AstNodeKind::Bool(value) => VariableValue::Bool(value),
+            _ => unreachable!(),
         }
     }
 }

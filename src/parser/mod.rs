@@ -3,7 +3,7 @@ use pest_consume::Parser;
 
 use crate::ast::ast_kind::AstNodeKind;
 use crate::ast::AstNode;
-use crate::enums::{Operations, Types};
+use crate::enums::{Operator, Types};
 
 #[derive(Parser)]
 #[grammar = "parser/grammar.pest"] // relative to src
@@ -63,8 +63,8 @@ impl LanguageParser {
     }
 
     // Operations
-    fn not(_input: Node) -> Result<Operations> {
-        Ok(Operations::NOT)
+    fn not(_input: Node) -> Result<Operator> {
+        Ok(Operator::NOT)
     }
 
     // Values
@@ -161,8 +161,8 @@ impl LanguageParser {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [operand_value(value)] => value,
-            [not(operation), operand_value(operand)] => {
-                let kind = AstNodeKind::UnaryOperation { operation: operation, operand: Box::new(operand) };
+            [not(operator), operand_value(operand)] => {
+                let kind = AstNodeKind::UnaryOperation { operator, operand: Box::new(operand) };
                 AstNode { kind, span }
             }
         ))

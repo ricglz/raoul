@@ -4,17 +4,11 @@ use crate::{dir_func::variable_value::VariableValue, enums::Types};
 
 type AddressCounter = HashMap<Types, usize>;
 
-#[derive(PartialEq, Clone, Debug)]
-pub struct AddressManager {
-    base: usize,
-    counter: AddressCounter,
-}
-
 const THRESHOLD: usize = 250;
 const COUNTER_SIZE: usize = 4;
 pub const TOTAL_SIZE: usize = THRESHOLD * COUNTER_SIZE;
 
-fn get_type_base(data_type: Types) -> usize {
+fn get_type_base(data_type: &Types) -> usize {
     match data_type {
         Types::INT => 0,
         Types::FLOAT => THRESHOLD,
@@ -22,6 +16,16 @@ fn get_type_base(data_type: Types) -> usize {
         Types::BOOL => THRESHOLD * 3,
         _ => unreachable!(),
     }
+}
+
+pub trait GenericAddressManager {
+    fn get_address(&mut self, data_type: &Types) -> Option<usize>;
+}
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct AddressManager {
+    base: usize,
+    counter: AddressCounter,
 }
 
 impl AddressManager {
@@ -35,19 +39,72 @@ impl AddressManager {
         debug_assert_eq!(counter.len(), COUNTER_SIZE);
         AddressManager { base, counter }
     }
+}
 
-    pub fn get_address(&mut self, data_type: Types) -> Option<usize> {
+impl GenericAddressManager for AddressManager {
+    fn get_address(&mut self, data_type: &Types) -> Option<usize> {
         let type_counter = self
             .counter
-            .get_mut(&data_type)
+            .get_mut(data_type)
             .expect(format!("Get address received {:?}", data_type).as_str());
         let type_counter_clone = type_counter.clone();
         if type_counter.to_owned().cmp(&THRESHOLD) == Ordering::Equal {
             return None;
         }
         *type_counter = *type_counter + 1;
-        let type_base = get_type_base(data_type);
+        let type_base = get_type_base(&data_type);
         Some(self.base + type_counter_clone + type_base)
+    }
+}
+
+#[derive(PartialEq, Clone, Debug)]
+pub struct TempAddressManager {
+    address_manager: AddressManager,
+    released: HashMap<Types, Vec<usize>>,
+}
+
+impl TempAddressManager {
+    pub fn new() -> Self {
+        let released = HashMap::from([
+            (Types::INT, Vec::new()),
+            (Types::FLOAT, Vec::new()),
+            (Types::STRING, Vec::new()),
+            (Types::BOOL, Vec::new()),
+        ]);
+        debug_assert_eq!(released.len(), COUNTER_SIZE);
+        TempAddressManager {
+            address_manager: AddressManager::new(TOTAL_SIZE * 2),
+            released,
+        }
+    }
+
+    fn address_type(&self, address: usize) -> Types {
+        let contextless_address = address - self.address_manager.base;
+        let type_determinant = contextless_address / THRESHOLD;
+        match type_determinant {
+            0 => Types::INT,
+            1 => Types::FLOAT,
+            2 => Types::STRING,
+            3 => Types::BOOL,
+            _ => unreachable!(),
+        }
+    }
+
+    fn type_released_addresses(&mut self, data_type: &Types) -> &mut Vec<usize> {
+        self.released.get_mut(data_type).unwrap()
+    }
+
+    pub fn release_address(&mut self, address: usize) {
+        let data_type = self.address_type(address);
+        self.type_released_addresses(&data_type).push(address);
+    }
+}
+
+impl GenericAddressManager for TempAddressManager {
+    fn get_address(&mut self, data_type: &Types) -> Option<usize> {
+        self.type_released_addresses(data_type)
+            .pop()
+            .or(self.address_manager.get_address(data_type))
     }
 }
 
@@ -73,10 +130,10 @@ impl ConstantMemory {
         }
     }
 
-    fn get_address(&mut self, data_type: Types, value: VariableValue) -> Option<usize> {
+    fn get_address(&mut self, data_type: &Types, value: VariableValue) -> Option<usize> {
         let type_memory = self
             .memory
-            .get_mut(&data_type)
+            .get_mut(data_type)
             .expect(format!("Get address received {:?}", data_type).as_str());
         let type_base = get_type_base(data_type);
         match type_memory.into_iter().position(|x| x.to_owned() == value) {
@@ -92,8 +149,10 @@ impl ConstantMemory {
         }
     }
 
-    fn add(&mut self, data_type: Types, value: VariableValue) -> Option<usize> {
-        self.get_address(data_type, value)
+    pub fn add(&mut self, value: VariableValue) -> Option<(usize, Types)> {
+        let data_type = Types::from(&value);
+        let address = self.get_address(&data_type, value)?;
+        Some((address, data_type))
     }
 
     fn get(&self, address: usize) -> Option<VariableValue> {
