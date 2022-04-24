@@ -143,7 +143,7 @@ impl fmt::Debug for TempAddressManager {
 
 type Memory = HashMap<Types, Vec<VariableValue>>;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone)]
 pub struct ConstantMemory {
     base: usize,
     memory: Memory,
@@ -205,6 +205,12 @@ impl ConstantMemory {
                 .unwrap()
                 .to_owned(),
         )
+    }
+}
+
+impl fmt::Debug for ConstantMemory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ConstantMemory({:?})", self.memory)
     }
 }
 
