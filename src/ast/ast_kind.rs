@@ -18,6 +18,11 @@ pub enum AstNodeKind<'a> {
         operator: Operator,
         operand: Box<AstNode<'a>>,
     },
+    BinaryOperation {
+        operator: Operator,
+        lhs: Box<AstNode<'a>>,
+        rhs: Box<AstNode<'a>>,
+    },
     Main {
         functions: Vec<AstNode<'a>>,
         body: Vec<AstNode<'a>>,
@@ -88,6 +93,9 @@ impl fmt::Debug for AstNodeKind<'_> {
             }
             AstNodeKind::Write { exprs } => write!(f, "Write({:?})", exprs),
             AstNodeKind::Read => write!(f, "Read"),
+            AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
+                write!(f, "BinaryOperation({:?}, {:?}, {:?})", operator, lhs, rhs)
+            }
         }
     }
 }

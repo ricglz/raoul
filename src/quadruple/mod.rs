@@ -1,6 +1,5 @@
 use crate::{
-    address::ConstantMemory,
-    address::GenericAddressManager,
+    address::{Address, ConstantMemory, GenericAddressManager},
     ast::{ast_kind::AstNodeKind, AstNode},
     dir_func::{
         function::{Function, VariablesTable},
@@ -71,11 +70,32 @@ impl QuadrupleManager<'_> {
         self.function_mut().temp_addresses.get_address(data_type)
     }
 
-    fn safe_address<'a, T>(&self, result: Option<T>, node: AstNode<'a>) -> Result<'a, T> {
-        match result {
+    fn safe_address<'a, T>(&self, option: Option<T>, node: AstNode<'a>) -> Result<'a, T> {
+        match option {
             Some(value) => Ok(value),
             None => Err(RaoulError::new(node, RaoulErrorKind::MemoryExceded)),
         }
+    }
+
+    fn safe_add_temp<'a>(&mut self, data_type: &Types, node: AstNode<'a>) -> Result<'a, usize> {
+        let option = self.add_temp(data_type);
+        self.safe_address(option, node)
+    }
+
+    fn safe_remove_temp_address(&mut self, option: Option<usize>) {
+        match option {
+            None => (),
+            Some(address) => match address.is_temp_address() {
+                true => self.function_mut().temp_addresses.release_address(address),
+                _ => (),
+            },
+        }
+    }
+
+    fn add_quad(&mut self, quad: Quadruple) {
+        self.quad_list.push(quad);
+        self.safe_remove_temp_address(quad.op_1);
+        self.safe_remove_temp_address(quad.op_2);
     }
 
     fn parse_expr<'a>(&mut self, node: AstNode<'a>) -> Result<'a, (usize, Types)> {
@@ -104,15 +124,14 @@ impl QuadrupleManager<'_> {
                     },
                     _ => unreachable!(),
                 };
-                let result = self.add_temp(&res_type);
-                let res = self.safe_address(result, node_clone)?;
+                let res = self.safe_add_temp(&res_type, node_clone)?;
                 let quad = Quadruple {
                     operator,
                     op_1: Some(op),
                     op_2: None,
                     res: Some(res),
                 };
-                self.quad_list.push(quad);
+                self.add_quad(quad);
                 Ok((res, res_type))
             }
             AstNodeKind::Id(name) => {
@@ -127,12 +146,24 @@ impl QuadrupleManager<'_> {
             }
             AstNodeKind::Read => {
                 let data_type = Types::STRING;
-                let result = self.add_temp(&data_type);
-                let res = self.safe_address(result, node_clone)?;
-                self.quad_list.push(Quadruple {
+                let res = self.safe_add_temp(&data_type, node_clone)?;
+                self.add_quad(Quadruple {
                     operator: Operator::Read,
                     op_1: None,
                     op_2: None,
+                    res: Some(res),
+                });
+                Ok((res, data_type))
+            }
+            AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
+                let (op_1, lhs_type) = self.parse_expr(*lhs)?;
+                let (op_2, rhs_type) = self.parse_expr(*rhs)?;
+                let data_type = Types::binary_operator_type(operator, lhs_type, rhs_type).unwrap();
+                let res = self.safe_add_temp(&data_type, node_clone)?;
+                self.add_quad(Quadruple {
+                    operator,
+                    op_1: Some(op_1),
+                    op_2: Some(op_2),
                     res: Some(res),
                 });
                 Ok((res, data_type))
@@ -154,7 +185,7 @@ impl QuadrupleManager<'_> {
                 }
                 let (value_addr, _) = result.unwrap();
                 let variable_address = self.get_variable_address(global, name);
-                self.quad_list.push(Quadruple {
+                self.add_quad(Quadruple {
                     operator: Operator::Assignment,
                     op_1: Some(value_addr),
                     op_2: None,
@@ -175,14 +206,14 @@ impl QuadrupleManager<'_> {
                     .into_iter()
                     .map(Result::unwrap)
                     .for_each(|(address, _)| {
-                        self.quad_list.push(Quadruple {
+                        self.add_quad(Quadruple {
                             operator: Operator::Print,
                             op_1: Some(address),
                             op_2: None,
                             res: None,
                         })
                     });
-                self.quad_list.push(Quadruple {
+                self.add_quad(Quadruple {
                     operator: Operator::PrintNl,
                     op_1: None,
                     op_2: None,
