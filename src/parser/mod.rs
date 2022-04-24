@@ -64,7 +64,7 @@ impl LanguageParser {
 
     // Operations
     fn not(_input: Node) -> Result<Operator> {
-        Ok(Operator::NOT)
+        Ok(Operator::Not)
     }
 
     // Values
