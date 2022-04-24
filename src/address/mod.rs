@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, fmt};
 
 use crate::{dir_func::variable_value::VariableValue, enums::Types};
 
@@ -32,7 +32,7 @@ pub trait GenericAddressManager {
     fn get_address(&mut self, data_type: &Types) -> Option<usize>;
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone)]
 pub struct AddressManager {
     base: usize,
     counter: AddressCounter,
@@ -64,6 +64,20 @@ impl GenericAddressManager for AddressManager {
         *type_counter = *type_counter + 1;
         let type_base = get_type_base(&data_type);
         Some(self.base + type_counter_clone + type_base)
+    }
+}
+
+impl fmt::Debug for AddressManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let int_counter = self.counter.get(&Types::INT).unwrap();
+        let float_counter = self.counter.get(&Types::FLOAT).unwrap();
+        let string_counter = self.counter.get(&Types::STRING).unwrap();
+        let bool_counter = self.counter.get(&Types::BOOL).unwrap();
+        write!(
+            f,
+            "AddressManager({:?}, {:?}, {:?}, {:?})",
+            int_counter, float_counter, string_counter, bool_counter
+        )
     }
 }
 
