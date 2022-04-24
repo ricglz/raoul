@@ -137,10 +137,10 @@ MAT_TYPES      = { L_SQUARE ~ ARR_TYPES ~ R_SQUARE }
 COMPOSED_TYPES = _{ atomic_types | DATAFRAME | ARR_TYPES | MAT_TYPES  }
 types          = { atomic_types | void}
 
-READ = { INPUT ~ L_PAREN ~ R_PAREN }
+read = { INPUT ~ L_PAREN ~ R_PAREN }
 
-ASSIGNMENT_EXP = _{ READ | READ_CSV | expr }
-assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
+assignment_exp = { read | READ_CSV | expr }
+assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ assignment_exp }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 

@@ -35,6 +35,7 @@ impl Types {
                     ))
                 }
             }
+            AstNodeKind::Read => Ok(Types::STRING),
             _ => unreachable!(),
         }
     }
@@ -42,8 +43,9 @@ impl Types {
 
 #[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
 pub enum Operator {
-    NOT,
-    ASSIGNMENT,
-    PRINT,
-    PRINTNL,
+    Not,
+    Assignment,
+    Print,
+    PrintNl,
+    Read,
 }

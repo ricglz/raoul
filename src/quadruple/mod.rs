@@ -92,7 +92,7 @@ impl QuadrupleManager<'_> {
             AstNodeKind::UnaryOperation { operator, operand } => {
                 let (op, op_type) = self.parse_expr(*operand)?;
                 let res_type = match operator {
-                    Operator::NOT => match op_type {
+                    Operator::Not => match op_type {
                         Types::BOOL | Types::INT => Types::BOOL,
                         op_type => {
                             let kind = RaoulErrorKind::InvalidCast {
@@ -125,10 +125,19 @@ impl QuadrupleManager<'_> {
                     None => unreachable!(),
                 }
             }
-            _ => {
-                println!("{:?}", node_clone);
-                unreachable!()
+            AstNodeKind::Read => {
+                let data_type = Types::STRING;
+                let result = self.add_temp(&data_type);
+                let res = self.safe_address(result, node_clone)?;
+                self.quad_list.push(Quadruple {
+                    operator: Operator::Read,
+                    op_1: None,
+                    op_2: None,
+                    res: Some(res),
+                });
+                Ok((res, data_type))
             }
+            kind => unreachable!("{:?}", kind),
         }
     }
 
@@ -146,7 +155,7 @@ impl QuadrupleManager<'_> {
                 let (value_addr, _) = result.unwrap();
                 let variable_address = self.get_variable_address(global, name);
                 self.quad_list.push(Quadruple {
-                    operator: Operator::ASSIGNMENT,
+                    operator: Operator::Assignment,
                     op_1: Some(value_addr),
                     op_2: None,
                     res: Some(variable_address),
@@ -167,14 +176,14 @@ impl QuadrupleManager<'_> {
                     .map(Result::unwrap)
                     .for_each(|(address, _)| {
                         self.quad_list.push(Quadruple {
-                            operator: Operator::PRINT,
+                            operator: Operator::Print,
                             op_1: Some(address),
                             op_2: None,
                             res: None,
                         })
                     });
                 self.quad_list.push(Quadruple {
-                    operator: Operator::PRINTNL,
+                    operator: Operator::PrintNl,
                     op_1: None,
                     op_2: None,
                     res: None,
