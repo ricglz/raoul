@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{ast::ast_kind::AstNodeKind, enums::Types};
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq)]
 pub enum VariableValue {
     Integer(i64),
     Float(f64),
@@ -28,5 +30,17 @@ impl From<AstNodeKind<'_>> for VariableValue {
             AstNodeKind::Bool(value) => VariableValue::Bool(value),
             _ => unreachable!(),
         }
+    }
+}
+
+impl fmt::Debug for VariableValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            VariableValue::Bool(value) => value.to_string(),
+            VariableValue::Integer(value) => value.to_string(),
+            VariableValue::Float(value) => value.to_string(),
+            VariableValue::String(value) => value.to_owned(),
+        };
+        write!(f, "{}", value)
     }
 }
