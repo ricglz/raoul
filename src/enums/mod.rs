@@ -28,7 +28,7 @@ impl Types {
         }
     }
 
-    fn binary_operator_type(
+    pub fn binary_operator_type(
         operator: Operator,
         lhs_type: Types,
         rhs_type: Types,

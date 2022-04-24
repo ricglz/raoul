@@ -2,11 +2,21 @@ use std::{cmp::Ordering, collections::HashMap};
 
 use crate::{dir_func::variable_value::VariableValue, enums::Types};
 
-type AddressCounter = HashMap<Types, usize>;
-
 const THRESHOLD: usize = 250;
 const COUNTER_SIZE: usize = 4;
 pub const TOTAL_SIZE: usize = THRESHOLD * COUNTER_SIZE;
+
+pub trait Address {
+    fn is_temp_address(&self) -> bool;
+}
+
+impl Address for usize {
+    fn is_temp_address(&self) -> bool {
+        TOTAL_SIZE * 2 < *self && *self < TOTAL_SIZE * 3
+    }
+}
+
+type AddressCounter = HashMap<Types, usize>;
 
 fn get_type_base(data_type: &Types) -> usize {
     match data_type {
@@ -86,7 +96,10 @@ impl TempAddressManager {
             1 => Types::FLOAT,
             2 => Types::STRING,
             3 => Types::BOOL,
-            _ => unreachable!(),
+            _ => unreachable!(
+                "{:?}, {:?}, {:?}",
+                address, contextless_address, type_determinant
+            ),
         }
     }
 
