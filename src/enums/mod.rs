@@ -36,14 +36,31 @@ impl Types {
                 }
             }
             AstNodeKind::Read => Ok(Types::STRING),
-            _ => unreachable!(),
+            kind => unreachable!("{:?}", kind),
         }
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
 pub enum Operator {
+    // Boolean
     Not,
+    Or,
+    And,
+    // Relational
+    Gte,
+    Lte,
+    Gt,
+    Lt,
+    // Equality
+    Eq,
+    Ne,
+    // Aritmetic
+    Sum,
+    Minus,
+    Times,
+    Div,
+    // ByteCode
     Assignment,
     Print,
     PrintNl,

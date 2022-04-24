@@ -11,5 +11,6 @@ func main(): void {
   h = 2 - 2;
   i = 4 * 4;
   j = 4 / 4;
-  print(a, b, c, d, e, f, g, h, i, j);
+  k = NOT false;
+  print(a, b, c, d, e, f, g, h, i, j, k);
 }

@@ -67,6 +67,76 @@ impl LanguageParser {
         Ok(Operator::Not)
     }
 
+    fn gte(_input: Node) -> Result<Operator> {
+        Ok(Operator::Gte)
+    }
+
+    fn lte(_input: Node) -> Result<Operator> {
+        Ok(Operator::Lte)
+    }
+
+    fn gt(_input: Node) -> Result<Operator> {
+        Ok(Operator::Gt)
+    }
+
+    fn lt(_input: Node) -> Result<Operator> {
+        Ok(Operator::Lt)
+    }
+
+    fn rel_op(input: Node) -> Result<Operator> {
+        Ok(match_nodes!(input.into_children();
+            [gte(value)] => value,
+            [lte(value)] => value,
+            [gt(value)] => value,
+            [lt(value)] => value,
+        ))
+    }
+
+    fn eq(_input: Node) -> Result<Operator> {
+        Ok(Operator::Eq)
+    }
+
+    fn ne(_input: Node) -> Result<Operator> {
+        Ok(Operator::Ne)
+    }
+
+    fn comp_op(input: Node) -> Result<Operator> {
+        Ok(match_nodes!(input.into_children();
+            [eq(value)] => value,
+            [ne(value)] => value,
+        ))
+    }
+
+    fn sum(_input: Node) -> Result<Operator> {
+        Ok(Operator::Sum)
+    }
+
+    fn minus(_input: Node) -> Result<Operator> {
+        Ok(Operator::Minus)
+    }
+
+    fn art_op(input: Node) -> Result<Operator> {
+        Ok(match_nodes!(input.into_children();
+            [sum(value)] => value,
+            [minus(value)] => value,
+        ))
+    }
+
+    fn times(_input: Node) -> Result<Operator> {
+        Ok(Operator::Times)
+    }
+
+    fn div(_input: Node) -> Result<Operator> {
+        Ok(Operator::Div)
+    }
+
+    fn fact_op(input: Node) -> Result<Operator> {
+        Ok(match_nodes!(input.into_children();
+            [times(value)] => value,
+            [div(value)] => value,
+        ))
+    }
+
     // Values
     fn int_cte(input: Node) -> Result<AstNode> {
         let value = input
@@ -122,38 +192,92 @@ impl LanguageParser {
 
     // Expressions
     fn expr(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [and_term(value)] => value,
+            [and_term(lhs), and_term(rhs)] => {
+                let kind = AstNodeKind::BinaryOperation {
+                    operator: Operator::Or,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                };
+                AstNode { kind, span }
+            },
         ))
     }
 
     fn and_term(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [comp_term(value)] => value,
+            [comp_term(lhs), comp_term(rhs)] => {
+                let kind = AstNodeKind::BinaryOperation {
+                    operator: Operator::And,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                };
+                AstNode { kind, span }
+            },
         ))
     }
 
     fn comp_term(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [rel_term(value)] => value,
+            [rel_term(lhs), comp_op(operator), rel_term(rhs)] => {
+                let kind = AstNodeKind::BinaryOperation {
+                    operator,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                };
+                AstNode { kind, span }
+            }
         ))
     }
 
     fn rel_term(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [art_term(value)] => value,
+            [art_term(lhs), rel_op(operator), art_term(rhs)] => {
+                let kind = AstNodeKind::BinaryOperation {
+                    operator,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                };
+                AstNode { kind, span }
+            }
         ))
     }
 
     fn art_term(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [fact_term(value)] => value,
+            [fact_term(lhs), art_op(operator), fact_term(rhs)] => {
+                let kind = AstNodeKind::BinaryOperation {
+                    operator,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                };
+                AstNode { kind, span }
+            }
         ))
     }
 
     fn fact_term(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [operand(value)] => value,
+            [operand(lhs), fact_op(operator), operand(rhs)] => {
+                let kind = AstNodeKind::BinaryOperation {
+                    operator,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                };
+                AstNode { kind, span }
+            }
         ))
     }
 
