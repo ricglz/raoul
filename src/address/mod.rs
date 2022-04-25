@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, fmt};
 
 use crate::{dir_func::variable_value::VariableValue, enums::Types};
 
@@ -13,6 +13,15 @@ pub trait Address {
 impl Address for usize {
     fn is_temp_address(&self) -> bool {
         TOTAL_SIZE * 2 < *self && *self < TOTAL_SIZE * 3
+    }
+}
+
+impl Address for Option<usize> {
+    fn is_temp_address(&self) -> bool {
+        match self {
+            Some(address) => address.is_temp_address(),
+            None => false,
+        }
     }
 }
 
@@ -32,7 +41,7 @@ pub trait GenericAddressManager {
     fn get_address(&mut self, data_type: &Types) -> Option<usize>;
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone)]
 pub struct AddressManager {
     base: usize,
     counter: AddressCounter,
@@ -67,7 +76,21 @@ impl GenericAddressManager for AddressManager {
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+impl fmt::Debug for AddressManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let int_counter = self.counter.get(&Types::INT).unwrap();
+        let float_counter = self.counter.get(&Types::FLOAT).unwrap();
+        let string_counter = self.counter.get(&Types::STRING).unwrap();
+        let bool_counter = self.counter.get(&Types::BOOL).unwrap();
+        write!(
+            f,
+            "AddressManager({:?}, {:?}, {:?}, {:?})",
+            int_counter, float_counter, string_counter, bool_counter
+        )
+    }
+}
+
+#[derive(PartialEq, Clone)]
 pub struct TempAddressManager {
     address_manager: AddressManager,
     released: HashMap<Types, Vec<usize>>,
@@ -121,9 +144,15 @@ impl GenericAddressManager for TempAddressManager {
     }
 }
 
+impl fmt::Debug for TempAddressManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "TempAddressManager({:#?})", self.released)
+    }
+}
+
 type Memory = HashMap<Types, Vec<VariableValue>>;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone)]
 pub struct ConstantMemory {
     base: usize,
     memory: Memory,
@@ -185,6 +214,12 @@ impl ConstantMemory {
                 .unwrap()
                 .to_owned(),
         )
+    }
+}
+
+impl fmt::Debug for ConstantMemory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ConstantMemory({:?})", self.memory)
     }
 }
 
