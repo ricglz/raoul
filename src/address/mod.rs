@@ -16,6 +16,15 @@ impl Address for usize {
     }
 }
 
+impl Address for Option<usize> {
+    fn is_temp_address(&self) -> bool {
+        match self {
+            Some(address) => address.is_temp_address(),
+            None => false,
+        }
+    }
+}
+
 type AddressCounter = HashMap<Types, usize>;
 
 fn get_type_base(data_type: &Types) -> usize {

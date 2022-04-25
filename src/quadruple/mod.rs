@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{
     address::{Address, ConstantMemory, GenericAddressManager},
     ast::{ast_kind::AstNodeKind, AstNode},
@@ -10,12 +12,34 @@ use crate::{
     error::{error_kind::RaoulErrorKind, RaoulError, Result, Results},
 };
 
-#[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
+#[derive(Clone, Copy, PartialEq, Hash, Eq)]
 pub struct Quadruple {
     operator: Operator,
     op_1: Option<usize>,
     op_2: Option<usize>,
     res: Option<usize>,
+}
+
+impl Quadruple {
+    fn format_address(option: Option<usize>) -> String {
+        match option {
+            None => "-".to_owned(),
+            Some(address) => address.to_string(),
+        }
+    }
+}
+
+impl fmt::Debug for Quadruple {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:?} {} {} {}",
+            self.operator,
+            Quadruple::format_address(self.op_1),
+            Quadruple::format_address(self.op_2),
+            Quadruple::format_address(self.res),
+        )
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -83,12 +107,12 @@ impl QuadrupleManager<'_> {
     }
 
     fn safe_remove_temp_address(&mut self, option: Option<usize>) {
-        match option {
-            None => (),
-            Some(address) => match address.is_temp_address() {
-                true => self.function_mut().temp_addresses.release_address(address),
-                _ => (),
-            },
+        match option.is_temp_address() {
+            false => (),
+            true => self
+                .function_mut()
+                .temp_addresses
+                .release_address(option.unwrap()),
         }
     }
 
