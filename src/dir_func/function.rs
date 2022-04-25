@@ -14,7 +14,22 @@ pub type VariablesTable = HashMap<String, Variable>;
 type InsertResult = std::result::Result<(), RaoulErrorKind>;
 
 pub trait Scope {
-    fn insert_variable(&mut self, variable: Variable) -> InsertResult;
+    fn get_variable(&self, name: &str) -> Option<&Variable>;
+    fn _insert_variable(&mut self, name: String, variable: Variable);
+    fn insert_variable(&mut self, variable: Variable) -> InsertResult {
+        let name = variable.name.clone();
+        match self.get_variable(&name) {
+            None => Ok(self._insert_variable(variable.name.clone(), variable)),
+            Some(stored_var) => match stored_var.data_type == variable.data_type {
+                true => Ok(()),
+                false => Err(RaoulErrorKind::RedefinedType {
+                    name,
+                    from: stored_var.data_type,
+                    to: variable.data_type,
+                }),
+            },
+        }
+    }
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -101,18 +116,11 @@ impl Function {
 }
 
 impl Scope for Function {
-    fn insert_variable(&mut self, variable: Variable) -> InsertResult {
-        let name = variable.name.clone();
-        match self.variables.get(&name) {
-            None => {
-                self.variables.insert(variable.name.clone(), variable);
-                Ok(())
-            }
-            Some(stored_var) => match stored_var.data_type == variable.data_type {
-                true => Ok(()),
-                false => Err(RaoulErrorKind::RedefinedType { name }),
-            },
-        }
+    fn get_variable(&self, name: &str) -> Option<&Variable> {
+        self.variables.get(name)
+    }
+    fn _insert_variable(&mut self, name: String, variable: Variable) {
+        self.variables.insert(name, variable);
     }
 }
 
@@ -132,17 +140,10 @@ impl GlobalScope {
 }
 
 impl Scope for GlobalScope {
-    fn insert_variable(&mut self, variable: Variable) -> InsertResult {
-        let name = variable.name.clone();
-        match self.variables.get(&name) {
-            None => {
-                self.variables.insert(variable.name.clone(), variable);
-                Ok(())
-            }
-            Some(stored_var) => match stored_var.data_type == variable.data_type {
-                true => Ok(()),
-                false => Err(RaoulErrorKind::RedefinedType { name }),
-            },
-        }
+    fn get_variable(&self, name: &str) -> Option<&Variable> {
+        self.variables.get(name)
+    }
+    fn _insert_variable(&mut self, name: String, variable: Variable) {
+        self.variables.insert(name, variable);
     }
 }

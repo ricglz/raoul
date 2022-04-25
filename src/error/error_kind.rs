@@ -7,7 +7,7 @@ pub enum RaoulErrorKind {
     Invalid,
     UndeclaredVar { name: String },
     RedeclaredFunction { name: String },
-    RedefinedType { name: String },
+    RedefinedType { name: String, from: Types, to: Types },
     InvalidCast { from: Types, to: Types },
     MemoryExceded,
 }
@@ -22,11 +22,13 @@ impl fmt::Debug for RaoulErrorKind {
             RaoulErrorKind::RedeclaredFunction { name } => {
                 write!(f, "Function \"{}\" was already declared before", name)
             }
-            RaoulErrorKind::RedefinedType { name } => {
+            RaoulErrorKind::RedefinedType { name, from, to } => {
                 write!(
                     f,
-                    "Type from variable \"{}\" was already defined. Don't change it.",
-                    name
+                    "\"{}\" was originally defined as {:?} and you're attempting to redefined it as a {:?}",
+                    name,
+                    from,
+                    to,
                 )
             }
             RaoulErrorKind::InvalidCast { from, to } => {
