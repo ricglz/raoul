@@ -33,7 +33,7 @@ impl fmt::Debug for Quadruple {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{:?} {} {} {}",
+            "{} {:5} {:5} {:5}",
             self.operator,
             Quadruple::format_address(self.op_1),
             Quadruple::format_address(self.op_2),
@@ -42,7 +42,7 @@ impl fmt::Debug for Quadruple {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub struct QuadrupleManager<'a> {
     dir_func: &'a mut DirFunc,
     function_name: String,
@@ -205,6 +205,25 @@ impl QuadrupleManager<'_> {
         }
     }
 
+    fn assert_expr_type<'a>(
+        &mut self,
+        expr: AstNode<'a>,
+        to: Types,
+    ) -> Results<'a, (usize, Types)> {
+        let expr_clone = expr.clone();
+        let (res_address, res_type) = self.parse_expr_results(expr)?;
+        match res_type.can_cast(to) {
+            true => Ok((res_address, res_type)),
+            false => {
+                let error = RaoulError::new(
+                    expr_clone,
+                    RaoulErrorKind::InvalidCast { from: res_type, to },
+                );
+                Err(vec![error])
+            }
+        }
+    }
+
     fn parse_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
         let errors: Vec<RaoulError> = body
             .into_iter()
@@ -289,18 +308,7 @@ impl QuadrupleManager<'_> {
                 statements,
                 else_block,
             } => {
-                let expr_clone = *expr.clone();
-                let (res_address, res_type) = self.parse_expr_results(*expr)?;
-                if !res_type.is_boolish() {
-                    let error = RaoulError::new(
-                        expr_clone,
-                        RaoulErrorKind::InvalidCast {
-                            from: res_type,
-                            to: Types::BOOL,
-                        },
-                    );
-                    return Err(vec![error]);
-                }
+                let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
                 self.parse_body(statements)?;
                 Ok(if let Some(node) = else_block {
@@ -314,6 +322,21 @@ impl QuadrupleManager<'_> {
                 })
             }
             AstNodeKind::ElseBlock { statements } => Ok(self.parse_body(statements)?),
+            AstNodeKind::While { expr, statements } => {
+                self.jump_list.push(self.quad_list.len());
+                let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
+                self.add_goto(Operator::GotoF, Some(res_address));
+                self.parse_body(statements)?;
+                let index = self.jump_list.pop().unwrap();
+                let goto_res = self.jump_list.pop().unwrap();
+                self.add_quad(Quadruple {
+                    operator: Operator::Goto,
+                    op_1: None,
+                    op_2: None,
+                    res: Some(goto_res),
+                });
+                Ok(self.fill_goto_index(index))
+            }
             _ => unreachable!("{:?}", node.kind),
         }
     }
@@ -327,5 +350,18 @@ impl QuadrupleManager<'_> {
             AstNodeKind::Function { .. } => todo!(),
             _ => unreachable!(),
         }
+    }
+}
+
+impl fmt::Debug for QuadrupleManager<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value: String = self
+            .quad_list
+            .clone()
+            .into_iter()
+            .enumerate()
+            .map(|(i, quad)| format!("{} - {:?}\n", i, quad))
+            .collect();
+        write!(f, "{value}")
     }
 }

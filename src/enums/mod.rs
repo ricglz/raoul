@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::ast::ast_kind::AstNodeKind;
 use crate::ast::AstNode;
 use crate::dir_func::function::VariablesTable;
@@ -25,6 +27,14 @@ impl Types {
         match self {
             Types::INT | Types::FLOAT | Types::STRING => true,
             _ => false,
+        }
+    }
+
+    pub fn can_cast(&self, to: Types) -> bool {
+        match to {
+            Types::BOOL => self.is_boolish(),
+            Types::FLOAT => self.is_number(),
+            _ => to == self.to_owned(),
         }
     }
 
@@ -175,5 +185,11 @@ impl Operator {
             Operator::Goto | Operator::GotoF => true,
             _ => false,
         }
+    }
+}
+
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:10}", format!("{:?}", self))
     }
 }
