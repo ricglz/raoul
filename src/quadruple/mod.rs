@@ -17,7 +17,7 @@ pub struct Quadruple {
     operator: Operator,
     op_1: Option<usize>,
     op_2: Option<usize>,
-    res: Option<usize>,
+    pub res: Option<usize>,
 }
 
 impl Quadruple {
@@ -46,6 +46,7 @@ impl fmt::Debug for Quadruple {
 pub struct QuadrupleManager<'a> {
     dir_func: &'a mut DirFunc,
     function_name: String,
+    jump_list: Vec<usize>,
     pub memory: ConstantMemory,
     pub quad_list: Vec<Quadruple>,
 }
@@ -57,6 +58,7 @@ impl QuadrupleManager<'_> {
             function_name: "".to_owned(),
             memory: ConstantMemory::new(),
             quad_list: Vec::new(),
+            jump_list: Vec::new(),
         }
     }
 
@@ -196,6 +198,49 @@ impl QuadrupleManager<'_> {
         }
     }
 
+    fn parse_expr_results<'a>(&mut self, node: AstNode<'a>) -> Results<'a, (usize, Types)> {
+        match self.parse_expr(node) {
+            Ok(val) => Ok(val),
+            Err(error) => Err(vec![error]),
+        }
+    }
+
+    fn parse_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
+        let errors: Vec<RaoulError> = body
+            .into_iter()
+            .filter_map(|node| self.parse_function(node).err())
+            .flatten()
+            .collect();
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+
+    fn add_goto(&mut self, goto_type: Operator, condition: Option<usize>) {
+        debug_assert!(goto_type.is_goto());
+        self.jump_list.push(self.quad_list.len());
+        self.add_quad(Quadruple {
+            operator: goto_type,
+            op_1: condition,
+            op_2: None,
+            res: None,
+        })
+    }
+
+    fn fill_goto_index(&mut self, index: usize) {
+        let res = self.quad_list.len();
+        let mut quad = self.quad_list.get_mut(index).unwrap();
+        debug_assert!(quad.operator.is_goto());
+        quad.res = Some(res);
+    }
+
+    fn fill_goto(&mut self) {
+        let index = self.jump_list.pop().unwrap();
+        self.fill_goto_index(index);
+    }
+
     fn parse_function<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         match node.kind {
             AstNodeKind::Assignment {
@@ -203,19 +248,14 @@ impl QuadrupleManager<'_> {
                 ref name,
                 value,
             } => {
-                let result = self.parse_expr(*value);
-                if let Err(error) = result {
-                    return Err(vec![error]);
-                }
-                let (value_addr, _) = result.unwrap();
+                let (value_addr, _) = self.parse_expr_results(*value)?;
                 let variable_address = self.get_variable_address(global, name);
-                self.add_quad(Quadruple {
+                Ok(self.add_quad(Quadruple {
                     operator: Operator::Assignment,
                     op_1: Some(value_addr),
                     op_2: None,
                     res: Some(variable_address),
-                });
-                Ok(())
+                }))
             }
             AstNodeKind::Write { exprs } => {
                 let (addresses, errors): (Vec<_>, Vec<_>) = exprs
@@ -237,15 +277,44 @@ impl QuadrupleManager<'_> {
                             res: None,
                         })
                     });
-                self.add_quad(Quadruple {
+                Ok(self.add_quad(Quadruple {
                     operator: Operator::PrintNl,
                     op_1: None,
                     op_2: None,
                     res: None,
-                });
-                Ok(())
+                }))
             }
-            _ => unreachable!(),
+            AstNodeKind::Decision {
+                expr,
+                statements,
+                else_block,
+            } => {
+                let expr_clone = *expr.clone();
+                let (res_address, res_type) = self.parse_expr_results(*expr)?;
+                if !res_type.is_boolish() {
+                    let error = RaoulError::new(
+                        expr_clone,
+                        RaoulErrorKind::InvalidCast {
+                            from: res_type,
+                            to: Types::BOOL,
+                        },
+                    );
+                    return Err(vec![error]);
+                }
+                self.add_goto(Operator::GotoF, Some(res_address));
+                self.parse_body(statements)?;
+                Ok(if let Some(node) = else_block {
+                    let index = self.jump_list.pop().unwrap();
+                    self.add_goto(Operator::Goto, None);
+                    self.fill_goto_index(index);
+                    self.parse_function(*node)?;
+                    self.fill_goto();
+                } else {
+                    self.fill_goto();
+                })
+            }
+            AstNodeKind::ElseBlock { statements } => Ok(self.parse_body(statements)?),
+            _ => unreachable!("{:?}", node.kind),
         }
     }
 
@@ -253,16 +322,7 @@ impl QuadrupleManager<'_> {
         match node.kind {
             AstNodeKind::Main { body, .. } => {
                 self.function_name = "main".to_owned();
-                let errors: Vec<RaoulError> = body
-                    .into_iter()
-                    .filter_map(|node| self.parse_function(node).err())
-                    .flatten()
-                    .collect();
-                if errors.is_empty() {
-                    Ok(())
-                } else {
-                    Err(errors)
-                }
+                Ok(self.parse_body(body)?)
             }
             AstNodeKind::Function { .. } => todo!(),
             _ => unreachable!(),

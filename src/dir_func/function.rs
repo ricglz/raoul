@@ -83,7 +83,11 @@ impl Function {
     ) -> Results<'a, Self> {
         let errors: Vec<RaoulError> = nodes
             .into_iter()
-            .filter_map(|node| self.insert_variable_from_node(node, global_fn).err())
+            .flat_map(AstNode::expand_node)
+            .filter_map(|node| {
+                self.insert_variable_from_node(node.to_owned(), global_fn)
+                    .err()
+            })
             .collect();
         if errors.is_empty() {
             Ok(self.to_owned())

@@ -14,7 +14,7 @@ pub enum Types {
 }
 
 impl Types {
-    fn is_boolish(&self) -> bool {
+    pub fn is_boolish(&self) -> bool {
         match self {
             Types::INT | Types::BOOL => true,
             _ => false,
@@ -165,4 +165,15 @@ pub enum Operator {
     Print,
     PrintNl,
     Read,
+    Goto,
+    GotoF,
+}
+
+impl Operator {
+    pub fn is_goto(&self) -> bool {
+        match self {
+            Operator::Goto | Operator::GotoF => true,
+            _ => false,
+        }
+    }
 }

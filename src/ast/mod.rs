@@ -16,6 +16,22 @@ impl<'a> From<AstNode<'a>> for String {
     }
 }
 
+impl<'a> AstNode<'a> {
+    pub fn expand_node(v: AstNode<'a>) -> Vec<AstNode<'a>> {
+        let node = v.clone();
+        match &v.kind {
+            AstNodeKind::Decision { statements, .. } | AstNodeKind::ElseBlock { statements } => {
+                statements
+                    .to_owned()
+                    .into_iter()
+                    .flat_map(AstNode::expand_node)
+                    .collect()
+            }
+            _ => vec![node],
+        }
+    }
+}
+
 impl fmt::Debug for AstNode<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.kind)
