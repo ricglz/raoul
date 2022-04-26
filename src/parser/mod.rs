@@ -365,6 +365,20 @@ impl LanguageParser {
         ))
     }
 
+    // Loops
+    fn while_loop(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [expr(expr), block(statements)] => {
+                let kind = AstNodeKind::While {
+                    expr: Box::new(expr),
+                    statements,
+                };
+                AstNode {kind, span}
+            },
+        ))
+    }
+
     // Inline statements
     fn assignment(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
@@ -398,6 +412,7 @@ impl LanguageParser {
             [assignment(node)] => node,
             [write(node)] => node,
             [decision(node)] => node,
+            [while_loop(node)] => node,
         ))
     }
 

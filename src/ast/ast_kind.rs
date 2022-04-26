@@ -49,6 +49,10 @@ pub enum AstNodeKind<'a> {
     ElseBlock {
         statements: Vec<AstNode<'a>>,
     },
+    While {
+        expr: Box<AstNode<'a>>,
+        statements: Vec<AstNode<'a>>,
+    },
 }
 
 impl<'a> From<AstNodeKind<'a>> for String {
@@ -117,6 +121,9 @@ impl fmt::Debug for AstNodeKind<'_> {
             }
             AstNodeKind::ElseBlock { statements } => {
                 write!(f, "ElseBlock({:?})", statements)
+            }
+            AstNodeKind::While { expr, statements } => {
+                write!(f, "While({:?}, {:?})", expr, statements)
             }
         }
     }

@@ -158,7 +158,7 @@ decision   = { if_block ~ else_block? }
 
 write = {PRINT ~ L_PAREN ~ exprs? ~ R_PAREN }
 
-WHILE_LOOP = {WHILE ~ COND_EXPR ~ block}
+while_loop = {WHILE ~ COND_EXPR ~ block}
 
 FOR_LOOP = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
 
@@ -179,7 +179,7 @@ DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
 
 RETURN = { RETURN_KEY ~ expr }
 
-BLOCK_STATEMENT  = _{ decision | WHILE_LOOP | FOR_LOOP }
+BLOCK_STATEMENT  = _{ decision | while_loop | FOR_LOOP }
 INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | RETURN | FUNC_CALL }
 statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
 
