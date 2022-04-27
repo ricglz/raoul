@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    address::{AddressManager, TempAddressManager, TOTAL_SIZE},
+    address::{AddressManager, GenericAddressManager, TempAddressManager, TOTAL_SIZE},
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
@@ -34,9 +34,10 @@ pub trait Scope {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
+    pub args: Vec<Variable>,
+    pub local_addresses: AddressManager,
     pub name: String,
     pub return_type: Types,
-    pub local_addresses: AddressManager,
     pub temp_addresses: TempAddressManager,
     pub variables: VariablesTable,
 }
@@ -44,6 +45,7 @@ pub struct Function {
 impl Function {
     fn new(name: String, return_type: Types) -> Self {
         Self {
+            args: Vec::new(),
             local_addresses: AddressManager::new(TOTAL_SIZE),
             name,
             return_type,
@@ -56,16 +58,21 @@ impl Function {
         &mut self,
         node: AstNode<'a>,
         global_fn: &mut GlobalScope,
+        argument: bool,
     ) -> Result<'a, ()> {
         let clone = node.clone();
         match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => {
+                let variable_clone = variable.clone();
                 let result = match global {
                     true => global_fn.insert_variable(variable),
                     false => self.insert_variable(variable),
                 };
                 match result {
-                    Ok(_) => Ok(()),
+                    Ok(_) => {
+                        self.args.push(variable_clone);
+                        Ok(())
+                    }
                     Err(kind) => Err(RaoulError::new(clone, kind)),
                 }
             }
@@ -80,17 +87,37 @@ impl Function {
         &mut self,
         nodes: Vec<AstNode<'a>>,
         global_fn: &mut GlobalScope,
-    ) -> Results<'a, Self> {
+    ) -> Results<'a, ()> {
         let errors: Vec<RaoulError> = nodes
             .into_iter()
             .flat_map(AstNode::expand_node)
             .filter_map(|node| {
-                self.insert_variable_from_node(node.to_owned(), global_fn)
+                self.insert_variable_from_node(node.to_owned(), global_fn, false)
                     .err()
             })
             .collect();
         if errors.is_empty() {
-            Ok(self.to_owned())
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+
+    fn insert_args_from_nodes<'a>(
+        &mut self,
+        nodes: Vec<AstNode<'a>>,
+        global_fn: &mut GlobalScope,
+    ) -> Results<'a, ()> {
+        let errors: Vec<RaoulError> = nodes
+            .into_iter()
+            .flat_map(AstNode::expand_node)
+            .filter_map(|node| {
+                self.insert_variable_from_node(node.to_owned(), global_fn, true)
+                    .err()
+            })
+            .collect();
+        if errors.is_empty() {
+            Ok(())
         } else {
             Err(errors)
         }
@@ -105,17 +132,21 @@ impl Function {
                 arguments,
             } => {
                 let mut function = Function::new(name, return_type);
-                let args_iter = arguments.clone().into_iter();
-                let body_iter = body.clone().into_iter();
-                function.insert_variable_from_nodes(args_iter.chain(body_iter).collect(), global_fn)
+                function.insert_args_from_nodes(arguments, global_fn)?;
+                function.insert_variable_from_nodes(body, global_fn)?;
+                Ok(function)
             }
             AstNodeKind::Main { body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::VOID);
-                let body_iter = body.clone().into_iter();
-                function.insert_variable_from_nodes(body_iter.collect(), global_fn)
+                function.insert_variable_from_nodes(body, global_fn)?;
+                Ok(function)
             }
             _ => unreachable!(),
         }
+    }
+
+    pub fn size(&self) -> usize {
+        self.local_addresses.size() + self.temp_addresses.size()
     }
 }
 

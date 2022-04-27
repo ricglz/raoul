@@ -194,8 +194,11 @@ pub enum Operator {
     Read,
     Goto,
     GotoF,
+    End,
     // Functions
     Return,
+    EndProc,
+    Era,
 }
 
 impl Operator {
