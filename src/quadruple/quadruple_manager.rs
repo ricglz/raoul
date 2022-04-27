@@ -5,6 +5,7 @@ use crate::{
     ast::{ast_kind::AstNodeKind, AstNode},
     dir_func::{
         function::{Function, VariablesTable},
+        variable::Variable,
         variable_value::VariableValue,
         DirFunc,
     },
@@ -131,25 +132,89 @@ impl QuadrupleManager<'_> {
         }
     }
 
-    fn parse_func_call<'a>(
+    fn assert_type<'a>(&self, from: Types, to: Types, node: AstNode<'a>) -> Result<'a, ()> {
+        match from.can_cast(to) {
+            true => Ok(()),
+            false => {
+                let error = RaoulError::new(node, RaoulErrorKind::InvalidCast { from, to });
+                Err(error)
+            }
+        }
+    }
+
+    fn parse_args_exprs<'a>(
         &mut self,
-        name: &str,
         node: AstNode<'a>,
         exprs: Vec<AstNode<'a>>,
-    ) -> Results<'a, ()> {
-        let function = self.get_function(name);
-        let function_size = function.size();
+        args: Vec<Variable>,
+    ) -> Results<'a, Vec<(usize, Types)>> {
+        if args.len() != exprs.len() {
+            let kind = RaoulErrorKind::UnmatchArgsAmount {
+                expected: args.len(),
+                given: exprs.len(),
+            };
+            return Err(vec![RaoulError::new(node, kind)]);
+        }
+        let (addresses, errors): (Vec<_>, Vec<_>) = exprs
+            .into_iter()
+            .enumerate()
+            .map(|(i, node)| -> Results<(usize, Types)> {
+                let (v, v_type) = self.parse_expr(node.clone())?;
+                let arg_type = args.get(i).unwrap().data_type;
+                self.assert_type_results(v_type, arg_type, node)?;
+                Ok((v, v_type))
+            })
+            .partition(|res| res.is_ok());
+        match errors.is_empty() {
+            true => Ok(addresses.into_iter().map(|res| res.unwrap()).collect()),
+            false => Err(errors
+                .into_iter()
+                .flat_map(|res| res.unwrap_err())
+                .collect()),
+        }
+    }
+
+    fn add_era_quad(&mut self, name: &str) {
+        let function_size = self.get_function(name).size();
         self.add_quad(Quadruple {
             operator: Operator::Era,
             op_1: Some(function_size),
             op_2: None,
             res: None,
         });
-        let addresses = self.parse_exprs(exprs)?;
-        todo!("Check for type in arguments");
-        todo!("Add Param quad");
-        todo!("Add GoSub");
-        Ok(())
+    }
+
+    fn add_go_sub_quad(&mut self, name: &str) {
+        let first_quad = self.get_function(name).first_quad;
+        self.add_quad(Quadruple {
+            operator: Operator::GoSub,
+            op_1: Some(first_quad),
+            op_2: None,
+            res: None,
+        });
+    }
+
+    fn parse_func_call<'a>(
+        &mut self,
+        name: &str,
+        node: AstNode<'a>,
+        exprs: Vec<AstNode<'a>>,
+    ) -> Results<'a, ()> {
+        self.add_era_quad(name);
+        let args = self.get_function(name).args.clone();
+        let addresses = self.parse_args_exprs(node, exprs, args)?;
+        addresses
+            .into_iter()
+            .enumerate()
+            .for_each(|(i, (address, _))| {
+                self.add_quad(Quadruple {
+                    operator: Operator::Param,
+                    op_1: Some(address),
+                    op_2: None,
+                    res: Some(i),
+                })
+            });
+        Ok(self.add_go_sub_quad(name))
     }
 
     fn parse_expr<'a>(&mut self, node: AstNode<'a>) -> Results<'a, (usize, Types)> {
@@ -213,18 +278,23 @@ impl QuadrupleManager<'_> {
                 });
                 Ok((res, data_type))
             }
-            AstNodeKind::FuncCall { name, .. } => self.get_variable_name_address(name, node_clone),
+            AstNodeKind::FuncCall { name, exprs } => {
+                self.parse_func_call(&name, node_clone.clone(), exprs)?;
+                self.get_variable_name_address(name, node_clone)
+            }
             kind => unreachable!("{kind:?}"),
         }
     }
 
-    fn assert_type<'a>(&self, from: Types, to: Types, node: AstNode<'a>) -> Results<'a, ()> {
-        match from.can_cast(to) {
-            true => Ok(()),
-            false => {
-                let error = RaoulError::new(node, RaoulErrorKind::InvalidCast { from, to });
-                Err(vec![error])
-            }
+    fn assert_type_results<'a>(
+        &self,
+        from: Types,
+        to: Types,
+        node: AstNode<'a>,
+    ) -> Results<'a, ()> {
+        match self.assert_type(from, to, node) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(vec![error]),
         }
     }
 
@@ -235,7 +305,7 @@ impl QuadrupleManager<'_> {
     ) -> Results<'a, (usize, Types)> {
         let expr_clone = expr.clone();
         let (res_address, res_type) = self.parse_expr(expr)?;
-        self.assert_type(res_type, to, expr_clone)?;
+        self.assert_type_results(res_type, to, expr_clone)?;
         Ok((res_address, res_type))
     }
 
@@ -356,7 +426,7 @@ impl QuadrupleManager<'_> {
                 self.parse_body(statements)?;
                 let (var_address, var_type) =
                     self.get_variable_name_address(name, node_clone.clone())?;
-                self.assert_type(var_type, Types::INT, node_clone)?;
+                self.assert_type_results(var_type, Types::INT, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Inc,
                     op_1: None,
@@ -382,24 +452,30 @@ impl QuadrupleManager<'_> {
                     res: None,
                 }))
             }
-            AstNodeKind::FuncCall { name, exprs } => Ok(()),
+            AstNodeKind::FuncCall { name, exprs } => {
+                self.parse_func_call(&name, node_clone.clone(), exprs)
+            }
             kind => unreachable!("{kind:?}"),
         }
+    }
+
+    pub fn update_quad(&mut self, first_quad: usize) {
+        self.function_mut().update_quad(first_quad);
     }
 
     pub fn parse<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         match node.kind {
             AstNodeKind::Main { body, functions } => {
                 self.add_goto(Operator::Goto, None);
-                let errors: Vec<RaoulError> = functions
+                let errors: Vec<_> = functions
                     .into_iter()
                     .filter_map(|node| self.parse(node).err())
                     .flatten()
                     .collect();
-                self.fill_goto();
                 if !errors.is_empty() {
                     return Err(errors);
                 }
+                self.fill_goto();
                 self.function_name = "main".to_owned();
                 self.parse_body(body)?;
                 Ok(self.add_quad(Quadruple {
@@ -411,6 +487,8 @@ impl QuadrupleManager<'_> {
             }
             AstNodeKind::Function { name, body, .. } => {
                 self.function_name = name;
+                let first_quad = self.quad_list.len();
+                self.update_quad(first_quad);
                 self.parse_body(body)?;
                 Ok(self.add_quad(Quadruple {
                     operator: Operator::EndProc,

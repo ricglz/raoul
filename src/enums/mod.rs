@@ -199,6 +199,8 @@ pub enum Operator {
     Return,
     EndProc,
     Era,
+    GoSub,
+    Param,
 }
 
 impl Operator {

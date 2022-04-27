@@ -40,6 +40,7 @@ pub struct Function {
     pub return_type: Types,
     pub temp_addresses: TempAddressManager,
     pub variables: VariablesTable,
+    pub first_quad: usize,
 }
 
 impl Function {
@@ -51,6 +52,7 @@ impl Function {
             return_type,
             temp_addresses: TempAddressManager::new(),
             variables: HashMap::new(),
+            first_quad: 0,
         }
     }
 
@@ -70,7 +72,9 @@ impl Function {
                 };
                 match result {
                     Ok(_) => {
-                        self.args.push(variable_clone);
+                        if argument {
+                            self.args.push(variable_clone);
+                        }
                         Ok(())
                     }
                     Err(kind) => Err(RaoulError::new(clone, kind)),
@@ -147,6 +151,10 @@ impl Function {
 
     pub fn size(&self) -> usize {
         self.local_addresses.size() + self.temp_addresses.size()
+    }
+
+    pub fn update_quad(&mut self, first_quad: usize) {
+        self.first_quad = first_quad;
     }
 }
 

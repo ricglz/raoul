@@ -24,6 +24,10 @@ pub enum RaoulErrorKind {
         to: Types,
     },
     MemoryExceded,
+    UnmatchArgsAmount {
+        expected: usize,
+        given: usize,
+    },
 }
 
 impl fmt::Debug for RaoulErrorKind {
@@ -53,6 +57,12 @@ impl fmt::Debug for RaoulErrorKind {
             }
             RaoulErrorKind::MemoryExceded => {
                 write!(f, "Memory was exceded")
+            }
+            RaoulErrorKind::UnmatchArgsAmount { expected, given } => {
+                write!(
+                    f,
+                    "Wrong args amount: Expected {expected}, but were given {given}"
+                )
             }
         }
     }
