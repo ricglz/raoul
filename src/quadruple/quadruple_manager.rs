@@ -95,6 +95,24 @@ impl QuadrupleManager<'_> {
         self.safe_remove_temp_address(quad.op_2);
     }
 
+    fn get_variable_name_address<'a>(
+        &mut self,
+        name: String,
+        node: AstNode<'a>,
+    ) -> Result<'a, (usize, Types)> {
+        match self
+            .function_variables()
+            .get(&name)
+            .or(self.global_variables().get(&name))
+        {
+            Some(variable) => Ok((variable.address, variable.data_type)),
+            None => {
+                let kind = RaoulErrorKind::UndeclaredVar { name };
+                Err(RaoulError::new(node, kind))
+            }
+        }
+    }
+
     fn parse_expr<'a>(&mut self, node: AstNode<'a>) -> Result<'a, (usize, Types)> {
         let node_clone = node.clone();
         match node.kind {
@@ -131,19 +149,7 @@ impl QuadrupleManager<'_> {
                 self.add_quad(quad);
                 Ok((res, res_type))
             }
-            AstNodeKind::Id(name) => {
-                match self
-                    .function_variables()
-                    .get(&name)
-                    .or(self.global_variables().get(&name))
-                {
-                    Some(variable) => Ok((variable.address, variable.data_type)),
-                    None => {
-                        let kind = RaoulErrorKind::UndeclaredVar { name };
-                        Err(RaoulError::new(node_clone, kind))
-                    }
-                }
-            }
+            AstNodeKind::Id(name) => self.get_variable_name_address(name, node_clone),
             AstNodeKind::Read => {
                 let data_type = Types::STRING;
                 let res = self.safe_add_temp(&data_type, node_clone)?;
@@ -179,6 +185,16 @@ impl QuadrupleManager<'_> {
         }
     }
 
+    fn assert_type<'a>(&self, from: Types, to: Types, node: AstNode<'a>) -> Results<'a, ()> {
+        match from.can_cast(to) {
+            true => Ok(()),
+            false => {
+                let error = RaoulError::new(node, RaoulErrorKind::InvalidCast { from, to });
+                Err(vec![error])
+            }
+        }
+    }
+
     fn assert_expr_type<'a>(
         &mut self,
         expr: AstNode<'a>,
@@ -186,16 +202,8 @@ impl QuadrupleManager<'_> {
     ) -> Results<'a, (usize, Types)> {
         let expr_clone = expr.clone();
         let (res_address, res_type) = self.parse_expr_results(expr)?;
-        match res_type.can_cast(to) {
-            true => Ok((res_address, res_type)),
-            false => {
-                let error = RaoulError::new(
-                    expr_clone,
-                    RaoulErrorKind::InvalidCast { from: res_type, to },
-                );
-                Err(vec![error])
-            }
-        }
+        self.assert_type(res_type, to, expr_clone)?;
+        Ok((res_address, res_type))
     }
 
     fn parse_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
@@ -235,6 +243,7 @@ impl QuadrupleManager<'_> {
     }
 
     fn parse_function<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
+        let node_clone = node.clone();
         match node.kind {
             AstNodeKind::Assignment {
                 global,
@@ -316,11 +325,24 @@ impl QuadrupleManager<'_> {
                 expr,
                 statements,
             } => {
+                let name = String::from(*assignment.clone());
                 self.parse_function(*assignment)?;
                 self.jump_list.push(self.quad_list.len());
                 let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
                 self.parse_body(statements)?;
+                let result = self.get_variable_name_address(name, node_clone.clone());
+                if let Err(error) = result {
+                    return Err(vec![error]);
+                }
+                let (var_address, var_type) = result.unwrap();
+                self.assert_type(var_type, Types::INT, node_clone)?;
+                self.add_quad(Quadruple {
+                    operator: Operator::Inc,
+                    op_1: None,
+                    op_2: None,
+                    res: Some(var_address),
+                });
                 let index = self.jump_list.pop().unwrap();
                 let goto_res = self.jump_list.pop().unwrap();
                 self.add_quad(Quadruple {
