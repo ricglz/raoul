@@ -27,8 +27,21 @@ impl<'a> AstNode<'a> {
                 .into_iter()
                 .flat_map(AstNode::expand_node)
                 .collect(),
+            AstNodeKind::For {
+                statements,
+                assignment,
+                ..
+            } => vec![*assignment.clone()]
+                .to_owned()
+                .into_iter()
+                .chain(statements.to_owned())
+                .flat_map(AstNode::expand_node)
+                .collect(),
             _ => vec![node],
         }
+    }
+    pub fn new(kind: AstNodeKind<'a>, span: Span<'a>) -> AstNode<'a> {
+        AstNode { kind, span }
     }
 }
 
