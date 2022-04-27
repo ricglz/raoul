@@ -311,6 +311,26 @@ impl QuadrupleManager<'_> {
                 });
                 Ok(self.fill_goto_index(index))
             }
+            AstNodeKind::For {
+                assignment,
+                expr,
+                statements,
+            } => {
+                self.parse_function(*assignment)?;
+                self.jump_list.push(self.quad_list.len());
+                let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
+                self.add_goto(Operator::GotoF, Some(res_address));
+                self.parse_body(statements)?;
+                let index = self.jump_list.pop().unwrap();
+                let goto_res = self.jump_list.pop().unwrap();
+                self.add_quad(Quadruple {
+                    operator: Operator::Goto,
+                    op_1: None,
+                    op_2: None,
+                    res: Some(goto_res),
+                });
+                Ok(self.fill_goto_index(index))
+            }
             _ => unreachable!("{:?}", node.kind),
         }
     }
