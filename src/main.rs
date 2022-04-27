@@ -11,7 +11,7 @@ mod quadruple;
 
 use dir_func::DirFunc;
 use parser::parse;
-use quadruple::QuadrupleManager;
+use quadruple::quadruple_manager::QuadrupleManager;
 
 // ANCHOR: Testing the examples
 mod test_parser;
