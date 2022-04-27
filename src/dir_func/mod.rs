@@ -14,7 +14,7 @@ use self::{
 };
 
 pub mod function;
-mod variable;
+pub mod variable;
 pub mod variable_value;
 
 #[derive(PartialEq, Debug)]
