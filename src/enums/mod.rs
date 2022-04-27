@@ -170,6 +170,7 @@ pub enum Operator {
     Minus,
     Times,
     Div,
+    Inc,
     // ByteCode
     Assignment,
     Print,

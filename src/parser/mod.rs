@@ -379,6 +379,25 @@ impl LanguageParser {
         ))
     }
 
+    fn for_loop(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [assignment(assignment), expr(stop_expr), block(statements)] => {
+                let assignment_clone = assignment.clone();
+                let expr_clone = stop_expr.clone();
+                let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment_clone.kind)), assignment_clone.span);
+                let expr_kind = AstNodeKind::BinaryOperation {
+                    operator: Operator::Lt,
+                    lhs: Box::new(id_node),
+                    rhs: Box::new(stop_expr),
+                };
+                let expr = Box::new(AstNode::new(expr_kind, expr_clone.span));
+                let kind = AstNodeKind::For { assignment: Box::new(assignment), expr, statements };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
     // Inline statements
     fn assignment(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
@@ -413,6 +432,7 @@ impl LanguageParser {
             [write(node)] => node,
             [decision(node)] => node,
             [while_loop(node)] => node,
+            [for_loop(node)] => node,
         ))
     }
 
