@@ -182,6 +182,20 @@ impl LanguageParser {
         })
     }
 
+    fn func_call(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [id(id)] => {
+                let kind = AstNodeKind::FuncCall { name: String::from(id), exprs: Vec::new() };
+                AstNode { kind, span }
+            },
+            [id(id), exprs(exprs)] => {
+                let kind = AstNodeKind::FuncCall { name: String::from(id), exprs };
+                AstNode { kind, span }
+            },
+        ))
+    }
+
     // ID
     fn id(input: Node) -> Result<AstNode> {
         Ok(AstNode {
@@ -304,6 +318,7 @@ impl LanguageParser {
             [string_value(string)] => string,
             [bool_cte(value)] => value,
             [id(id)] => id,
+            [func_call(call)] => call,
         ))
     }
 
@@ -422,6 +437,15 @@ impl LanguageParser {
         ))
     }
 
+    fn return_statement(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [expr(expr)] => {
+                AstNode { kind: AstNodeKind::Return(Box::new(expr)), span }
+            },
+        ))
+    }
+
     fn statement(input: Node) -> Result<AstNode> {
         // TODO: Still misses some conditions
         if *input.user_data() {
@@ -433,6 +457,8 @@ impl LanguageParser {
             [decision(node)] => node,
             [while_loop(node)] => node,
             [for_loop(node)] => node,
+            [func_call(node)] => node,
+            [return_statement(node)] => node,
         ))
     }
 

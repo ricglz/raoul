@@ -58,6 +58,11 @@ pub enum AstNodeKind<'a> {
         expr: Box<AstNode<'a>>,
         statements: Vec<AstNode<'a>>,
     },
+    FuncCall {
+        name: String,
+        exprs: Vec<AstNode<'a>>,
+    },
+    Return(Box<AstNode<'a>>),
 }
 
 impl<'a> From<AstNodeKind<'a>> for String {
@@ -92,7 +97,7 @@ impl fmt::Debug for AstNodeKind<'_> {
                 write!(f, "Unary({:?}, {:?})", operation, operand)
             }
             AstNodeKind::Main { functions, body } => {
-                write!(f, "Main(({:?}, {:#?}))", functions, body)
+                write!(f, "Main(({:#?}, {:#?}))", functions, body)
             }
             AstNodeKind::Argument { arg_type, name } => {
                 write!(f, "Argument({:?}, {})", arg_type, name)
@@ -105,8 +110,8 @@ impl fmt::Debug for AstNodeKind<'_> {
             } => {
                 write!(
                     f,
-                    "Function({}, {:#?}, {:#?}, {:?})",
-                    name, arguments, return_type, body
+                    "Function({}, {:?}, {:?}, {:#?})",
+                    name, return_type, arguments, body
                 )
             }
             AstNodeKind::Write { exprs } => write!(f, "Write({:?})", exprs),
@@ -134,6 +139,10 @@ impl fmt::Debug for AstNodeKind<'_> {
             } => {
                 write!(f, "For({expr:?}, {statements:?}, {assignment:?})")
             }
+            AstNodeKind::FuncCall { name, exprs } => {
+                write!(f, "FunctionCall({name}, {exprs:?})")
+            }
+            AstNodeKind::Return(expr) => write!(f, "Return({expr:?})"),
         }
     }
 }
