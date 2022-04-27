@@ -167,7 +167,10 @@ impl QuadrupleManager<'_> {
                     .or(self.global_variables().get(&name))
                 {
                     Some(variable) => Ok((variable.address, variable.data_type)),
-                    None => unreachable!(),
+                    None => {
+                        let kind = RaoulErrorKind::UndeclaredVar { name };
+                        Err(RaoulError::new(node_clone, kind))
+                    },
                 }
             }
             AstNodeKind::Read => {
