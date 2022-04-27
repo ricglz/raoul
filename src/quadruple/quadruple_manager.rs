@@ -174,7 +174,8 @@ impl QuadrupleManager<'_> {
                 });
                 Ok((res, data_type))
             }
-            kind => unreachable!("{:?}", kind),
+            AstNodeKind::FuncCall { name, .. } => self.get_variable_name_address(name, node_clone),
+            kind => unreachable!("{kind:?}"),
         }
     }
 
@@ -353,17 +354,40 @@ impl QuadrupleManager<'_> {
                 });
                 Ok(self.fill_goto_index(index))
             }
-            _ => unreachable!("{:?}", node.kind),
+            AstNodeKind::Return(expr) => {
+                let (expr_address, _) = self.parse_expr_results(*expr)?;
+                Ok(self.add_quad(Quadruple {
+                    operator: Operator::Return,
+                    op_1: Some(expr_address),
+                    op_2: None,
+                    res: None,
+                }))
+            }
+            AstNodeKind::FuncCall { name, exprs } => Ok(()),
+            kind => unreachable!("{kind:?}"),
         }
     }
 
     pub fn parse<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         match node.kind {
-            AstNodeKind::Main { body, .. } => {
+            AstNodeKind::Main { body, functions } => {
+                self.add_goto(Operator::Goto, None);
+                let errors: Vec<RaoulError> = functions
+                    .into_iter()
+                    .filter_map(|node| self.parse(node).err())
+                    .flatten()
+                    .collect();
+                self.fill_goto();
+                if !errors.is_empty() {
+                    return Err(errors);
+                }
                 self.function_name = "main".to_owned();
                 Ok(self.parse_body(body)?)
             }
-            AstNodeKind::Function { .. } => todo!(),
+            AstNodeKind::Function { name, body, .. } => {
+                self.function_name = name;
+                Ok(self.parse_body(body)?)
+            }
             _ => unreachable!(),
         }
     }
