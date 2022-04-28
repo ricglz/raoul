@@ -8,12 +8,14 @@ mod enums;
 mod error;
 mod parser;
 mod quadruple;
+mod vm;
 
 use ast::AstNode;
 use dir_func::DirFunc;
 use error::Results;
 use parser::parse;
 use quadruple::quadruple_manager::QuadrupleManager;
+use vm::VM;
 
 // ANCHOR: Testing the examples
 mod test_parser;
@@ -33,11 +35,13 @@ fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, ()> {
     }
     let mut quad_manager = QuadrupleManager::new(&mut dir_func);
     quad_manager.parse(ast.clone())?;
-    Ok(if debug {
+    if debug {
         println!("Quads created sucessfully");
         println!("{:#?}", quad_manager.memory);
         println!("{:?}", quad_manager);
-    })
+    }
+    let _vm = VM::new(&quad_manager);
+    Ok(())
 }
 
 fn main() {

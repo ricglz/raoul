@@ -16,7 +16,7 @@ use crate::{
 
 #[derive(PartialEq)]
 pub struct QuadrupleManager<'a> {
-    dir_func: &'a mut DirFunc,
+    pub dir_func: &'a mut DirFunc,
     function_name: String,
     jump_list: Vec<usize>,
     pub memory: ConstantMemory,

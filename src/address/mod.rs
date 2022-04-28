@@ -240,7 +240,7 @@ impl fmt::Debug for ConstantMemory {
     }
 }
 
-struct Memory {
+pub struct Memory {
     int_pointer: usize,
     float_pointer: usize,
     string_pointer: usize,
