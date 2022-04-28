@@ -38,6 +38,7 @@ fn get_type_base(data_type: &Types) -> usize {
 }
 
 pub trait GenericAddressManager {
+    fn get_address_counter(&self) -> AddressCounter;
     fn get_address(&mut self, data_type: &Types) -> Option<usize>;
     fn size(&self) -> usize;
 }
@@ -62,6 +63,9 @@ impl AddressManager {
 }
 
 impl GenericAddressManager for AddressManager {
+    fn get_address_counter(&self) -> AddressCounter {
+        self.counter.clone()
+    }
     fn get_address(&mut self, data_type: &Types) -> Option<usize> {
         let type_counter = self
             .counter
@@ -146,6 +150,9 @@ impl TempAddressManager {
 }
 
 impl GenericAddressManager for TempAddressManager {
+    fn get_address_counter(&self) -> AddressCounter {
+        self.address_manager.get_address_counter()
+    }
     fn get_address(&mut self, data_type: &Types) -> Option<usize> {
         self.type_released_addresses(data_type)
             .pop()
@@ -162,12 +169,10 @@ impl fmt::Debug for TempAddressManager {
     }
 }
 
-type Memory = HashMap<Types, Vec<VariableValue>>;
-
 #[derive(PartialEq, Clone)]
 pub struct ConstantMemory {
     base: usize,
-    memory: Memory,
+    memory: HashMap<Types, Vec<VariableValue>>,
 }
 
 impl ConstantMemory {
@@ -232,6 +237,33 @@ impl ConstantMemory {
 impl fmt::Debug for ConstantMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ConstantMemory({:?})", self.memory)
+    }
+}
+
+struct Memory {
+    int_pointer: usize,
+    float_pointer: usize,
+    string_pointer: usize,
+    bool_pointer: usize,
+    space: Vec<Option<VariableValue>>,
+}
+
+impl Memory {
+    pub fn new(manager: Box<dyn GenericAddressManager>) -> Self {
+        let counter = manager.get_address_counter();
+        let int_pointer: usize = 0;
+        let float_pointer = int_pointer + counter.get(&Types::INT).unwrap();
+        let string_pointer = float_pointer + counter.get(&Types::FLOAT).unwrap();
+        let bool_pointer = string_pointer + counter.get(&Types::STRING).unwrap();
+        let total_size = bool_pointer + counter.get(&Types::BOOL).unwrap();
+        let space = vec![None; total_size];
+        Memory {
+            int_pointer,
+            float_pointer,
+            string_pointer,
+            bool_pointer,
+            space,
+        }
     }
 }
 
