@@ -40,7 +40,8 @@ fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, ()> {
         println!("{:#?}", quad_manager.memory);
         println!("{:?}", quad_manager);
     }
-    let _vm = VM::new(&quad_manager);
+    let mut vm = VM::new(&quad_manager);
+    vm.run();
     Ok(())
 }
 
