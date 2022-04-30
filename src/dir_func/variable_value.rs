@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, BitAnd, BitOr, Div, Mul, Not, Sub};
 
 use crate::{ast::ast_kind::AstNodeKind, enums::Types};
 
@@ -57,6 +57,16 @@ impl From<VariableValue> for f64 {
 impl From<&VariableValue> for f64 {
     fn from(v: &VariableValue) -> Self {
         Self::from(v.to_owned())
+    }
+}
+
+impl From<VariableValue> for bool {
+    fn from(v: VariableValue) -> Self {
+        match v {
+            VariableValue::Integer(a) => a != 0,
+            VariableValue::Bool(a) => a,
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -139,5 +149,29 @@ impl PartialOrd for VariableValue {
                 _ => None,
             },
         }
+    }
+}
+
+impl BitOr for VariableValue {
+    type Output = Self;
+
+    fn bitor(self, other: Self) -> Self::Output {
+        Self::Bool(bool::from(self) | bool::from(other))
+    }
+}
+
+impl BitAnd for VariableValue {
+    type Output = Self;
+
+    fn bitand(self, other: Self) -> Self::Output {
+        Self::Bool(bool::from(self) & bool::from(other))
+    }
+}
+
+impl Not for VariableValue {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self::Bool(!bool::from(self))
     }
 }
