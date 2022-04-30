@@ -18,6 +18,24 @@ impl VariableValue {
             _ => false,
         }
     }
+
+    #[inline]
+    fn cast_to_bool(&self) -> VariableValue {
+        Self::Bool(bool::from(self))
+    }
+
+    #[inline]
+    fn cast_to_float(&self) -> VariableValue {
+        Self::Float(f64::from(self))
+    }
+
+    pub fn cast_to(&self, to: Types) -> VariableValue {
+        match to {
+            Types::BOOL => self.cast_to_bool(),
+            Types::FLOAT => self.cast_to_float(),
+            _ => self.clone(),
+        }
+    }
 }
 
 impl From<&VariableValue> for Types {
@@ -67,6 +85,12 @@ impl From<VariableValue> for bool {
             VariableValue::Bool(a) => a,
             _ => unreachable!(),
         }
+    }
+}
+
+impl From<&VariableValue> for bool {
+    fn from(v: &VariableValue) -> Self {
+        Self::from(v.to_owned())
     }
 }
 

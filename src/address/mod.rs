@@ -289,7 +289,7 @@ impl Memory {
         }
     }
 
-    fn get_index(&self, address: usize) -> usize {
+    fn get_index(&self, address: usize) -> (usize, Types) {
         let (contextless_address, _, address_type) = get_address_info(address, self.base);
         let type_index = contextless_address % THRESHOLD;
         let pointer = match address_type {
@@ -299,16 +299,17 @@ impl Memory {
             Types::BOOL => self.bool_pointer,
             data_type => unreachable!("{:?}", data_type),
         };
-        type_index + pointer
+        (type_index + pointer, address_type)
     }
 
     pub fn get(&self, address: usize) -> Option<VariableValue> {
-        let index = self.get_index(address);
+        let index = self.get_index(address).0;
         self.space.get(index).unwrap().to_owned()
     }
 
-    pub fn write(&mut self, address: usize, value: VariableValue) {
-        let index = self.get_index(address);
+    pub fn write(&mut self, address: usize, uncast: VariableValue) {
+        let (index, address_type) = self.get_index(address);
+        let value = uncast.cast_to(address_type);
         *self.space.get_mut(index).unwrap() = Some(value);
     }
 }
