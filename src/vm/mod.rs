@@ -181,6 +181,23 @@ impl VM {
         self.write_value(value, quad.res.unwrap());
     }
 
+    fn conditional_goto(&mut self, approved: bool) -> usize {
+        let quad = self.get_current_quad();
+        let cond = self.get_value(quad.op_1.unwrap());
+        let quad_pos = self.current_context().quad_pos;
+        match bool::from(cond) == approved {
+            true => quad.res.unwrap() - 1,
+            false => quad_pos,
+        }
+    }
+
+    fn process_inc(&mut self) {
+        let quad = self.get_current_quad();
+        let a = self.get_value(quad.res.unwrap());
+        let value = a + VariableValue::Integer(1);
+        self.write_value(value, quad.res.unwrap());
+    }
+
     pub fn run(&mut self) {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
@@ -205,6 +222,8 @@ impl VM {
                 | Operator::Eq
                 | Operator::Ne => self.comparison(),
                 Operator::Not => self.unary_operation(|a| !a),
+                Operator::GotoF => quad_pos = self.conditional_goto(false),
+                Operator::Inc => self.process_inc(),
                 kind => todo!("{:?}", kind),
             }
             self.update_quad_pos(quad_pos + 1);
