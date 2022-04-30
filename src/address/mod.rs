@@ -41,6 +41,7 @@ pub trait GenericAddressManager {
     fn get_address_counter(&self) -> AddressCounter;
     fn get_address(&mut self, data_type: &Types) -> Option<usize>;
     fn size(&self) -> usize;
+    fn get_base(&self) -> usize;
 }
 
 #[derive(PartialEq, Clone)]
@@ -63,6 +64,7 @@ impl AddressManager {
 }
 
 impl GenericAddressManager for AddressManager {
+    #[inline]
     fn get_address_counter(&self) -> AddressCounter {
         self.counter.clone()
     }
@@ -79,6 +81,7 @@ impl GenericAddressManager for AddressManager {
         let type_base = get_type_base(&data_type);
         Some(self.base + type_counter_clone + type_base)
     }
+    #[inline]
     fn size(&self) -> usize {
         self.counter
             .to_owned()
@@ -86,6 +89,10 @@ impl GenericAddressManager for AddressManager {
             .map(|v| v.1)
             .reduce(|a, v| a + v)
             .unwrap_or(0)
+    }
+    #[inline]
+    fn get_base(&self) -> usize {
+        self.base
     }
 }
 
@@ -150,16 +157,23 @@ impl TempAddressManager {
 }
 
 impl GenericAddressManager for TempAddressManager {
+    #[inline]
     fn get_address_counter(&self) -> AddressCounter {
         self.address_manager.get_address_counter()
     }
+    #[inline]
     fn get_address(&mut self, data_type: &Types) -> Option<usize> {
         self.type_released_addresses(data_type)
             .pop()
             .or(self.address_manager.get_address(data_type))
     }
+    #[inline]
     fn size(&self) -> usize {
         self.address_manager.size()
+    }
+    #[inline]
+    fn get_base(&self) -> usize {
+        self.address_manager.base
     }
 }
 
@@ -173,6 +187,19 @@ impl fmt::Debug for TempAddressManager {
 pub struct ConstantMemory {
     base: usize,
     memory: HashMap<Types, Vec<VariableValue>>,
+}
+
+fn get_address_info(address: usize, base: usize) -> (usize, usize, Types) {
+    let contextless_address = address - base;
+    let type_determinant = contextless_address / THRESHOLD;
+    let address_type = match type_determinant {
+        0 => Types::INT,
+        1 => Types::FLOAT,
+        2 => Types::STRING,
+        3 => Types::BOOL,
+        _ => unreachable!(),
+    };
+    (contextless_address, type_determinant, address_type)
 }
 
 impl ConstantMemory {
@@ -214,23 +241,15 @@ impl ConstantMemory {
         Some((address, data_type))
     }
 
-    fn get(&self, address: usize) -> Option<VariableValue> {
-        let contextless_address = address - self.base;
-        let type_determinant = contextless_address / THRESHOLD;
-        let address_type = match type_determinant {
-            0 => Types::INT,
-            1 => Types::FLOAT,
-            2 => Types::STRING,
-            3 => Types::BOOL,
-            _ => unreachable!(),
-        };
-        let type_memory = self.memory.get(&address_type).unwrap();
-        Some(
-            type_memory
-                .get(contextless_address - type_determinant * THRESHOLD)
-                .unwrap()
-                .to_owned(),
-        )
+    pub fn get(&self, address: usize) -> VariableValue {
+        let (contextless_address, type_determinant, address_type) =
+            get_address_info(address, self.base);
+        self.memory
+            .get(&address_type)
+            .unwrap()
+            .get(contextless_address - type_determinant * THRESHOLD)
+            .unwrap()
+            .to_owned()
     }
 }
 
@@ -240,7 +259,9 @@ impl fmt::Debug for ConstantMemory {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Memory {
+    base: usize,
     int_pointer: usize,
     float_pointer: usize,
     string_pointer: usize,
@@ -251,6 +272,7 @@ pub struct Memory {
 impl Memory {
     pub fn new(manager: Box<dyn GenericAddressManager>) -> Self {
         let counter = manager.get_address_counter();
+        let base = manager.get_base();
         let int_pointer: usize = 0;
         let float_pointer = int_pointer + counter.get(&Types::INT).unwrap();
         let string_pointer = float_pointer + counter.get(&Types::FLOAT).unwrap();
@@ -258,12 +280,36 @@ impl Memory {
         let total_size = bool_pointer + counter.get(&Types::BOOL).unwrap();
         let space = vec![None; total_size];
         Memory {
+            base,
             int_pointer,
             float_pointer,
             string_pointer,
             bool_pointer,
             space,
         }
+    }
+
+    fn get_index(&self, address: usize) -> usize {
+        let (contextless_address, _, address_type) = get_address_info(address, self.base);
+        let type_index = contextless_address % THRESHOLD;
+        let pointer = match address_type {
+            Types::INT => self.int_pointer,
+            Types::FLOAT => self.float_pointer,
+            Types::STRING => self.string_pointer,
+            Types::BOOL => self.bool_pointer,
+            data_type => unreachable!("{:?}", data_type),
+        };
+        type_index + pointer
+    }
+
+    pub fn get(&self, address: usize) -> Option<VariableValue> {
+        let index = self.get_index(address);
+        self.space.get(index).unwrap().to_owned()
+    }
+
+    pub fn write(&mut self, address: usize, value: VariableValue) {
+        let index = self.get_index(address);
+        *self.space.get_mut(index).unwrap() = Some(value);
     }
 }
 
