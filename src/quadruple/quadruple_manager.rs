@@ -15,16 +15,16 @@ use crate::{
 };
 
 #[derive(PartialEq)]
-pub struct QuadrupleManager<'a> {
-    pub dir_func: &'a mut DirFunc,
+pub struct QuadrupleManager {
+    pub dir_func: DirFunc,
     function_name: String,
     jump_list: Vec<usize>,
     pub memory: ConstantMemory,
     pub quad_list: Vec<Quadruple>,
 }
 
-impl QuadrupleManager<'_> {
-    pub fn new<'a>(dir_func: &'a mut DirFunc) -> QuadrupleManager<'a> {
+impl QuadrupleManager {
+    pub fn new(dir_func: DirFunc) -> QuadrupleManager {
         QuadrupleManager {
             dir_func,
             function_name: "".to_owned(),
@@ -502,7 +502,7 @@ impl QuadrupleManager<'_> {
     }
 }
 
-impl fmt::Debug for QuadrupleManager<'_> {
+impl fmt::Debug for QuadrupleManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value: String = self
             .quad_list

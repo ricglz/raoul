@@ -26,23 +26,21 @@ use std::process::exit;
 
 use args::parse_args;
 
-fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, ()> {
+fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, QuadrupleManager> {
     let mut dir_func = DirFunc::new();
     dir_func.build_dir_func(ast.clone())?;
     if debug {
         println!("Dir func created sucessfully");
         println!("{:#?}", dir_func);
     }
-    let mut quad_manager = QuadrupleManager::new(&mut dir_func);
+    let mut quad_manager = QuadrupleManager::new(dir_func);
     quad_manager.parse(ast.clone())?;
     if debug {
         println!("Quads created sucessfully");
         println!("{:#?}", quad_manager.memory);
         println!("{:?}", quad_manager);
     }
-    let mut vm = VM::new(&quad_manager);
-    vm.run();
-    Ok(())
+    Ok(quad_manager)
 }
 
 fn main() {
@@ -63,12 +61,16 @@ fn main() {
         println!("Parsing ended sucessfully");
         println!("AST:\n{:?}", ast);
     }
-    if let Err(errors) = parse_ast(ast, debug) {
+    let res = parse_ast(ast, debug);
+    if let Err(errors) = res {
         for error in errors {
             println!("{:?}", error);
         }
         exit(1);
     }
+    let quad_manager = res.unwrap();
+    let mut vm = VM::new(&quad_manager);
+    vm.run();
 }
 
 #[cfg(test)]
