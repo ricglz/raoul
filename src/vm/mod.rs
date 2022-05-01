@@ -1,58 +1,91 @@
-use std::{cmp::Ordering, io::stdin};
+use std::{cmp::Ordering, collections::HashMap, io::stdin, process::exit, vec};
 
 use crate::{
     address::{ConstantMemory, Memory, TOTAL_SIZE},
-    dir_func::{function::Function, variable_value::VariableValue, FunctionTable},
+    dir_func::{
+        function::{Function, VariablesTable},
+        variable_value::VariableValue,
+    },
     enums::Operator,
     quadruple::{quadruple::Quadruple, quadruple_manager::QuadrupleManager},
 };
 
+#[derive(Clone, Debug)]
 pub struct VMContext {
-    quad_pos: usize,
-    name: String,
+    args: Vec<usize>,
     local_memory: Memory,
+    name: String,
+    quad_pos: usize,
+    size: usize,
     temp_memory: Memory,
 }
 
 impl VMContext {
     pub fn new(function: Function) -> Self {
+        let size = function.size();
         let local_memory = Memory::new(Box::new(function.local_addresses));
         let temp_memory = Memory::new(Box::new(function.temp_addresses));
-        let name = function.name.clone();
         let quad_pos = function.first_quad;
-        VMContext {
-            quad_pos,
-            name,
+        let name = function.name;
+        let args = function.args.into_iter().map(|v| v.address).collect();
+        Self {
+            args,
             local_memory,
+            name,
+            quad_pos,
+            size,
             temp_memory,
         }
     }
 }
 
+#[derive(Debug)]
 pub struct VM {
+    call_stack: Vec<VMContext>,
     constant_memory: ConstantMemory,
     contexts_stack: Vec<VMContext>,
-    functions: FunctionTable,
+    functions: HashMap<usize, Function>,
     global_memory: Memory,
+    global_variables: VariablesTable,
     quad_list: Vec<Quadruple>,
+    stack_size: usize,
 }
+
+const STACK_SIZE_CAP: usize = 1024;
 
 impl VM {
     pub fn new(quad_manager: &QuadrupleManager) -> Self {
         let constant_memory = quad_manager.memory.clone();
         let functions = quad_manager.dir_func.functions.clone();
-        let global_memory =
-            Memory::new(Box::new(quad_manager.dir_func.global_fn.addresses.clone()));
+        let global_fn = quad_manager.dir_func.global_fn.clone();
+        let global_memory = Memory::new(Box::new(global_fn.addresses));
+        let global_variables = global_fn.variables;
         let quad_list = quad_manager.quad_list.clone();
         let main_function = functions.get("main").unwrap().clone();
+        let stack_size = main_function.size();
         let initial_context = VMContext::new(main_function);
         VM {
+            call_stack: vec![],
             constant_memory,
             contexts_stack: vec![initial_context],
-            functions,
+            functions: functions
+                .into_iter()
+                .map(|(_, function)| (function.first_quad.clone(), function))
+                .collect(),
             global_memory,
+            global_variables,
             quad_list,
+            stack_size,
         }
+    }
+
+    fn add_call_stack(&mut self, function: Function) {
+        self.stack_size += function.size();
+        if self.stack_size > STACK_SIZE_CAP {
+            println!("Stack overflow!");
+            exit(1);
+        }
+        self.call_stack.push(VMContext::new(function));
     }
 
     #[inline]
@@ -88,6 +121,11 @@ impl VM {
     #[inline]
     fn update_quad_pos(&mut self, quad_pos: usize) {
         self.current_context_mut().quad_pos = quad_pos;
+    }
+
+    #[inline]
+    fn get_function(&self, first_quad: usize) -> Function {
+        self.functions.get(&first_quad).unwrap().clone()
     }
 
     fn get_current_quad(&self) -> Quadruple {
@@ -198,6 +236,63 @@ impl VM {
         self.write_value(value, quad.res.unwrap());
     }
 
+    fn process_era(&mut self) {
+        let quad = self.get_current_quad();
+        let first_quad = quad.op_2.unwrap();
+        let function = self.get_function(first_quad);
+        self.add_call_stack(function);
+    }
+
+    fn process_go_sub(&mut self) {
+        let quad_pos = self.current_context().quad_pos;
+        self.update_quad_pos(quad_pos + 1);
+        let call = self.call_stack.pop().unwrap();
+        self.contexts_stack.push(call);
+    }
+
+    fn process_end_proc(&mut self) {
+        let context = self.contexts_stack.pop().unwrap();
+        self.stack_size -= context.size;
+    }
+
+    #[inline]
+    fn current_call(&self) -> VMContext {
+        self.call_stack.last().unwrap().clone()
+    }
+
+    #[inline]
+    fn current_call_mut(&mut self) -> &mut VMContext {
+        self.call_stack.last_mut().unwrap()
+    }
+
+    fn write_value_param(&mut self, value: VariableValue, address: usize) {
+        let memory = match address / TOTAL_SIZE {
+            1 => &mut self.current_call_mut().local_memory,
+            val => unreachable!("{val}"),
+        };
+        memory.write(address, value);
+    }
+
+    fn process_param(&mut self) {
+        let quad = self.get_current_quad();
+        let value = self.get_value(quad.op_1.unwrap());
+        let index = quad.res.unwrap();
+        let address = self.current_call().args.get(index).unwrap().clone();
+        self.write_value_param(value, address);
+    }
+
+    fn get_context_global_address(&self) -> usize {
+        let name = &self.current_context().name;
+        self.global_variables.get(name).unwrap().address
+    }
+
+    fn process_return(&mut self) {
+        let quad = self.get_current_quad();
+        let value = self.get_value(quad.op_1.unwrap());
+        let address = self.get_context_global_address();
+        self.write_value(value, address);
+    }
+
     pub fn run(&mut self) {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
@@ -224,7 +319,18 @@ impl VM {
                 Operator::Not => self.unary_operation(|a| !a),
                 Operator::GotoF => quad_pos = self.conditional_goto(false),
                 Operator::Inc => self.process_inc(),
-                kind => todo!("{:?}", kind),
+                Operator::Era => self.process_era(),
+                Operator::GoSub => {
+                    self.process_go_sub();
+                    continue;
+                }
+                Operator::EndProc => {
+                    self.process_end_proc();
+                    continue;
+                }
+                Operator::Param => self.process_param(),
+                Operator::Return => self.process_return(),
+                // kind => todo!("{:?}", kind),
             }
             self.update_quad_pos(quad_pos + 1);
         }
