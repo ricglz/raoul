@@ -34,6 +34,7 @@ impl QuadrupleManager {
         }
     }
 
+    #[inline]
     fn get_function(&self, name: &str) -> &Function {
         self.dir_func
             .functions
@@ -41,14 +42,17 @@ impl QuadrupleManager {
             .expect(&self.function_name)
     }
 
+    #[inline]
     fn function(&self) -> &Function {
         self.get_function(&self.function_name)
     }
 
+    #[inline]
     fn function_variables(&self) -> &VariablesTable {
         &self.function().variables
     }
 
+    #[inline]
     fn global_variables(&self) -> &VariablesTable {
         &self.dir_func.global_fn.variables
     }
@@ -61,6 +65,7 @@ impl QuadrupleManager {
         variables.get(name).expect(name).address
     }
 
+    #[inline]
     fn function_mut(&mut self) -> &mut Function {
         self.dir_func
             .functions
@@ -68,6 +73,7 @@ impl QuadrupleManager {
             .unwrap()
     }
 
+    #[inline]
     fn add_temp(&mut self, data_type: &Types) -> Option<usize> {
         self.function_mut().temp_addresses.get_address(data_type)
     }
@@ -175,11 +181,13 @@ impl QuadrupleManager {
     }
 
     fn add_era_quad(&mut self, name: &str) {
-        let function_size = self.get_function(name).size();
+        let function = self.get_function(name);
+        let function_size = function.size();
+        let first_quad = function.first_quad;
         self.add_quad(Quadruple {
             operator: Operator::Era,
             op_1: Some(function_size),
-            op_2: None,
+            op_2: Some(first_quad),
             res: None,
         });
     }
@@ -459,6 +467,7 @@ impl QuadrupleManager {
         }
     }
 
+    #[inline]
     pub fn update_quad(&mut self, first_quad: usize) {
         self.function_mut().update_quad(first_quad);
     }
