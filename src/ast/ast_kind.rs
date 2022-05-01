@@ -1,5 +1,5 @@
 use super::AstNode;
-use crate::enums::{Operations, Types};
+use crate::enums::{Operator, Types};
 use std::fmt;
 
 #[derive(PartialEq, Clone)]
@@ -15,8 +15,13 @@ pub enum AstNodeKind<'a> {
         value: Box<AstNode<'a>>,
     },
     UnaryOperation {
-        operation: Operations,
+        operator: Operator,
         operand: Box<AstNode<'a>>,
+    },
+    BinaryOperation {
+        operator: Operator,
+        lhs: Box<AstNode<'a>>,
+        rhs: Box<AstNode<'a>>,
     },
     Main {
         functions: Vec<AstNode<'a>>,
@@ -35,6 +40,7 @@ pub enum AstNodeKind<'a> {
     Write {
         exprs: Vec<AstNode<'a>>,
     },
+    Read,
 }
 
 impl<'a> From<AstNodeKind<'a>> for String {
@@ -61,7 +67,10 @@ impl fmt::Debug for AstNodeKind<'_> {
                 name,
                 value,
             } => write!(f, "Assignment({}, {}, {:?})", global, name, value),
-            AstNodeKind::UnaryOperation { operation, operand } => {
+            AstNodeKind::UnaryOperation {
+                operator: operation,
+                operand,
+            } => {
                 write!(f, "Unary({:?}, {:?})", operation, operand)
             }
             AstNodeKind::Main { functions, body } => {
@@ -83,6 +92,10 @@ impl fmt::Debug for AstNodeKind<'_> {
                 )
             }
             AstNodeKind::Write { exprs } => write!(f, "Write({:?})", exprs),
+            AstNodeKind::Read => write!(f, "Read"),
+            AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
+                write!(f, "BinaryOperation({:?}, {:?}, {:?})", operator, lhs, rhs)
+            }
         }
     }
 }

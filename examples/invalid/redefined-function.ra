@@ -1,0 +1,11 @@
+func test(): void {
+  a = 1;
+}
+
+func test(): int {
+  a = 1;
+}
+
+func main(): void {
+  b = 2;
+}

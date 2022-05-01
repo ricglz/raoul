@@ -1,13 +1,17 @@
 mod args;
 
 // ANCHOR: Actual parser
+mod address;
 mod ast;
 mod dir_func;
 mod enums;
 mod error;
 mod parser;
+mod quadruple;
+
 use dir_func::DirFunc;
 use parser::parse;
+use quadruple::QuadrupleManager;
 
 // ANCHOR: Testing the examples
 mod test_parser;
@@ -37,7 +41,7 @@ fn main() {
         println!("AST:\n{:?}", ast);
     }
     let mut dir_func = DirFunc::new();
-    if let Err(errors) = dir_func.build_dir_func(ast) {
+    if let Err(errors) = dir_func.build_dir_func(ast.clone()) {
         for error in errors {
             println!("{:?}", error);
         }
@@ -46,6 +50,18 @@ fn main() {
     if debug {
         println!("Dir func created sucessfully");
         println!("{:#?}", dir_func);
+    }
+    let mut quad_manager = QuadrupleManager::new(&mut dir_func);
+    if let Err(errors) = quad_manager.parse(ast.clone()) {
+        for error in errors {
+            println!("{:?}", error);
+        }
+        exit(1);
+    }
+    if debug {
+        println!("Quads created sucessfully");
+        println!("{:#?}", quad_manager.memory);
+        println!("{:#?}", quad_manager.quad_list);
     }
 }
 

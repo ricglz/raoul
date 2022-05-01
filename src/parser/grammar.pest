@@ -9,17 +9,17 @@ ASGN       = _{ "=" }
 COMMA      = _{","}
 SEMI_COLON = _{";"}
 
-MINUS = {"-"}
-SUM   = {"+"}
-DIV   = {"/"}
-TIMES = {"*"}
+minus = {"-"}
+sum   = {"+"}
+div   = {"/"}
+times = {"*"}
 
-GT  = {">"}
-GTE = {">="}
-LT  = {"<"}
-LTE = {"<="}
-EQ  = {"=="}
-NE  = {"!="}
+gt  = {">"}
+gte = {">="}
+lt  = {"<"}
+lte = {"<="}
+eq  = {"=="}
+ne  = {"!="}
 
 L_BRACKET = _{"{"}
 R_BRACKET = _{"}"}
@@ -28,9 +28,9 @@ R_PAREN   = _{")"}
 L_SQUARE  = _{"["}
 R_SQUARE  = _{"]"}
 
-AND = {"AND"}
-OR  = {"OR"}
-not = {"not"}
+AND = _{"AND"}
+OR  = _{"OR"}
+not = {"NOT"}
 
 bool      = {"bool"}
 float     = {"float"}
@@ -66,11 +66,11 @@ RETURN_KEY = _{"return"}
 
 // Grammar
 
-ART_OP  = _{MINUS | SUM}
-FACT_OP = _{DIV | TIMES}
+art_op  = {minus | sum}
+fact_op = {div | times}
 
-COMP_OP = _{ EQ | NE }
-REL_OP  = _{ GT | GTE | LT | LTE }
+comp_op = { eq | ne }
+rel_op  = { gte | lte | gt | lt }
 
 KEYWORD_TYPE = _{
   AND             |
@@ -109,7 +109,7 @@ ID_SUFFIX = _{ ASCII_ALPHANUMERIC | UNDERSCORE }
 id = @{ !KEYWORD ~ ASCII_ALPHA ~ ID_SUFFIX* }
 
 bool_cte     = @{ TRUE | FALSE }
-int_cte      = @{ MINUS? ~ ASCII_DIGIT+ }
+int_cte      = @{ minus? ~ ASCII_DIGIT+ }
 float_cte    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
 string_value = { (!PEEK ~ ANY)* }
 STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
@@ -123,12 +123,12 @@ VAR_VAL      = _{ CTE | NON_CTE }
 
 expr          = { and_term ~ (OR ~ and_term)* }
 and_term      = { comp_term ~ (AND ~ comp_term)* }
-comp_term     = { rel_term ~ (COMP_OP ~ rel_term)? }
-rel_term      = { art_term ~ (REL_OP ~ art_term)? }
-art_term      = { fact_term ~ (ART_OP ~ fact_term)* }
-fact_term     = { operand ~ (FACT_OP ~ operand)* }
+comp_term     = { rel_term ~ (comp_op ~ rel_term)? }
+rel_term      = { art_term ~ (rel_op ~ art_term)? }
+art_term      = { fact_term ~ (art_op ~ fact_term)* }
+fact_term     = { operand ~ (fact_op ~ operand)* }
 operand       = { not? ~ operand_value }
-operand_value = { L_PAREN ~ expr ~ R_PAREN | VAR_VAL }
+operand_value = { VAR_VAL | L_PAREN ~ expr ~ R_PAREN }
 exprs         = { expr ~ (COMMA ~ expr)* }
 
 atomic_types   = { bool | float | int | string }
@@ -137,10 +137,10 @@ MAT_TYPES      = { L_SQUARE ~ ARR_TYPES ~ R_SQUARE }
 COMPOSED_TYPES = _{ atomic_types | DATAFRAME | ARR_TYPES | MAT_TYPES  }
 types          = { atomic_types | void}
 
-READ = { INPUT ~ L_PAREN ~ R_PAREN }
+read = { INPUT ~ L_PAREN ~ R_PAREN }
 
-ASSIGNMENT_EXP = _{ READ | READ_CSV | expr }
-assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ ASSIGNMENT_EXP }
+assignment_exp = { read | READ_CSV | expr }
+assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ assignment_exp }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
