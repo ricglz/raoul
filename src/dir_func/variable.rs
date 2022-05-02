@@ -19,7 +19,7 @@ pub struct Variable {
 impl Variable {
     pub fn from_node<'a>(
         v: AstNode<'a>,
-        current_function: &mut Function,
+        current_fn: &mut Function,
         global_fn: &mut GlobalScope,
     ) -> Result<'a, (Variable, bool)> {
         let node = v.clone();
@@ -29,14 +29,17 @@ impl Variable {
                 value: node_value,
                 global,
             } => {
-                let data_type = Types::from_node(
-                    *node_value,
-                    &current_function.variables,
-                    &global_fn.variables,
-                )?;
+                let data_type =
+                    Types::from_node(*node_value, &current_fn.variables, &global_fn.variables)?;
                 let address = match global {
-                    true => global_fn.addresses.get_address(&data_type),
-                    false => current_function.local_addresses.get_address(&data_type),
+                    true => match global_fn.variables.contains_key(&name) {
+                        true => Some(global_fn.variables.get(&name).unwrap().address),
+                        false => global_fn.addresses.get_address(&data_type),
+                    },
+                    false => match current_fn.variables.contains_key(&name) {
+                        true => Some(current_fn.variables.get(&name).unwrap().address),
+                        false => current_fn.local_addresses.get_address(&data_type),
+                    },
                 };
                 match address {
                     Some(address) => Ok((
@@ -57,7 +60,7 @@ impl Variable {
                 arg_type: data_type,
                 name,
             } => {
-                let address = current_function.local_addresses.get_address(&data_type);
+                let address = current_fn.local_addresses.get_address(&data_type);
                 match address {
                     Some(address) => Ok((
                         Variable {

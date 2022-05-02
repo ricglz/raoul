@@ -5,5 +5,7 @@ func my_function(): void {
 func main(): void {
   a = 1;
   global c = 2;
+  a = 2;
+  b = 1;
   print(a, c);
 }
