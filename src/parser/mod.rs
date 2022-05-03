@@ -182,6 +182,15 @@ impl LanguageParser {
         })
     }
 
+    fn arr_cte(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [exprs(exprs)] => {
+                AstNode { kind: AstNodeKind::Array(exprs), span }
+            },
+        ))
+    }
+
     fn func_call(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
@@ -319,6 +328,7 @@ impl LanguageParser {
             [bool_cte(value)] => value,
             [id(id)] => id,
             [func_call(call)] => call,
+            [arr_cte(arr)] => arr,
         ))
     }
 
@@ -343,6 +353,28 @@ impl LanguageParser {
         Ok(match_nodes!(input.into_children();
             [expr(value)] => value,
             [read(value)] => value,
+            [declare_arr(value)] => value,
+        ))
+    }
+
+    // Arrays
+    fn declare_arr_type(input: Node) -> Result<Types> {
+        Ok(match_nodes!(input.into_children();
+            [types(data_type)] => data_type,
+        ))
+    }
+
+    fn declare_arr(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [declare_arr_type(data_type), int_cte(dim1)] => {
+                let kind = AstNodeKind::ArrayDeclaration { data_type, dim1: dim1.into(), dim2: None };
+                AstNode {kind, span}
+            },
+            [declare_arr_type(data_type), int_cte(dim1), int_cte(dim2)] => {
+                let kind = AstNodeKind::ArrayDeclaration { data_type, dim1: dim1.into(), dim2: Some(dim2.into()) };
+                AstNode {kind, span}
+            },
         ))
     }
 

@@ -16,6 +16,12 @@ impl<'a> From<AstNode<'a>> for String {
     }
 }
 
+impl<'a> From<AstNode<'a>> for usize {
+    fn from(val: AstNode) -> Self {
+        val.kind.into()
+    }
+}
+
 impl<'a> AstNode<'a> {
     pub fn expand_node(v: AstNode<'a>) -> Vec<AstNode<'a>> {
         let node = v.clone();

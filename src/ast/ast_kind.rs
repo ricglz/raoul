@@ -9,6 +9,12 @@ pub enum AstNodeKind<'a> {
     Float(f64),
     String(String),
     Bool(bool),
+    Array(Vec<AstNode<'a>>),
+    ArrayDeclaration {
+        data_type: Types,
+        dim1: usize,
+        dim2: Option<usize>,
+    },
     Assignment {
         global: bool,
         name: String,
@@ -77,6 +83,15 @@ impl<'a> From<AstNodeKind<'a>> for String {
     }
 }
 
+impl<'a> From<AstNodeKind<'a>> for usize {
+    fn from(val: AstNodeKind) -> Self {
+        match val {
+            AstNodeKind::Integer(n) => n.try_into().unwrap_or(0),
+            node => unreachable!("{node:?}, cannot be a usize"),
+        }
+    }
+}
+
 impl fmt::Debug for AstNodeKind<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
@@ -85,6 +100,14 @@ impl fmt::Debug for AstNodeKind<'_> {
             AstNodeKind::Float(n) => write!(f, "Float({})", n),
             AstNodeKind::String(s) => write!(f, "String({})", s),
             AstNodeKind::Bool(s) => write!(f, "Bool({})", s),
+            AstNodeKind::Array(s) => write!(f, "Array({s:?})"),
+            Self::ArrayDeclaration {
+                data_type,
+                dim1,
+                dim2,
+            } => {
+                write!(f, "ArrayDeclaration({data_type:?}, {dim1}, {dim2:?})")
+            }
             AstNodeKind::Assignment {
                 global,
                 name,

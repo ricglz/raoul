@@ -117,8 +117,8 @@ float_cte    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
 string_value = { (!PEEK ~ ANY)* }
 STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
 ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
-ARR_CTE      = { L_SQUARE ~ exprs? ~ R_SQUARE }
-CTE          = _{ ARR_CTE | ATOM_CTE }
+arr_cte      = { L_SQUARE ~ exprs ~ R_SQUARE }
+CTE          = _{ arr_cte | ATOM_CTE }
 ARR_INDEX    = { L_SQUARE ~ expr ~ R_SQUARE }
 ARR_VAL      = { id ~ ARR_INDEX{1,2} }
 NON_CTE      = _{ DATAFRAME_VALUE_OPS | func_call | ARR_VAL | id }
@@ -139,7 +139,7 @@ types          = { atomic_types | void}
 
 read = { INPUT ~ L_PAREN ~ R_PAREN }
 
-declare_arr_type = @{DECLARE_KEY ~ lt ~ types ~ gt ~ L_PAREN}
+declare_arr_type = {DECLARE_KEY ~ "<" ~ types ~ ">" ~ L_PAREN}
 declare_arr = { declare_arr_type ~ int_cte ~ (COMMA ~ int_cte)? ~ R_PAREN }
 assignment_exp = { read | READ_CSV | expr | declare_arr }
 assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ assignment_exp }
