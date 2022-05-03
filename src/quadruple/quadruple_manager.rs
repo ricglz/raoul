@@ -332,12 +332,14 @@ impl QuadrupleManager {
         }
     }
 
-    fn parse_return_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
+    fn parse_return_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, bool> {
         let prev = self.missing_return;
         self.parse_body(body)?;
-        Ok(if self.missing_return != prev {
+        let current = self.missing_return;
+        if self.missing_return != prev {
             self.missing_return = prev;
-        })
+        }
+        Ok(current)
     }
 
     fn add_goto(&mut self, goto_type: Operator, condition: Option<usize>) {
@@ -404,13 +406,16 @@ impl QuadrupleManager {
             } => {
                 let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
-                self.parse_return_body(statements)?;
+                let if_misses_return = self.parse_return_body(statements)?;
                 Ok(if let Some(node) = else_block {
                     let index = self.jump_list.pop().unwrap();
                     self.add_goto(Operator::Goto, None);
                     self.fill_goto_index(index);
                     self.parse_function(*node)?;
                     self.fill_goto();
+                    if if_misses_return & !self.missing_return {
+                        self.missing_return = true;
+                    }
                 } else {
                     self.fill_goto();
                 })
