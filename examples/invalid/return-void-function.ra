@@ -1,0 +1,7 @@
+func test(): void {
+  return 1;
+}
+
+func main(): void {
+  test();
+}
