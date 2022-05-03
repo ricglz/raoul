@@ -28,6 +28,7 @@ pub enum RaoulErrorKind {
         expected: usize,
         given: usize,
     },
+    MissingReturn(String),
 }
 
 impl fmt::Debug for RaoulErrorKind {
@@ -67,6 +68,9 @@ impl fmt::Debug for RaoulErrorKind {
                     f,
                     "Wrong args amount: Expected {expected}, but were given {given}"
                 )
+            }
+            RaoulErrorKind::MissingReturn(name) => {
+                write!(f, "In function {name} not all branches return a value")
             }
         }
     }

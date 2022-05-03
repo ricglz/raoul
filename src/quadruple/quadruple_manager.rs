@@ -16,10 +16,11 @@ use crate::{
 
 #[derive(PartialEq)]
 pub struct QuadrupleManager {
-    pub dir_func: DirFunc,
     function_name: String,
     jump_list: Vec<usize>,
+    pub dir_func: DirFunc,
     pub memory: ConstantMemory,
+    pub missing_returns: usize,
     pub quad_list: Vec<Quadruple>,
 }
 
@@ -28,9 +29,10 @@ impl QuadrupleManager {
         QuadrupleManager {
             dir_func,
             function_name: "".to_owned(),
-            memory: ConstantMemory::new(),
-            quad_list: Vec::new(),
             jump_list: Vec::new(),
+            memory: ConstantMemory::new(),
+            missing_returns: 0,
+            quad_list: Vec::new(),
         }
     }
 
@@ -395,6 +397,7 @@ impl QuadrupleManager {
                 let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
                 self.parse_body(statements)?;
+                self.missing_returns += 1;
                 Ok(if let Some(node) = else_block {
                     let index = self.jump_list.pop().unwrap();
                     self.add_goto(Operator::Goto, None);
@@ -452,7 +455,9 @@ impl QuadrupleManager {
                 Ok(self.fill_goto_index(index))
             }
             AstNodeKind::Return(expr) => {
-                let (expr_address, _) = self.parse_expr(*expr)?;
+                let return_type = self.function().return_type;
+                let (expr_address, _) = self.assert_expr_type(*expr, return_type)?;
+                self.missing_returns -= 1;
                 Ok(self.add_quad(Quadruple {
                     operator: Operator::Return,
                     op_1: Some(expr_address),
@@ -473,6 +478,7 @@ impl QuadrupleManager {
     }
 
     pub fn parse<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
+        let clone = node.clone();
         match node.kind {
             AstNodeKind::Main { body, functions } => {
                 self.add_goto(Operator::Goto, None);
@@ -494,11 +500,23 @@ impl QuadrupleManager {
                     res: None,
                 }))
             }
-            AstNodeKind::Function { name, body, .. } => {
+            AstNodeKind::Function {
+                name,
+                body,
+                return_type,
+                ..
+            } => {
                 self.function_name = name;
                 let first_quad = self.quad_list.len();
                 self.update_quad(first_quad);
+                if return_type != Types::VOID {
+                    self.missing_returns = 1;
+                }
                 self.parse_body(body)?;
+                if self.missing_returns > 0 {
+                    let kind = RaoulErrorKind::MissingReturn(self.function_name.clone());
+                    return Err(vec![RaoulError::new(clone, kind)]);
+                }
                 Ok(self.add_quad(Quadruple {
                     operator: Operator::EndProc,
                     op_1: None,
