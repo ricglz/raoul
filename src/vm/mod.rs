@@ -291,6 +291,7 @@ impl VM {
         let value = self.get_value(quad.op_1.unwrap());
         let address = self.get_context_global_address();
         self.write_value(value, address);
+        self.process_end_proc();
     }
 
     pub fn run(&mut self) {
@@ -329,8 +330,10 @@ impl VM {
                     continue;
                 }
                 Operator::Param => self.process_param(),
-                Operator::Return => self.process_return(),
-                // kind => todo!("{:?}", kind),
+                Operator::Return => {
+                    self.process_return();
+                    continue;
+                } // kind => todo!("{:?}", kind),
             }
             self.update_quad_pos(quad_pos + 1);
         }
