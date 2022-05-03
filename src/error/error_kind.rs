@@ -38,7 +38,11 @@ impl fmt::Debug for RaoulErrorKind {
                 write!(f, "Variable \"{}\" was not declared", name)
             }
             RaoulErrorKind::UndeclaredFunction { name } => {
-                write!(f, "Function \"{}\" was not declared", name)
+                write!(
+                    f,
+                    "Function \"{}\" was not declared or does not return a non-void value",
+                    name
+                )
             }
             RaoulErrorKind::RedeclaredFunction { name } => {
                 write!(f, "Function \"{}\" was already declared before", name)
