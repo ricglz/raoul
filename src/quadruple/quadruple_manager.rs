@@ -332,6 +332,14 @@ impl QuadrupleManager {
         }
     }
 
+    fn parse_return_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
+        let prev_missing_returns = self.missing_returns;
+        self.parse_body(body)?;
+        Ok(if self.missing_returns != prev_missing_returns {
+            self.missing_returns = prev_missing_returns;
+        })
+    }
+
     fn add_goto(&mut self, goto_type: Operator, condition: Option<usize>) {
         debug_assert!(goto_type.is_goto());
         self.jump_list.push(self.quad_list.len());
@@ -396,8 +404,7 @@ impl QuadrupleManager {
             } => {
                 let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
-                self.parse_body(statements)?;
-                self.missing_returns += 1;
+                self.parse_return_body(statements)?;
                 Ok(if let Some(node) = else_block {
                     let index = self.jump_list.pop().unwrap();
                     self.add_goto(Operator::Goto, None);
@@ -413,8 +420,7 @@ impl QuadrupleManager {
                 self.jump_list.push(self.quad_list.len());
                 let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
-                self.parse_body(statements)?;
-                self.missing_returns += 1;
+                self.parse_return_body(statements)?;
                 let index = self.jump_list.pop().unwrap();
                 let goto_res = self.jump_list.pop().unwrap();
                 self.add_quad(Quadruple {
@@ -435,8 +441,7 @@ impl QuadrupleManager {
                 self.jump_list.push(self.quad_list.len());
                 let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
-                self.parse_body(statements)?;
-                self.missing_returns += 1;
+                self.parse_return_body(statements)?;
                 let (var_address, var_type) =
                     self.get_variable_name_address(name, node_clone.clone())?;
                 self.assert_type_results(var_type, Types::INT, node_clone)?;
