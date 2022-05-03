@@ -20,7 +20,7 @@ pub struct QuadrupleManager {
     jump_list: Vec<usize>,
     pub dir_func: DirFunc,
     pub memory: ConstantMemory,
-    pub missing_returns: usize,
+    missing_return: bool,
     pub quad_list: Vec<Quadruple>,
 }
 
@@ -31,7 +31,7 @@ impl QuadrupleManager {
             function_name: "".to_owned(),
             jump_list: Vec::new(),
             memory: ConstantMemory::new(),
-            missing_returns: 0,
+            missing_return: false,
             quad_list: Vec::new(),
         }
     }
@@ -333,10 +333,10 @@ impl QuadrupleManager {
     }
 
     fn parse_return_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
-        let prev_missing_returns = self.missing_returns;
+        let prev = self.missing_return;
         self.parse_body(body)?;
-        Ok(if self.missing_returns != prev_missing_returns {
-            self.missing_returns = prev_missing_returns;
+        Ok(if self.missing_return != prev {
+            self.missing_return = prev;
         })
     }
 
@@ -464,7 +464,7 @@ impl QuadrupleManager {
             AstNodeKind::Return(expr) => {
                 let return_type = self.function().return_type;
                 let (expr_address, _) = self.assert_expr_type(*expr, return_type)?;
-                self.missing_returns -= 1;
+                self.missing_return = false;
                 Ok(self.add_quad(Quadruple {
                     operator: Operator::Return,
                     op_1: Some(expr_address),
@@ -517,10 +517,10 @@ impl QuadrupleManager {
                 let first_quad = self.quad_list.len();
                 self.update_quad(first_quad);
                 if return_type != Types::VOID {
-                    self.missing_returns = 1;
+                    self.missing_return = true;
                 }
                 self.parse_body(body)?;
-                if self.missing_returns > 0 {
+                if self.missing_return {
                     let kind = RaoulErrorKind::MissingReturn(self.function_name.clone());
                     return Err(vec![RaoulError::new(clone, kind)]);
                 }
