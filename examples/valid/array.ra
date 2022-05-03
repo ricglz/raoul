@@ -1,0 +1,6 @@
+func main(): void {
+  a = [1, 2, 3];
+  b = [[1, 2, 3], [1, 2, 3]];
+  c = declare_arr<int>(3);
+  d = declare_arr<int>(2, 2);
+}
