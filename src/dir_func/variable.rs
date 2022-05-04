@@ -13,9 +13,9 @@ pub type Dimensions = (Option<usize>, Option<usize>);
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Variable {
-    dimensions: Dimensions,
     pub address: usize,
     pub data_type: Types,
+    pub dimensions: Dimensions,
     pub name: String,
 }
 

@@ -86,6 +86,7 @@ impl<'a> From<AstNodeKind<'a>> for String {
             AstNodeKind::Id(s) => s.to_string(),
             AstNodeKind::String(s) => s.to_string(),
             AstNodeKind::Assignment { assignee, .. } => assignee.into(),
+            AstNodeKind::ArrayVal { name, .. } => name,
             node => unreachable!("Node {:?}, cannot be a string", node),
         }
     }

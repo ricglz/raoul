@@ -343,7 +343,8 @@ impl VM {
                 Operator::Return => {
                     self.process_return();
                     continue;
-                } // kind => todo!("{:?}", kind),
+                }
+                kind => todo!("{:?}", kind),
             }
             self.update_quad_pos(quad_pos + 1);
         }

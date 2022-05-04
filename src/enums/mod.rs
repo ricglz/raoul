@@ -240,6 +240,8 @@ pub enum Operator {
     Era,
     GoSub,
     Param,
+    // Arrays
+    Ver,
 }
 
 impl Operator {
