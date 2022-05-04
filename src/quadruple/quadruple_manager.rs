@@ -110,21 +110,26 @@ impl QuadrupleManager {
         self.safe_remove_temp_address(quad.op_2);
     }
 
+    #[inline]
+    fn get_variable(&mut self, name: &str) -> Option<&Variable> {
+        self.function_variables()
+            .get(name)
+            .or_else(|| self.global_variables().get(name))
+    }
+
     fn get_variable_name_address<'a>(
         &mut self,
-        name: String,
+        name: &str,
         node: AstNode<'a>,
     ) -> Results<'a, (usize, Types)> {
-        match self
-            .function_variables()
-            .get(&name)
-            .or(self.global_variables().get(&name))
-        {
+        match self.get_variable(name) {
             Some(variable) => Ok((variable.address, variable.data_type)),
-            None => Err(vec![RaoulError::new(
+            None => Err(RaoulError::new_vec(
                 node,
-                RaoulErrorKind::UndeclaredVar { name },
-            )]),
+                RaoulErrorKind::UndeclaredVar {
+                    name: name.to_owned(),
+                },
+            )),
         }
     }
 
@@ -265,7 +270,7 @@ impl QuadrupleManager {
                 self.add_quad(quad);
                 Ok((res, res_type))
             }
-            AstNodeKind::Id(name) => self.get_variable_name_address(name, node_clone),
+            AstNodeKind::Id(name) => self.get_variable_name_address(&name, node_clone),
             AstNodeKind::Read => {
                 let data_type = Types::STRING;
                 let res = self.safe_add_temp(&data_type, node_clone)?;
@@ -292,7 +297,7 @@ impl QuadrupleManager {
             }
             AstNodeKind::FuncCall { name, exprs } => {
                 self.parse_func_call(&name, node_clone.clone(), exprs)?;
-                self.get_variable_name_address(name, node_clone)
+                self.get_variable_name_address(&name, node_clone)
             }
             kind => unreachable!("{kind:?}"),
         }
@@ -375,6 +380,9 @@ impl QuadrupleManager {
                 ref name,
                 value,
             } => {
+                if value.is_array() {
+                    return Ok(());
+                }
                 let (value_addr, _) = self.parse_expr(*value)?;
                 let variable_address = self.get_variable_address(global, name);
                 Ok(self.add_quad(Quadruple {
@@ -450,7 +458,7 @@ impl QuadrupleManager {
                 self.add_goto(Operator::GotoF, Some(res_address));
                 self.parse_return_body(statements)?;
                 let (var_address, var_type) =
-                    self.get_variable_name_address(name, node_clone.clone())?;
+                    self.get_variable_name_address(&name, node_clone.clone())?;
                 self.assert_type_results(var_type, Types::INT, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Inc,

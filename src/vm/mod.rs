@@ -53,6 +53,16 @@ pub struct VM {
 
 const STACK_SIZE_CAP: usize = 1024;
 
+fn safe_address<T>(address: Option<T>) -> T {
+    match address {
+        Some(address) => address,
+        None => {
+            println!("[Error]: Found initialized value");
+            exit(1);
+        }
+    }
+}
+
 impl VM {
     pub fn new(quad_manager: &QuadrupleManager) -> Self {
         let constant_memory = quad_manager.memory.clone();
@@ -135,9 +145,9 @@ impl VM {
 
     fn get_value(&self, address: usize) -> VariableValue {
         match address / TOTAL_SIZE {
-            0 => self.global_memory.get(address).unwrap(),
-            1 => self.local_addresses().get(address).unwrap(),
-            2 => self.temp_addresses().get(address).unwrap(),
+            0 => safe_address(self.global_memory.get(address)),
+            1 => safe_address(self.local_addresses().get(address)),
+            2 => safe_address(self.temp_addresses().get(address)),
             3 => self.constant_memory.get(address),
             _ => unreachable!(),
         }
