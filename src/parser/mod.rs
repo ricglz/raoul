@@ -469,7 +469,7 @@ impl LanguageParser {
                 let expr_clone = stop_expr.clone();
                 let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment_clone.kind)), assignment_clone.span);
                 let expr_kind = AstNodeKind::BinaryOperation {
-                    operator: Operator::Lt,
+                    operator: Operator::Lte,
                     lhs: Box::new(id_node),
                     rhs: Box::new(stop_expr),
                 };
