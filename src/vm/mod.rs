@@ -322,7 +322,7 @@ impl VM {
         let quad = self.get_current_quad();
         let index = self.get_value(quad.op_1.unwrap());
         let limit = self.get_value(quad.op_2.unwrap());
-        if limit <= index || VariableValue::Integer(0) > index {
+        if limit < index || VariableValue::Integer(0) > index {
             println!("[Error] Index out of range for array");
             exit(1);
         }
