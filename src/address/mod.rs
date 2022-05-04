@@ -11,11 +11,16 @@ pub const TOTAL_SIZE: usize = THRESHOLD * COUNTER_SIZE;
 
 pub trait Address {
     fn is_temp_address(&self) -> bool;
+    fn is_pointer_address(&self) -> bool;
 }
 
 impl Address for usize {
     fn is_temp_address(&self) -> bool {
         TOTAL_SIZE * 2 < *self && *self < TOTAL_SIZE * 3
+    }
+
+    fn is_pointer_address(&self) -> bool {
+        *self >= TOTAL_SIZE * 4
     }
 }
 
@@ -23,6 +28,13 @@ impl Address for Option<usize> {
     fn is_temp_address(&self) -> bool {
         match self {
             Some(address) => address.is_temp_address(),
+            None => false,
+        }
+    }
+
+    fn is_pointer_address(&self) -> bool {
+        match self {
+            Some(address) => address.is_pointer_address(),
             None => false,
         }
     }
@@ -328,7 +340,7 @@ impl Memory {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct PointerMemory {
     counter: usize,
     pointers: HashMap<usize, usize>,
@@ -346,6 +358,14 @@ impl PointerMemory {
         let prev_counter = self.counter.clone();
         self.counter += 1;
         prev_counter
+    }
+
+    pub fn write(&mut self, address: usize, var: VariableValue) {
+        self.pointers.insert(address, var.into());
+    }
+
+    pub fn get(&self, address: usize) -> usize {
+        self.pointers.get(&address).unwrap().to_owned()
     }
 }
 
