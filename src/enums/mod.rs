@@ -147,7 +147,32 @@ impl Types {
                     .map(|node| Types::from_node(node, variables, global))
                     .partition(|res| res.is_ok());
                 match errors.is_empty() {
-                    true => Ok(types.get(0).unwrap().clone().unwrap()),
+                    true => {
+                        let first_type = types.get(0).unwrap().clone().unwrap();
+                        let errors: Vec<_> = types
+                            .into_iter()
+                            .enumerate()
+                            .filter_map(|(i, v)| {
+                                let data_type = v.unwrap();
+                                let node = exprs.get(i).unwrap().clone();
+                                let res = match data_type.can_cast(first_type) {
+                                    true => Ok(()),
+                                    false => Err(RaoulError::new(
+                                        node,
+                                        RaoulErrorKind::InvalidCast {
+                                            from: data_type,
+                                            to: first_type,
+                                        },
+                                    )),
+                                };
+                                res.err()
+                            })
+                            .collect();
+                        match errors.is_empty() {
+                            true => Ok(first_type),
+                            false => Err(errors),
+                        }
+                    }
                     false => Err(errors.into_iter().flat_map(|v| v.unwrap_err()).collect()),
                 }
             }
