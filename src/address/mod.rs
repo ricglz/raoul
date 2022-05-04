@@ -328,5 +328,26 @@ impl Memory {
     }
 }
 
+#[derive(Clone, PartialEq)]
+pub struct PointerMemory {
+    counter: usize,
+    pointers: HashMap<usize, usize>,
+}
+
+impl PointerMemory {
+    pub fn new() -> Self {
+        Self {
+            counter: TOTAL_SIZE * 4,
+            pointers: HashMap::new(),
+        }
+    }
+
+    pub fn get_pointer(&mut self) -> usize {
+        let prev_counter = self.counter.clone();
+        self.counter += 1;
+        prev_counter
+    }
+}
+
 #[cfg(test)]
 mod tests;

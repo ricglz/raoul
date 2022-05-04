@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    address::{Address, ConstantMemory, GenericAddressManager},
+    address::{Address, ConstantMemory, GenericAddressManager, PointerMemory},
     ast::{ast_kind::AstNodeKind, AstNode},
     dir_func::{
         function::{Function, VariablesTable},
@@ -18,9 +18,10 @@ use crate::{
 pub struct QuadrupleManager {
     function_name: String,
     jump_list: Vec<usize>,
+    missing_return: bool,
+    pointer_memory: PointerMemory,
     pub dir_func: DirFunc,
     pub memory: ConstantMemory,
-    missing_return: bool,
     pub quad_list: Vec<Quadruple>,
 }
 
@@ -34,6 +35,7 @@ impl QuadrupleManager {
             jump_list: Vec::new(),
             memory: ConstantMemory::new(),
             missing_return: false,
+            pointer_memory: PointerMemory::new(),
             quad_list: Vec::new(),
         }
     }
@@ -354,8 +356,7 @@ impl QuadrupleManager {
                 });
                 let address: usize = match idx_2 {
                     None => {
-                        todo!("get pointer");
-                        let pointer: usize = 0;
+                        let pointer = self.pointer_memory.get_pointer();
                         self.add_quad(Quadruple {
                             operator: Operator::Sum,
                             op_1: Some(v.address),
@@ -386,8 +387,7 @@ impl QuadrupleManager {
                             mult_op,
                             node_clone,
                         )?;
-                        todo!("get pointer");
-                        let pointer: usize = 0;
+                        let pointer = self.pointer_memory.get_pointer();
                         self.add_quad(Quadruple {
                             operator: Operator::Sum,
                             op_1: Some(sum_res),
