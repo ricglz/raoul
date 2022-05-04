@@ -505,7 +505,7 @@ impl QuadrupleManager {
                                     let errors: Vec<_> = exprs
                                         .into_iter()
                                         .enumerate()
-                                        .map(|(i, expr): (usize, AstNode)| -> Results<()> {
+                                        .map(|(i, expr)| -> Results<()> {
                                             let idx_1 = Box::new(AstNode::new(
                                                 AstNodeKind::Integer(i.try_into().unwrap()),
                                                 expr.span.clone(),
@@ -527,7 +527,52 @@ impl QuadrupleManager {
                                         false => return Err(errors),
                                     }
                                 }
-                                false => todo!("Implement looping through a 2d list"),
+                                false => {
+                                    let errors: Vec<_> = exprs
+                                        .into_iter()
+                                        .enumerate()
+                                        .map(|(i, exprs)| -> Results<()> {
+                                            let idx_1 = Box::new(AstNode::new(
+                                                AstNodeKind::Integer(i.try_into().unwrap()),
+                                                node_clone.span.clone(),
+                                            ));
+                                            let errors: Vec<_> = exprs
+                                                .expand_array()
+                                                .into_iter()
+                                                .enumerate()
+                                                .map(|(j, expr)| -> Results<()> {
+                                                    let idx_2 = Box::new(AstNode::new(
+                                                        AstNodeKind::Integer(j.try_into().unwrap()),
+                                                        expr.span.clone(),
+                                                    ));
+                                                    let (variable_address, _) = self
+                                                        .get_array_val_operand(
+                                                            &name,
+                                                            node_clone.clone(),
+                                                            idx_1.clone(),
+                                                            Some(idx_2),
+                                                        )?;
+                                                    self.add_assign_quad(
+                                                        variable_address,
+                                                        expr.clone(),
+                                                    )
+                                                })
+                                                .filter_map(|v| v.err())
+                                                .flatten()
+                                                .collect();
+                                            match errors.is_empty() {
+                                                true => Ok(()),
+                                                false => return Err(errors),
+                                            }
+                                        })
+                                        .filter_map(|v| v.err())
+                                        .flatten()
+                                        .collect();
+                                    match errors.is_empty() {
+                                        true => (),
+                                        false => return Err(errors),
+                                    }
+                                }
                             }
                         }
                         _ => (),

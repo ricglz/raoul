@@ -55,6 +55,13 @@ impl<'a> AstNode<'a> {
         }
     }
 
+    pub fn expand_array(&self) -> Vec<AstNode<'a>> {
+        match &self.kind {
+            AstNodeKind::Array(exprs) => exprs.to_vec(),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn new(kind: AstNodeKind<'a>, span: Span<'a>) -> AstNode<'a> {
         AstNode { kind, span }
     }
