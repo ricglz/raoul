@@ -117,9 +117,9 @@ float_cte    = @{ int_cte ~ DOT ~ ASCII_DIGIT+ }
 string_value = { (!PEEK ~ ANY)* }
 STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
 ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
-ARR_INDEX    = { L_SQUARE ~ expr ~ R_SQUARE }
-ARR_VAL      = { id ~ ARR_INDEX{1,2} }
-NON_CTE      = _{ DATAFRAME_VALUE_OPS | func_call | ARR_VAL | id }
+arr_index    = _{ L_SQUARE ~ expr ~ R_SQUARE }
+arr_val      = { id ~ arr_index{1,2} }
+NON_CTE      = _{ DATAFRAME_VALUE_OPS | func_call | arr_val | id }
 VAR_VAL      = _{ ATOM_CTE | NON_CTE }
 
 expr          = { and_term ~ (OR ~ and_term)* }
@@ -145,7 +145,8 @@ mat_cte  = {L_SQUARE ~ list_cte ~ ( COMMA ~ list_cte )* ~ R_SQUARE }
 arr_cte  = { list_cte | mat_cte }
 
 assignment_exp = { read | READ_CSV | expr | declare_arr | arr_cte }
-assignment     = { global? ~ (ARR_VAL | id) ~ ASGN ~ assignment_exp }
+assignee       = { arr_val | id }
+assignment     = { global? ~ assignee ~ ASGN ~ assignment_exp }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 

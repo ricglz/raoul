@@ -376,15 +376,16 @@ impl QuadrupleManager {
         let node_clone = node.clone();
         match node.kind {
             AstNodeKind::Assignment {
+                assignee,
                 global,
-                ref name,
                 value,
             } => {
                 if value.is_array() {
                     return Ok(());
                 }
+                let name: String = assignee.into();
                 let (value_addr, _) = self.parse_expr(*value)?;
-                let variable_address = self.get_variable_address(global, name);
+                let variable_address = self.get_variable_address(global, &name);
                 Ok(self.add_quad(Quadruple {
                     operator: Operator::Assignment,
                     op_1: Some(value_addr),

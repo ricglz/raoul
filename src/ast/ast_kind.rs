@@ -18,9 +18,14 @@ pub enum AstNodeKind<'a> {
         dim1: usize,
         dim2: Option<usize>,
     },
-    Assignment {
-        global: bool,
+    ArrayVal {
         name: String,
+        idx_1: Box<AstNode<'a>>,
+        idx_2: Option<Box<AstNode<'a>>>,
+    },
+    Assignment {
+        assignee: Box<AstNode<'a>>,
+        global: bool,
         value: Box<AstNode<'a>>,
     },
     UnaryOperation {
@@ -80,7 +85,7 @@ impl<'a> From<AstNodeKind<'a>> for String {
             AstNodeKind::Integer(n) => n.to_string(),
             AstNodeKind::Id(s) => s.to_string(),
             AstNodeKind::String(s) => s.to_string(),
-            AstNodeKind::Assignment { name, .. } => name,
+            AstNodeKind::Assignment { assignee, .. } => assignee.into(),
             node => unreachable!("Node {:?}, cannot be a string", node),
         }
     }
@@ -111,11 +116,14 @@ impl fmt::Debug for AstNodeKind<'_> {
             } => {
                 write!(f, "ArrayDeclaration({data_type:?}, {dim1}, {dim2:?})")
             }
+            Self::ArrayVal { name, idx_1, idx_2 } => {
+                write!(f, "ArrayDeclaration({name}, {idx_1:?}, {idx_2:?})")
+            }
             AstNodeKind::Assignment {
+                assignee,
                 global,
-                name,
                 value,
-            } => write!(f, "Assignment({}, {}, {:?})", global, name, value),
+            } => write!(f, "Assignment({}, {:?}, {:?})", global, assignee, value),
             AstNodeKind::UnaryOperation {
                 operator: operation,
                 operand,

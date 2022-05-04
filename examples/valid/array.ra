@@ -2,6 +2,14 @@ func main(): void {
   a = [1, 2, 3];
   b = [[1, 2, 3], [1, 2, 3]];
   c = declare_arr<int>(3);
+  for (i=0 to 2) {
+    c[i] = i;
+  }
   d = declare_arr<int>(2, 2);
-  print(a, b, c, d);
+  for (i=0 to 1) {
+    for (j=0 to 1) {
+      d[i][j] = i * 2 + j;
+    }
+  }
+  print(a, b, c, d, c[0], d[0], d[0][0]);
 }

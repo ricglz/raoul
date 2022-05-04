@@ -28,10 +28,11 @@ impl Variable {
         let node = v.clone();
         match v.kind {
             AstNodeKind::Assignment {
-                name,
+                assignee,
                 value,
                 global,
             } => {
+                let name: String = assignee.into();
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
                 let dimensions = value.get_dimensions();

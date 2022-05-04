@@ -319,6 +319,7 @@ impl LanguageParser {
             [bool_cte(value)] => value,
             [id(id)] => id,
             [func_call(call)] => call,
+            [arr_val(id)] => id,
         ))
     }
 
@@ -394,6 +395,24 @@ impl LanguageParser {
         ))
     }
 
+    fn arr_val(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [id(name), expr(idx_1)] => {
+                let name = String::from(name);
+                let idx_1 = Box::new(idx_1);
+                let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: None };
+                AstNode::new(kind, span)
+            },
+            [id(name), expr(idx_1), expr(idx_2)] => {
+                let name = String::from(name);
+                let idx_1 = Box::new(idx_1);
+                let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: Some(Box::new(idx_2)) };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
     // Condition
     fn else_block(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
@@ -462,15 +481,22 @@ impl LanguageParser {
     }
 
     // Inline statements
+    fn assignee(input: Node) -> Result<Box<AstNode>> {
+        Ok(match_nodes!(input.into_children();
+            [id(id)] => Box::new(id),
+            [arr_val(id)] => Box::new(id),
+        ))
+    }
+
     fn assignment(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [global(_), id(id), assignment_exp(value)] => {
-                let kind = AstNodeKind::Assignment { global: true, name: String::from(id), value: Box::new(value) };
+            [global(_), assignee(id), assignment_exp(value)] => {
+                let kind = AstNodeKind::Assignment { global: true, assignee: id, value: Box::new(value) };
                 AstNode { kind, span }
             },
-            [id(id), assignment_exp(value)] => {
-                let kind = AstNodeKind::Assignment { global: false, name: String::from(id), value: Box::new(value) };
+            [assignee(id), assignment_exp(value)] => {
+                let kind = AstNodeKind::Assignment { global: false, assignee: id, value: Box::new(value) };
                 AstNode { kind, span }
             },
         ))
