@@ -8,7 +8,7 @@ use crate::{
     error::{error_kind::RaoulErrorKind, RaoulError, Results},
 };
 
-use super::variable::Variable;
+use super::variable::{Dimensions, Variable};
 
 pub type VariablesTable = HashMap<String, Variable>;
 type InsertResult = std::result::Result<(), RaoulErrorKind>;
@@ -30,11 +30,17 @@ pub trait Scope {
             },
         }
     }
-    fn _get_variable_address(&mut self, data_type: &Types) -> Option<usize>;
-    fn get_variable_address(&mut self, name: &str, data_type: &Types) -> Option<usize> {
+    fn _get_variable_address(&mut self, data_type: &Types, dimensions: Dimensions)
+        -> Option<usize>;
+    fn get_variable_address(
+        &mut self,
+        name: &str,
+        data_type: &Types,
+        dimensions: Dimensions,
+    ) -> Option<usize> {
         match self.get_variable(name) {
             Some(variable) => Some(variable.address),
-            None => self._get_variable_address(data_type),
+            None => self._get_variable_address(data_type, dimensions),
         }
     }
 }
@@ -172,8 +178,12 @@ impl Scope for Function {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    fn _get_variable_address(&mut self, data_type: &Types) -> Option<usize> {
-        self.local_addresses.get_address(data_type)
+    fn _get_variable_address(
+        &mut self,
+        data_type: &Types,
+        dimensions: Dimensions,
+    ) -> Option<usize> {
+        self.local_addresses.get_address(data_type, dimensions)
     }
 }
 
@@ -199,7 +209,11 @@ impl Scope for GlobalScope {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    fn _get_variable_address(&mut self, data_type: &Types) -> Option<usize> {
-        self.addresses.get_address(data_type)
+    fn _get_variable_address(
+        &mut self,
+        data_type: &Types,
+        dimensions: Dimensions,
+    ) -> Option<usize> {
+        self.addresses.get_address(data_type, dimensions)
     }
 }

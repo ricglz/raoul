@@ -53,15 +53,8 @@ impl<'a> AstNode<'a> {
         AstNode { kind, span }
     }
 
-    fn is_array(&self) -> bool {
-        self.kind.is_array()
-    }
-
     pub fn get_dimensions(&self) -> Dimensions {
-        match self.is_array() {
-            true => todo!("Get dimensions"),
-            false => (None, None),
-        }
+        self.kind.get_dimensions()
     }
 }
 

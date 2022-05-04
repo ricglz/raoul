@@ -77,7 +77,9 @@ impl QuadrupleManager {
 
     #[inline]
     fn add_temp(&mut self, data_type: &Types) -> Option<usize> {
-        self.function_mut().temp_addresses.get_address(data_type)
+        self.function_mut()
+            .temp_addresses
+            .get_address(data_type, (None, None))
     }
 
     fn safe_address<'a, T>(&self, option: Option<T>, node: AstNode<'a>) -> Results<'a, T> {

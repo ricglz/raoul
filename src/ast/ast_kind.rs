@@ -1,5 +1,8 @@
 use super::AstNode;
-use crate::enums::{Operator, Types};
+use crate::{
+    dir_func::variable::Dimensions,
+    enums::{Operator, Types},
+};
 use std::fmt;
 
 #[derive(PartialEq, Clone)]
@@ -171,10 +174,27 @@ impl fmt::Debug for AstNodeKind<'_> {
 }
 
 impl AstNodeKind<'_> {
-    pub fn is_array(&self) -> bool {
+    fn is_array(&self) -> bool {
         match self {
             Self::Array(_) | Self::ArrayDeclaration { .. } => true,
             _ => false,
+        }
+    }
+
+    pub fn get_dimensions(&self) -> Dimensions {
+        if !self.is_array() {
+            return (None, None);
+        }
+        match self {
+            Self::ArrayDeclaration { dim1, dim2, .. } => (Some(*dim1), dim2.to_owned()),
+            Self::Array(exprs) => {
+                let dim1 = Some(exprs.len());
+                // TODO: Check for diferent dimensions for each expression and that it does not
+                // have a "dim3"
+                let dim2 = exprs.get(0).unwrap().get_dimensions().0;
+                (dim1, dim2)
+            }
+            _ => unreachable!("{self:?}"),
         }
     }
 }

@@ -34,11 +34,11 @@ impl Variable {
             } => {
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                let address = match global {
-                    true => global_fn.get_variable_address(&name, &data_type),
-                    false => current_fn.get_variable_address(&name, &data_type),
-                };
                 let dimensions = value.get_dimensions();
+                let address = match global {
+                    true => global_fn.get_variable_address(&name, &data_type, dimensions),
+                    false => current_fn.get_variable_address(&name, &data_type, dimensions),
+                };
                 match address {
                     Some(address) => Ok((
                         Variable {
@@ -56,7 +56,9 @@ impl Variable {
                 arg_type: data_type,
                 name,
             } => {
-                let address = current_fn.local_addresses.get_address(&data_type);
+                let address = current_fn
+                    .local_addresses
+                    .get_address(&data_type, (None, None));
                 match address {
                     Some(address) => Ok((
                         Variable {
