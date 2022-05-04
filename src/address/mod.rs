@@ -88,7 +88,7 @@ impl GenericAddressManager for AddressManager {
         let prev = type_counter.clone();
         let amount = get_amount(dimensions);
         let new_counter = prev + amount;
-        if new_counter >= THRESHOLD {
+        if new_counter > THRESHOLD {
             return None;
         }
         *type_counter = new_counter;
