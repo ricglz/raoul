@@ -5,7 +5,7 @@ use crate::{
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
-    error::{error_kind::RaoulErrorKind, RaoulError, Result, Results},
+    error::{error_kind::RaoulErrorKind, RaoulError, Results},
 };
 
 use super::variable::Variable;
@@ -68,7 +68,7 @@ impl Function {
         node: AstNode<'a>,
         global_fn: &mut GlobalScope,
         argument: bool,
-    ) -> Result<'a, ()> {
+    ) -> Results<'a, ()> {
         let clone = node.clone();
         match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => {
@@ -84,14 +84,29 @@ impl Function {
                         }
                         Ok(())
                     }
-                    Err(kind) => Err(RaoulError::new(clone, kind)),
+                    Err(kind) => Err(RaoulError::new_vec(clone, kind)),
                 }
             }
-            Err(error) => match error.is_invalid() {
-                true => Ok(()),
-                false => Err(error),
-            },
+            Err(errors) => Err(errors),
         }
+    }
+
+    fn insert<'a>(
+        &mut self,
+        nodes: Vec<AstNode<'a>>,
+        global_fn: &mut GlobalScope,
+        argument: bool,
+    ) -> Vec<RaoulError<'a>> {
+        nodes
+            .into_iter()
+            .flat_map(AstNode::expand_node)
+            .filter_map(|node| {
+                self.insert_variable_from_node(node.to_owned(), global_fn, argument)
+                    .err()
+            })
+            .flatten()
+            .filter(|e| !e.is_invalid())
+            .collect()
     }
 
     fn insert_variable_from_nodes<'a>(
@@ -99,18 +114,10 @@ impl Function {
         nodes: Vec<AstNode<'a>>,
         global_fn: &mut GlobalScope,
     ) -> Results<'a, ()> {
-        let errors: Vec<RaoulError> = nodes
-            .into_iter()
-            .flat_map(AstNode::expand_node)
-            .filter_map(|node| {
-                self.insert_variable_from_node(node.to_owned(), global_fn, false)
-                    .err()
-            })
-            .collect();
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
+        let errors = self.insert(nodes, global_fn, false);
+        match errors.is_empty() {
+            true => Ok(()),
+            false => Err(errors),
         }
     }
 
@@ -119,14 +126,7 @@ impl Function {
         nodes: Vec<AstNode<'a>>,
         global_fn: &mut GlobalScope,
     ) -> Results<'a, ()> {
-        let errors: Vec<RaoulError> = nodes
-            .into_iter()
-            .flat_map(AstNode::expand_node)
-            .filter_map(|node| {
-                self.insert_variable_from_node(node.to_owned(), global_fn, true)
-                    .err()
-            })
-            .collect();
+        let errors = self.insert(nodes, global_fn, true);
         if errors.is_empty() {
             Ok(())
         } else {

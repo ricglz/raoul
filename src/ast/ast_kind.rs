@@ -169,3 +169,12 @@ impl fmt::Debug for AstNodeKind<'_> {
         }
     }
 }
+
+impl AstNodeKind<'_> {
+    pub fn is_array(&self) -> bool {
+        match self {
+            Self::Array(_) | Self::ArrayDeclaration { .. } => true,
+            _ => false,
+        }
+    }
+}
