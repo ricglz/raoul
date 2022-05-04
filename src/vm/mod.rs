@@ -304,6 +304,16 @@ impl VM {
         self.process_end_proc();
     }
 
+    fn process_ver(&mut self) {
+        let quad = self.get_current_quad();
+        let index = self.get_value(quad.op_1.unwrap());
+        let limit = self.get_value(quad.op_2.unwrap());
+        if limit <= index || VariableValue::Integer(0) > index {
+            println!("[Error] Index out of range for array");
+            exit(1);
+        }
+    }
+
     pub fn run(&mut self) {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
@@ -344,7 +354,7 @@ impl VM {
                     self.process_return();
                     continue;
                 }
-                kind => todo!("{:?}", kind),
+                Operator::Ver => self.process_ver(),
             }
             self.update_quad_pos(quad_pos + 1);
         }
