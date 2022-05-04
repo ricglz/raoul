@@ -321,7 +321,7 @@ impl QuadrupleManager {
                 self.add_quad(Quadruple {
                     operator: Operator::Ver,
                     op_1: Some(idx_2_op.0),
-                    op_2: Some(dim_1_op.0),
+                    op_2: Some(dim_2_op.0),
                     res: None,
                 });
                 let (sum_res, _) =
