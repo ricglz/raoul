@@ -7,7 +7,7 @@ use crate::{
     error::{RaoulError, Result},
 };
 
-use super::function::{Function, GlobalScope};
+use super::function::{Function, GlobalScope, Scope};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Variable {
@@ -30,16 +30,10 @@ impl Variable {
                 global,
             } => {
                 let data_type =
-                    Types::from_node(*node_value, &current_fn.variables, &global_fn.variables)?;
+                    Types::from_node(&*node_value, &current_fn.variables, &global_fn.variables)?;
                 let address = match global {
-                    true => match global_fn.variables.contains_key(&name) {
-                        true => Some(global_fn.variables.get(&name).unwrap().address),
-                        false => global_fn.addresses.get_address(&data_type),
-                    },
-                    false => match current_fn.variables.contains_key(&name) {
-                        true => Some(current_fn.variables.get(&name).unwrap().address),
-                        false => current_fn.local_addresses.get_address(&data_type),
-                    },
+                    true => global_fn.get_variable_address(&name, &data_type),
+                    false => current_fn.get_variable_address(&name, &data_type),
                 };
                 match address {
                     Some(address) => Ok((

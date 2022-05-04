@@ -30,6 +30,13 @@ pub trait Scope {
             },
         }
     }
+    fn _get_variable_address(&mut self, data_type: &Types) -> Option<usize>;
+    fn get_variable_address(&mut self, name: &str, data_type: &Types) -> Option<usize> {
+        match self.get_variable(name) {
+            Some(variable) => Some(variable.address),
+            None => self._get_variable_address(data_type),
+        }
+    }
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -165,6 +172,9 @@ impl Scope for Function {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
+    fn _get_variable_address(&mut self, data_type: &Types) -> Option<usize> {
+        self.local_addresses.get_address(data_type)
+    }
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -188,5 +198,8 @@ impl Scope for GlobalScope {
     }
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
+    }
+    fn _get_variable_address(&mut self, data_type: &Types) -> Option<usize> {
+        self.addresses.get_address(data_type)
     }
 }

@@ -110,45 +110,49 @@ impl Types {
     }
 
     pub fn from_node<'a>(
-        v: AstNode<'a>,
+        v: &AstNode<'a>,
         variables: &VariablesTable,
         global: &VariablesTable,
     ) -> Result<'a, Types> {
         let clone = v.clone();
-        match v.kind {
+        match &v.kind {
             AstNodeKind::Integer(_) => Ok(Types::INT),
             AstNodeKind::Float(_) => Ok(Types::FLOAT),
             AstNodeKind::String(_) => Ok(Types::STRING),
             AstNodeKind::Bool(_) => Ok(Types::BOOL),
-            AstNodeKind::Id(name) => match Types::get_variable(&name, variables, global) {
+            AstNodeKind::Id(name) => match Types::get_variable(name, variables, global) {
                 Some(variable) => Ok(variable.data_type),
                 None => Err(RaoulError::new(
                     clone,
-                    RaoulErrorKind::UndeclaredVar { name },
+                    RaoulErrorKind::UndeclaredVar {
+                        name: name.to_string(),
+                    },
                 )),
             },
             AstNodeKind::FuncCall { name, .. } => {
-                match Types::get_variable(&name, variables, global) {
+                match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new(
                         clone,
-                        RaoulErrorKind::UndeclaredFunction { name },
+                        RaoulErrorKind::UndeclaredFunction {
+                            name: name.to_string(),
+                        },
                     )),
                 }
             }
 
             AstNodeKind::Read => Ok(Types::STRING),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
-                let lhs_type = Types::from_node(*lhs, variables, global)?;
-                let rhs_type = Types::from_node(*rhs, variables, global)?;
-                match Types::binary_operator_type(operator, lhs_type, rhs_type) {
+                let lhs_type = Types::from_node(&*lhs, variables, global)?;
+                let rhs_type = Types::from_node(&*rhs, variables, global)?;
+                match Types::binary_operator_type(*operator, lhs_type, rhs_type) {
                     Err(kind) => Err(RaoulError::new(clone, kind)),
                     Ok(op_type) => Ok(op_type),
                 }
             }
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
-                    let operand_type = Types::from_node(*operand, variables, global)?;
+                    let operand_type = Types::from_node(&*operand, variables, global)?;
                     match operand_type.is_boolish() {
                         true => Ok(Types::BOOL),
                         false => Err(RaoulError::new(
