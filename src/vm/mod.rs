@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, collections::HashMap, io::stdin, process::exit, vec};
 
 use crate::{
-    address::{ConstantMemory, Memory, TOTAL_SIZE},
+    address::{Address, ConstantMemory, Memory, PointerMemory, TOTAL_SIZE},
     dir_func::{
         function::{Function, VariablesTable},
         variable_value::VariableValue,
@@ -47,17 +47,29 @@ pub struct VM {
     functions: HashMap<usize, Function>,
     global_memory: Memory,
     global_variables: VariablesTable,
+    pointer_memory: PointerMemory,
     quad_list: Vec<Quadruple>,
     stack_size: usize,
 }
 
 const STACK_SIZE_CAP: usize = 1024;
 
+fn safe_address<T>(address: Option<T>) -> T {
+    match address {
+        Some(address) => address,
+        None => {
+            println!("[Error]: Found initialized value");
+            exit(1);
+        }
+    }
+}
+
 impl VM {
     pub fn new(quad_manager: &QuadrupleManager) -> Self {
         let constant_memory = quad_manager.memory.clone();
         let functions = quad_manager.dir_func.functions.clone();
         let global_fn = quad_manager.dir_func.global_fn.clone();
+        let pointer_memory = quad_manager.pointer_memory.clone();
         let global_memory = Memory::new(Box::new(global_fn.addresses));
         let global_variables = global_fn.variables;
         let quad_list = quad_manager.quad_list.clone();
@@ -74,6 +86,7 @@ impl VM {
                 .collect(),
             global_memory,
             global_variables,
+            pointer_memory,
             quad_list,
             stack_size,
         }
@@ -135,16 +148,23 @@ impl VM {
 
     fn get_value(&self, address: usize) -> VariableValue {
         match address / TOTAL_SIZE {
-            0 => self.global_memory.get(address).unwrap(),
-            1 => self.local_addresses().get(address).unwrap(),
-            2 => self.temp_addresses().get(address).unwrap(),
+            0 => safe_address(self.global_memory.get(address)),
+            1 => safe_address(self.local_addresses().get(address)),
+            2 => safe_address(self.temp_addresses().get(address)),
             3 => self.constant_memory.get(address),
-            _ => unreachable!(),
+            _ => {
+                let address = self.pointer_memory.get(address);
+                self.get_value(address)
+            }
         }
     }
 
     fn write_value(&mut self, value: VariableValue, address: usize) {
-        let memory = match address / TOTAL_SIZE {
+        let determinant = address / TOTAL_SIZE;
+        if determinant >= 4 {
+            return self.pointer_memory.write(address, value);
+        }
+        let memory = match determinant {
             0 => &mut self.global_memory,
             1 => self.local_addresses_mut(),
             2 => self.temp_addresses_mut(),
@@ -156,7 +176,11 @@ impl VM {
     fn process_assign(&mut self) {
         let quad = self.get_current_quad();
         let value = self.get_value(quad.op_1.unwrap());
-        self.write_value(value, quad.res.unwrap());
+        let mut assignee = quad.res.unwrap();
+        if assignee.is_pointer_address() {
+            assignee = self.pointer_memory.get(assignee);
+        }
+        self.write_value(value, assignee);
     }
 
     fn process_print(&mut self) {
@@ -294,6 +318,16 @@ impl VM {
         self.process_end_proc();
     }
 
+    fn process_ver(&mut self) {
+        let quad = self.get_current_quad();
+        let index = self.get_value(quad.op_1.unwrap());
+        let limit = self.get_value(quad.op_2.unwrap());
+        if limit < index || VariableValue::Integer(0) > index {
+            println!("[Error] Index out of range for array");
+            exit(1);
+        }
+    }
+
     pub fn run(&mut self) {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
@@ -333,7 +367,8 @@ impl VM {
                 Operator::Return => {
                     self.process_return();
                     continue;
-                } // kind => todo!("{:?}", kind),
+                }
+                Operator::Ver => self.process_ver(),
             }
             self.update_quad_pos(quad_pos + 1);
         }

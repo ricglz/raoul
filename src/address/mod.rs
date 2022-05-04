@@ -1,6 +1,9 @@
 use std::{cmp::Ordering, collections::HashMap, fmt};
 
-use crate::{dir_func::variable_value::VariableValue, enums::Types};
+use crate::{
+    dir_func::{variable::Dimensions, variable_value::VariableValue},
+    enums::Types,
+};
 
 const THRESHOLD: usize = 250;
 const COUNTER_SIZE: usize = 4;
@@ -8,11 +11,16 @@ pub const TOTAL_SIZE: usize = THRESHOLD * COUNTER_SIZE;
 
 pub trait Address {
     fn is_temp_address(&self) -> bool;
+    fn is_pointer_address(&self) -> bool;
 }
 
 impl Address for usize {
     fn is_temp_address(&self) -> bool {
         TOTAL_SIZE * 2 < *self && *self < TOTAL_SIZE * 3
+    }
+
+    fn is_pointer_address(&self) -> bool {
+        *self >= TOTAL_SIZE * 4
     }
 }
 
@@ -20,6 +28,13 @@ impl Address for Option<usize> {
     fn is_temp_address(&self) -> bool {
         match self {
             Some(address) => address.is_temp_address(),
+            None => false,
+        }
+    }
+
+    fn is_pointer_address(&self) -> bool {
+        match self {
+            Some(address) => address.is_pointer_address(),
             None => false,
         }
     }
@@ -37,9 +52,18 @@ fn get_type_base(data_type: &Types) -> usize {
     }
 }
 
+fn get_amount(dimensions: Dimensions) -> usize {
+    let dim_1 = dimensions.0.unwrap_or(0);
+    let dim_2 = dimensions.1.unwrap_or(1);
+    match dim_1 * dim_2 {
+        0 => 1,
+        v => v,
+    }
+}
+
 pub trait GenericAddressManager {
     fn get_address_counter(&self) -> AddressCounter;
-    fn get_address(&mut self, data_type: &Types) -> Option<usize>;
+    fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize>;
     fn size(&self) -> usize;
     fn get_base(&self) -> usize;
 }
@@ -68,18 +92,20 @@ impl GenericAddressManager for AddressManager {
     fn get_address_counter(&self) -> AddressCounter {
         self.counter.clone()
     }
-    fn get_address(&mut self, data_type: &Types) -> Option<usize> {
+    fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize> {
         let type_counter = self
             .counter
             .get_mut(data_type)
             .expect(format!("Get address received {:?}", data_type).as_str());
-        let type_counter_clone = type_counter.clone();
-        if type_counter.to_owned().cmp(&THRESHOLD) == Ordering::Equal {
+        let prev = type_counter.clone();
+        let amount = get_amount(dimensions);
+        let new_counter = prev + amount;
+        if new_counter > THRESHOLD {
             return None;
         }
-        *type_counter = *type_counter + 1;
+        *type_counter = new_counter;
         let type_base = get_type_base(&data_type);
-        Some(self.base + type_counter_clone + type_base)
+        Some(self.base + prev + type_base)
     }
     #[inline]
     fn size(&self) -> usize {
@@ -162,10 +188,10 @@ impl GenericAddressManager for TempAddressManager {
         self.address_manager.get_address_counter()
     }
     #[inline]
-    fn get_address(&mut self, data_type: &Types) -> Option<usize> {
+    fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize> {
         self.type_released_addresses(data_type)
             .pop()
-            .or(self.address_manager.get_address(data_type))
+            .or_else(|| self.address_manager.get_address(data_type, dimensions))
     }
     #[inline]
     fn size(&self) -> usize {
@@ -311,6 +337,35 @@ impl Memory {
         let (index, address_type) = self.get_index(address);
         let value = uncast.cast_to(address_type);
         *self.space.get_mut(index).unwrap() = Some(value);
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct PointerMemory {
+    counter: usize,
+    pointers: HashMap<usize, usize>,
+}
+
+impl PointerMemory {
+    pub fn new() -> Self {
+        Self {
+            counter: TOTAL_SIZE * 4,
+            pointers: HashMap::new(),
+        }
+    }
+
+    pub fn get_pointer(&mut self) -> usize {
+        let prev_counter = self.counter.clone();
+        self.counter += 1;
+        prev_counter
+    }
+
+    pub fn write(&mut self, address: usize, var: VariableValue) {
+        self.pointers.insert(address, var.into());
+    }
+
+    pub fn get(&self, address: usize) -> usize {
+        self.pointers.get(&address).unwrap().to_owned()
     }
 }
 

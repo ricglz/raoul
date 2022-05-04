@@ -5,7 +5,7 @@ use crate::ast::AstNode;
 use crate::dir_func::function::VariablesTable;
 use crate::dir_func::variable::Variable;
 use crate::error::error_kind::RaoulErrorKind;
-use crate::error::{RaoulError, Result};
+use crate::error::{RaoulError, Results};
 
 #[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
 pub enum Types {
@@ -110,48 +110,87 @@ impl Types {
     }
 
     pub fn from_node<'a>(
-        v: AstNode<'a>,
+        v: &AstNode<'a>,
         variables: &VariablesTable,
         global: &VariablesTable,
-    ) -> Result<'a, Types> {
+    ) -> Results<'a, Types> {
         let clone = v.clone();
-        match v.kind {
+        match &v.kind {
             AstNodeKind::Integer(_) => Ok(Types::INT),
             AstNodeKind::Float(_) => Ok(Types::FLOAT),
             AstNodeKind::String(_) => Ok(Types::STRING),
             AstNodeKind::Bool(_) => Ok(Types::BOOL),
-            AstNodeKind::Id(name) => match Types::get_variable(&name, variables, global) {
+            AstNodeKind::Id(name) => match Types::get_variable(name, variables, global) {
                 Some(variable) => Ok(variable.data_type),
-                None => Err(RaoulError::new(
+                None => Err(RaoulError::new_vec(
                     clone,
-                    RaoulErrorKind::UndeclaredVar { name },
+                    RaoulErrorKind::UndeclaredVar {
+                        name: name.to_string(),
+                    },
                 )),
             },
             AstNodeKind::FuncCall { name, .. } => {
-                match Types::get_variable(&name, variables, global) {
+                match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
-                    None => Err(RaoulError::new(
+                    None => Err(RaoulError::new_vec(
                         clone,
-                        RaoulErrorKind::UndeclaredFunction { name },
+                        RaoulErrorKind::UndeclaredFunction {
+                            name: name.to_string(),
+                        },
                     )),
                 }
             }
-
+            AstNodeKind::ArrayDeclaration { data_type, .. } => Ok(*data_type),
+            AstNodeKind::Array(exprs) => {
+                let (types, errors): (Vec<_>, Vec<_>) = exprs
+                    .into_iter()
+                    .map(|node| Types::from_node(node, variables, global))
+                    .partition(|res| res.is_ok());
+                match errors.is_empty() {
+                    true => {
+                        let first_type = types.get(0).unwrap().clone().unwrap();
+                        let errors: Vec<_> = types
+                            .into_iter()
+                            .enumerate()
+                            .filter_map(|(i, v)| {
+                                let data_type = v.unwrap();
+                                let node = exprs.get(i).unwrap().clone();
+                                let res = match data_type.can_cast(first_type) {
+                                    true => Ok(()),
+                                    false => Err(RaoulError::new(
+                                        node,
+                                        RaoulErrorKind::InvalidCast {
+                                            from: data_type,
+                                            to: first_type,
+                                        },
+                                    )),
+                                };
+                                res.err()
+                            })
+                            .collect();
+                        match errors.is_empty() {
+                            true => Ok(first_type),
+                            false => Err(errors),
+                        }
+                    }
+                    false => Err(errors.into_iter().flat_map(|v| v.unwrap_err()).collect()),
+                }
+            }
             AstNodeKind::Read => Ok(Types::STRING),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
-                let lhs_type = Types::from_node(*lhs, variables, global)?;
-                let rhs_type = Types::from_node(*rhs, variables, global)?;
-                match Types::binary_operator_type(operator, lhs_type, rhs_type) {
-                    Err(kind) => Err(RaoulError::new(clone, kind)),
+                let lhs_type = Types::from_node(&*lhs, variables, global)?;
+                let rhs_type = Types::from_node(&*rhs, variables, global)?;
+                match Types::binary_operator_type(*operator, lhs_type, rhs_type) {
+                    Err(kind) => Err(RaoulError::new_vec(clone, kind)),
                     Ok(op_type) => Ok(op_type),
                 }
             }
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
-                    let operand_type = Types::from_node(*operand, variables, global)?;
+                    let operand_type = Types::from_node(&*operand, variables, global)?;
                     match operand_type.is_boolish() {
                         true => Ok(Types::BOOL),
-                        false => Err(RaoulError::new(
+                        false => Err(RaoulError::new_vec(
                             clone,
                             RaoulErrorKind::InvalidCast {
                                 from: operand_type,
@@ -201,6 +240,8 @@ pub enum Operator {
     Era,
     GoSub,
     Param,
+    // Arrays
+    Ver,
 }
 
 impl Operator {

@@ -1,5 +1,8 @@
 use super::AstNode;
-use crate::enums::{Operator, Types};
+use crate::{
+    dir_func::variable::Dimensions,
+    enums::{Operator, Types},
+};
 use std::fmt;
 
 #[derive(PartialEq, Clone)]
@@ -9,9 +12,20 @@ pub enum AstNodeKind<'a> {
     Float(f64),
     String(String),
     Bool(bool),
-    Assignment {
-        global: bool,
+    Array(Vec<AstNode<'a>>),
+    ArrayDeclaration {
+        data_type: Types,
+        dim1: usize,
+        dim2: Option<usize>,
+    },
+    ArrayVal {
         name: String,
+        idx_1: Box<AstNode<'a>>,
+        idx_2: Option<Box<AstNode<'a>>>,
+    },
+    Assignment {
+        assignee: Box<AstNode<'a>>,
+        global: bool,
         value: Box<AstNode<'a>>,
     },
     UnaryOperation {
@@ -71,8 +85,18 @@ impl<'a> From<AstNodeKind<'a>> for String {
             AstNodeKind::Integer(n) => n.to_string(),
             AstNodeKind::Id(s) => s.to_string(),
             AstNodeKind::String(s) => s.to_string(),
-            AstNodeKind::Assignment { name, .. } => name,
+            AstNodeKind::Assignment { assignee, .. } => assignee.into(),
+            AstNodeKind::ArrayVal { name, .. } => name,
             node => unreachable!("Node {:?}, cannot be a string", node),
+        }
+    }
+}
+
+impl<'a> From<AstNodeKind<'a>> for usize {
+    fn from(val: AstNodeKind) -> Self {
+        match val {
+            AstNodeKind::Integer(n) => n.try_into().unwrap_or(0),
+            node => unreachable!("{node:?}, cannot be a usize"),
         }
     }
 }
@@ -85,11 +109,22 @@ impl fmt::Debug for AstNodeKind<'_> {
             AstNodeKind::Float(n) => write!(f, "Float({})", n),
             AstNodeKind::String(s) => write!(f, "String({})", s),
             AstNodeKind::Bool(s) => write!(f, "Bool({})", s),
+            AstNodeKind::Array(s) => write!(f, "Array({s:?})"),
+            Self::ArrayDeclaration {
+                data_type,
+                dim1,
+                dim2,
+            } => {
+                write!(f, "ArrayDeclaration({data_type:?}, {dim1}, {dim2:?})")
+            }
+            Self::ArrayVal { name, idx_1, idx_2 } => {
+                write!(f, "ArrayDeclaration({name}, {idx_1:?}, {idx_2:?})")
+            }
             AstNodeKind::Assignment {
+                assignee,
                 global,
-                name,
                 value,
-            } => write!(f, "Assignment({}, {}, {:?})", global, name, value),
+            } => write!(f, "Assignment({}, {:?}, {:?})", global, assignee, value),
             AstNodeKind::UnaryOperation {
                 operator: operation,
                 operand,
@@ -143,6 +178,33 @@ impl fmt::Debug for AstNodeKind<'_> {
                 write!(f, "FunctionCall({name}, {exprs:?})")
             }
             AstNodeKind::Return(expr) => write!(f, "Return({expr:?})"),
+        }
+    }
+}
+
+impl AstNodeKind<'_> {
+    pub fn is_array(&self) -> bool {
+        match self {
+            Self::Array(_) | Self::ArrayDeclaration { .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_dimensions(&self) -> Dimensions {
+        if !self.is_array() {
+            return (None, None);
+        }
+        match self {
+            Self::ArrayDeclaration { dim1, dim2, .. } => (Some(*dim1), dim2.to_owned()),
+            Self::Array(exprs) => {
+                let dim1 = Some(exprs.len());
+                let dim2 = exprs.get(0).unwrap().get_dimensions().0;
+                match exprs.into_iter().all(|v| v.get_dimensions().0 == dim2) {
+                    true => (dim1, dim2),
+                    false => todo!("Return this as a `Result`"), // TODO
+                }
+            }
+            _ => unreachable!("{self:?}"),
         }
     }
 }

@@ -1,5 +1,7 @@
 pub mod ast_kind;
 
+use crate::dir_func::variable::Dimensions;
+
 use self::ast_kind::AstNodeKind;
 use pest::Span;
 use std::fmt;
@@ -11,6 +13,18 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> From<AstNode<'a>> for String {
+    fn from(val: AstNode) -> Self {
+        val.kind.into()
+    }
+}
+
+impl From<Box<AstNode<'_>>> for String {
+    fn from(val: Box<AstNode>) -> Self {
+        String::from(*val)
+    }
+}
+
+impl<'a> From<AstNode<'a>> for usize {
     fn from(val: AstNode) -> Self {
         val.kind.into()
     }
@@ -40,8 +54,24 @@ impl<'a> AstNode<'a> {
             _ => vec![node],
         }
     }
+
+    pub fn expand_array(&self) -> Vec<AstNode<'a>> {
+        match &self.kind {
+            AstNodeKind::Array(exprs) => exprs.to_vec(),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn new(kind: AstNodeKind<'a>, span: Span<'a>) -> AstNode<'a> {
         AstNode { kind, span }
+    }
+
+    pub fn is_array(&self) -> bool {
+        self.kind.is_array()
+    }
+
+    pub fn get_dimensions(&self) -> Dimensions {
+        self.kind.get_dimensions()
     }
 }
 

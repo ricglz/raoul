@@ -94,6 +94,21 @@ impl From<&VariableValue> for bool {
     }
 }
 
+impl From<usize> for VariableValue {
+    fn from(v: usize) -> Self {
+        Self::Integer(v.try_into().unwrap())
+    }
+}
+
+impl From<VariableValue> for usize {
+    fn from(v: VariableValue) -> Self {
+        match v {
+            VariableValue::Integer(v) => v.try_into().unwrap(),
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl fmt::Debug for VariableValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
