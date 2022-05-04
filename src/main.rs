@@ -69,7 +69,7 @@ fn main() {
         exit(1);
     }
     let quad_manager = res.unwrap();
-    let mut vm = VM::new(&quad_manager);
+    let mut vm = VM::new(&quad_manager, debug);
     vm.run();
 }
 

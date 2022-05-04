@@ -44,6 +44,7 @@ pub struct VM {
     call_stack: Vec<VMContext>,
     constant_memory: ConstantMemory,
     contexts_stack: Vec<VMContext>,
+    debug: bool,
     functions: HashMap<usize, Function>,
     global_memory: Memory,
     global_variables: VariablesTable,
@@ -65,7 +66,7 @@ fn safe_address<T>(address: Option<T>) -> T {
 }
 
 impl VM {
-    pub fn new(quad_manager: &QuadrupleManager) -> Self {
+    pub fn new(quad_manager: &QuadrupleManager, debug: bool) -> Self {
         let constant_memory = quad_manager.memory.clone();
         let functions = quad_manager.dir_func.functions.clone();
         let global_fn = quad_manager.dir_func.global_fn.clone();
@@ -76,10 +77,11 @@ impl VM {
         let main_function = functions.get("main").unwrap().clone();
         let stack_size = main_function.size();
         let initial_context = VMContext::new(main_function);
-        VM {
+        Self {
             call_stack: vec![],
             constant_memory,
             contexts_stack: vec![initial_context],
+            debug,
             functions: functions
                 .into_iter()
                 .map(|(_, function)| (function.first_quad.clone(), function))
@@ -331,6 +333,9 @@ impl VM {
     pub fn run(&mut self) {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
+            if self.debug {
+                println!("Quad - {quad_pos}");
+            }
             let quad = self.quad_list.get(quad_pos).unwrap();
             match quad.operator {
                 Operator::End => break,
