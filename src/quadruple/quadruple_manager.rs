@@ -373,7 +373,16 @@ impl QuadrupleManager {
                 self.add_quad(quad);
                 Ok((res, res_type))
             }
-            AstNodeKind::Id(name) => self.get_variable_name_address(&name, node_clone),
+            AstNodeKind::Id(name) => {
+                let variable = self.get_variable(&name, node_clone.clone())?.clone();
+                match variable.dimensions.0 {
+                    None => Ok((variable.address, variable.data_type)),
+                    _ => Err(RaoulError::new_vec(
+                        node_clone,
+                        RaoulErrorKind::UsePrimitive,
+                    )),
+                }
+            }
             AstNodeKind::Read => {
                 let data_type = Types::STRING;
                 let res = self.safe_add_temp(&data_type, node_clone)?;
