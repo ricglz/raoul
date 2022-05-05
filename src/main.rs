@@ -22,7 +22,7 @@ mod test_parser;
 #[macro_use]
 extern crate pest_derive;
 
-use std::process::exit;
+use std::{io::Stdin, process::exit};
 
 use args::parse_args;
 
@@ -69,7 +69,7 @@ fn main() {
         exit(1);
     }
     let quad_manager = res.unwrap();
-    let mut vm = VM::new(&quad_manager, debug);
+    let mut vm: VM<Stdin> = VM::new(&quad_manager, debug);
     vm.run();
 }
 
