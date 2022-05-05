@@ -50,6 +50,7 @@ fn ast_parsing_invalid_files() {
         let file = file_path.to_str().unwrap();
         if file == "examples/invalid/syntax-error.ra"
             || file == "examples/invalid/array-list-index.ra"
+            || file == "examples/invalid/div-0.ra"
         {
             continue;
         }
@@ -59,8 +60,11 @@ fn ast_parsing_invalid_files() {
 
 #[test]
 fn vm_running_invalid_files() {
-    let filename = "examples/invalid/array-list-index.ra";
-    run_vm_is_error(filename)
+    let files = vec![
+        "examples/invalid/array-list-index.ra",
+        "examples/invalid/div-0.ra",
+    ];
+    files.iter().for_each(|v| run_vm_is_error(*v));
 }
 
 #[test]

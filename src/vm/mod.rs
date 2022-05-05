@@ -232,12 +232,12 @@ impl<R: Read> VM<R> {
 
     fn binary_operation<F>(&mut self, f: F) -> VMResult<()>
     where
-        F: FnOnce(VariableValue, VariableValue) -> VariableValue,
+        F: FnOnce(VariableValue, VariableValue) -> VMResult<VariableValue>,
     {
         let quad = self.get_current_quad();
         let a = self.get_value(quad.op_1.unwrap())?;
         let b = self.get_value(quad.op_2.unwrap())?;
-        let value = f(a, b);
+        let value = f(a, b)?;
         Ok(self.write_value(value, quad.res.unwrap()))
     }
 
@@ -369,11 +369,11 @@ impl<R: Read> VM<R> {
                 Operator::Print => self.process_print(),
                 Operator::PrintNl => Ok(self.print_message("\n")),
                 Operator::Read => Ok(self.process_read()),
-                Operator::Or => self.binary_operation(|a, b| a | b),
-                Operator::And => self.binary_operation(|a, b| a & b),
-                Operator::Sum => self.binary_operation(|a, b| a + b),
-                Operator::Minus => self.binary_operation(|a, b| a - b),
-                Operator::Times => self.binary_operation(|a, b| a * b),
+                Operator::Or => self.binary_operation(|a, b| Ok(a | b)),
+                Operator::And => self.binary_operation(|a, b| Ok(a & b)),
+                Operator::Sum => self.binary_operation(|a, b| Ok(a + b)),
+                Operator::Minus => self.binary_operation(|a, b| Ok(a - b)),
+                Operator::Times => self.binary_operation(|a, b| Ok(a * b)),
                 Operator::Div => self.binary_operation(|a, b| a / b),
                 Operator::Lt
                 | Operator::Lte

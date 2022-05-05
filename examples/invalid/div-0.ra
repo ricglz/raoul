@@ -1,0 +1,4 @@
+func main(): void {
+  a = 1 / 0;
+  print(a);
+}
