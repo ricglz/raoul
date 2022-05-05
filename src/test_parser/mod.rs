@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn invalid_file() {
-        let filename = "examples/invalid/syntax-error.ra";
+        let filename = "examples/invalid/syntax/syntax-error.ra";
         assert!(parse_file(&filename, true).is_err());
     }
 }

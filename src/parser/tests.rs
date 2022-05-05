@@ -18,7 +18,7 @@ fn valid_files() {
 
 #[test]
 fn invalid_file() {
-    let filename = "examples/invalid/syntax-error.ra";
+    let filename = "examples/invalid/syntax/syntax-error.ra";
     let program = std::fs::read_to_string(filename).expect(filename);
     assert!(parse(&program, true).is_err());
 }

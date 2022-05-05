@@ -1,4 +1,7 @@
-use std::{fs::read_dir, io::Read};
+use std::{
+    fs::{read_dir, ReadDir},
+    io::Read,
+};
 
 use super::{parse, parse_ast, QuadrupleManager, VM};
 
@@ -42,29 +45,27 @@ fn run_vm_is_ok(filename: &str) {
     assert!(vm.run().is_ok());
 }
 
-#[test]
-fn ast_parsing_invalid_files() {
-    let paths = read_dir("examples/invalid").unwrap();
+fn expect_paths<F>(paths: ReadDir, mut f: F)
+where
+    F: FnMut(&str),
+{
     for path in paths {
         let file_path = path.expect("File must exist").path();
         let file = file_path.to_str().unwrap();
-        if file == "examples/invalid/syntax-error.ra"
-            || file == "examples/invalid/array-list-index.ra"
-            || file == "examples/invalid/div-0.ra"
-        {
-            continue;
-        }
-        parse_ast_has_error(file);
+        f(file);
     }
 }
 
 #[test]
+fn ast_parsing_invalid_files() {
+    let paths = read_dir("examples/invalid/static").unwrap();
+    expect_paths(paths, parse_ast_has_error);
+}
+
+#[test]
 fn vm_running_invalid_files() {
-    let files = vec![
-        "examples/invalid/array-list-index.ra",
-        "examples/invalid/div-0.ra",
-    ];
-    files.iter().for_each(|v| run_vm_is_error(*v));
+    let paths = read_dir("examples/invalid/dynamic").unwrap();
+    expect_paths(paths, run_vm_is_error);
 }
 
 #[test]
