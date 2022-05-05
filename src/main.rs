@@ -70,7 +70,10 @@ fn main() {
     }
     let quad_manager = res.unwrap();
     let mut vm: VM<Stdin> = VM::new(&quad_manager, debug);
-    vm.run();
+    if let Err(error) = vm.run() {
+        println!("[Error]: {error}");
+        exit(1);
+    }
 }
 
 #[cfg(test)]

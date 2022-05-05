@@ -30,14 +30,20 @@ fn parse_ast_is_ok(filename: &str) -> QuadrupleManager {
     res.unwrap()
 }
 
-fn run_vm(filename: &str) {
+fn run_vm_is_error(filename: &str) {
     let quad_manager = parse_ast_is_ok(filename);
     let mut vm = VM::new_with_reader(&quad_manager, false, b"test".as_ref());
-    vm.run();
+    assert!(vm.run().is_err());
+}
+
+fn run_vm_is_ok(filename: &str) {
+    let quad_manager = parse_ast_is_ok(filename);
+    let mut vm = VM::new_with_reader(&quad_manager, false, b"test".as_ref());
+    assert!(vm.run().is_ok());
 }
 
 #[test]
-fn invalid_files() {
+fn ast_parsing_invalid_files() {
     let paths = read_dir("examples/invalid").unwrap();
     for path in paths {
         let file_path = path.expect("File must exist").path();
@@ -52,6 +58,12 @@ fn invalid_files() {
 }
 
 #[test]
+fn vm_running_invalid_files() {
+    let filename = "examples/invalid/array-list-index.ra";
+    run_vm_is_error(filename)
+}
+
+#[test]
 fn valid_files() {
     let paths = read_dir("examples/valid").unwrap();
     for path in paths {
@@ -60,6 +72,6 @@ fn valid_files() {
         if file == "examples/valid/complete.ra" {
             continue;
         }
-        run_vm(file);
+        run_vm_is_ok(file);
     }
 }

@@ -3,7 +3,6 @@ use std::{
     collections::HashMap,
     io::{stdin, Read},
     process::exit,
-    vec,
 };
 
 use crate::{
@@ -45,6 +44,8 @@ impl VMContext {
     }
 }
 
+type VMResult<T> = std::result::Result<T, &'static str>;
+
 #[derive(Debug)]
 pub struct VM<R: Read> {
     call_stack: Vec<VMContext>,
@@ -54,23 +55,14 @@ pub struct VM<R: Read> {
     functions: HashMap<usize, Function>,
     global_memory: Memory,
     global_variables: VariablesTable,
+    messages: Vec<String>,
     pointer_memory: PointerMemory,
     quad_list: Vec<Quadruple>,
-    stack_size: usize,
     reader: Option<R>,
+    stack_size: usize,
 }
 
 const STACK_SIZE_CAP: usize = 1024;
-
-fn safe_address<T>(address: Option<T>) -> T {
-    match address {
-        Some(address) => address,
-        None => {
-            println!("[Error]: Found initialized value");
-            exit(1);
-        }
-    }
-}
 
 impl<R: Read> VM<R> {
     pub fn base_new(quad_manager: &QuadrupleManager, debug: bool, reader: Option<R>) -> Self {
@@ -95,6 +87,7 @@ impl<R: Read> VM<R> {
                 .collect(),
             global_memory,
             global_variables,
+            messages: Vec::new(),
             pointer_memory,
             quad_list,
             stack_size,
@@ -160,12 +153,12 @@ impl<R: Read> VM<R> {
         self.quad_list.get(quad_pos).unwrap().clone()
     }
 
-    fn get_value(&self, address: usize) -> VariableValue {
+    fn get_value(&self, address: usize) -> VMResult<VariableValue> {
         match address / TOTAL_SIZE {
-            0 => safe_address(self.global_memory.get(address)),
-            1 => safe_address(self.local_addresses().get(address)),
-            2 => safe_address(self.temp_addresses().get(address)),
-            3 => self.constant_memory.get(address),
+            0 => self.safe_address(self.global_memory.get(address)),
+            1 => self.safe_address(self.local_addresses().get(address)),
+            2 => self.safe_address(self.temp_addresses().get(address)),
+            3 => Ok(self.constant_memory.get(address)),
             _ => {
                 let address = self.pointer_memory.get(address);
                 self.get_value(address)
@@ -187,20 +180,25 @@ impl<R: Read> VM<R> {
         memory.write(address, value);
     }
 
-    fn process_assign(&mut self) {
+    fn process_assign(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let value = self.get_value(quad.op_1.unwrap());
+        let value = self.get_value(quad.op_1.unwrap())?;
         let mut assignee = quad.res.unwrap();
         if assignee.is_pointer_address() {
             assignee = self.pointer_memory.get(assignee);
         }
-        self.write_value(value, assignee);
+        Ok(self.write_value(value, assignee))
     }
 
-    fn process_print(&mut self) {
+    fn print_message(&mut self, message: &str) {
+        self.messages.push(message.to_string());
+        println!("{message}")
+    }
+
+    fn process_print(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let value = self.get_value(quad.op_1.unwrap());
-        print!("{value:?} ")
+        let value = self.get_value(quad.op_1.unwrap())?;
+        Ok(self.print_message(&format!("{value:?}")))
     }
 
     fn create_value_from_stdin(&mut self) -> VariableValue {
@@ -222,31 +220,31 @@ impl<R: Read> VM<R> {
         self.write_value(value, quad.res.unwrap());
     }
 
-    fn unary_operation<F>(&mut self, f: F)
+    fn unary_operation<F>(&mut self, f: F) -> VMResult<()>
     where
         F: FnOnce(VariableValue) -> VariableValue,
     {
         let quad = self.get_current_quad();
-        let a = self.get_value(quad.op_1.unwrap());
+        let a = self.get_value(quad.op_1.unwrap())?;
         let value = f(a);
-        self.write_value(value, quad.res.unwrap());
+        Ok(self.write_value(value, quad.res.unwrap()))
     }
 
-    fn binary_operation<F>(&mut self, f: F)
+    fn binary_operation<F>(&mut self, f: F) -> VMResult<()>
     where
         F: FnOnce(VariableValue, VariableValue) -> VariableValue,
     {
         let quad = self.get_current_quad();
-        let a = self.get_value(quad.op_1.unwrap());
-        let b = self.get_value(quad.op_2.unwrap());
+        let a = self.get_value(quad.op_1.unwrap())?;
+        let b = self.get_value(quad.op_2.unwrap())?;
         let value = f(a, b);
-        self.write_value(value, quad.res.unwrap());
+        Ok(self.write_value(value, quad.res.unwrap()))
     }
 
-    fn comparison(&mut self) {
+    fn comparison(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let a = self.get_value(quad.op_1.unwrap());
-        let b = self.get_value(quad.op_2.unwrap());
+        let a = self.get_value(quad.op_1.unwrap())?;
+        let b = self.get_value(quad.op_2.unwrap())?;
         let ord = a.partial_cmp(&b);
         let res = match ord {
             None => false,
@@ -261,24 +259,24 @@ impl<R: Read> VM<R> {
             },
         };
         let value = VariableValue::Bool(res);
-        self.write_value(value, quad.res.unwrap());
+        Ok(self.write_value(value, quad.res.unwrap()))
     }
 
-    fn conditional_goto(&mut self, approved: bool) -> usize {
+    fn conditional_goto(&mut self, approved: bool) -> VMResult<usize> {
         let quad = self.get_current_quad();
-        let cond = self.get_value(quad.op_1.unwrap());
+        let cond = self.get_value(quad.op_1.unwrap())?;
         let quad_pos = self.current_context().quad_pos;
-        match bool::from(cond) == approved {
+        Ok(match bool::from(cond) == approved {
             true => quad.res.unwrap() - 1,
             false => quad_pos,
-        }
+        })
     }
 
-    fn process_inc(&mut self) {
+    fn process_inc(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let a = self.get_value(quad.res.unwrap());
+        let a = self.get_value(quad.res.unwrap())?;
         let value = a + VariableValue::Integer(1);
-        self.write_value(value, quad.res.unwrap());
+        Ok(self.write_value(value, quad.res.unwrap()))
     }
 
     fn process_era(&mut self) {
@@ -318,12 +316,12 @@ impl<R: Read> VM<R> {
         memory.write(address, value);
     }
 
-    fn process_param(&mut self) {
+    fn process_param(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let value = self.get_value(quad.op_1.unwrap());
+        let value = self.get_value(quad.op_1.unwrap())?;
         let index = quad.res.unwrap();
         let address = self.current_call().args.get(index).unwrap().clone();
-        self.write_value_param(value, address);
+        Ok(self.write_value_param(value, address))
     }
 
     fn get_context_global_address(&self) -> usize {
@@ -331,39 +329,46 @@ impl<R: Read> VM<R> {
         self.global_variables.get(name).unwrap().address
     }
 
-    fn process_return(&mut self) {
+    fn process_return(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let value = self.get_value(quad.op_1.unwrap());
+        let value = self.get_value(quad.op_1.unwrap())?;
         let address = self.get_context_global_address();
         self.write_value(value, address);
-        self.process_end_proc();
+        Ok(self.process_end_proc())
     }
 
-    fn process_ver(&mut self) {
+    fn process_ver(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let index = self.get_value(quad.op_1.unwrap());
-        let limit = self.get_value(quad.op_2.unwrap());
+        let index = self.get_value(quad.op_1.unwrap())?;
+        let limit = self.get_value(quad.op_2.unwrap())?;
         println!("{index:?} - {limit:?}");
-        if limit <= index || VariableValue::Integer(0) > index {
-            println!("[Error] Index out of range for array");
-            exit(1);
+        match limit <= index || VariableValue::Integer(0) > index {
+            true => Err("Index out of range for array"),
+            false => Ok(()),
         }
     }
 
-    pub fn run(&mut self) {
+    fn safe_address(&self, address: Option<VariableValue>) -> VMResult<VariableValue> {
+        match address {
+            Some(address) => Ok(address),
+            None => Err("Found initialized value"),
+        }
+    }
+
+    pub fn run(&mut self) -> VMResult<()> {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
             if self.debug {
-                println!("Quad - {quad_pos}");
+                self.print_message(&format!("Quad - {quad_pos}\n"));
             }
             let quad = self.quad_list.get(quad_pos).unwrap();
             match quad.operator {
                 Operator::End => break,
-                Operator::Goto => quad_pos = quad.res.unwrap() - 1,
+                Operator::Goto => Ok(quad_pos = quad.res.unwrap() - 1),
                 Operator::Assignment => self.process_assign(),
                 Operator::Print => self.process_print(),
-                Operator::PrintNl => println!(""),
-                Operator::Read => self.process_read(),
+                Operator::PrintNl => Ok(self.print_message("\n")),
+                Operator::Read => Ok(self.process_read()),
                 Operator::Or => self.binary_operation(|a, b| a | b),
                 Operator::And => self.binary_operation(|a, b| a & b),
                 Operator::Sum => self.binary_operation(|a, b| a + b),
@@ -377,9 +382,9 @@ impl<R: Read> VM<R> {
                 | Operator::Eq
                 | Operator::Ne => self.comparison(),
                 Operator::Not => self.unary_operation(|a| !a),
-                Operator::GotoF => quad_pos = self.conditional_goto(false),
+                Operator::GotoF => Ok(quad_pos = self.conditional_goto(false)?),
                 Operator::Inc => self.process_inc(),
-                Operator::Era => self.process_era(),
+                Operator::Era => Ok(self.process_era()),
                 Operator::GoSub => {
                     self.process_go_sub();
                     continue;
@@ -390,12 +395,13 @@ impl<R: Read> VM<R> {
                 }
                 Operator::Param => self.process_param(),
                 Operator::Return => {
-                    self.process_return();
+                    self.process_return()?;
                     continue;
                 }
                 Operator::Ver => self.process_ver(),
-            }
+            }?;
             self.update_quad_pos(quad_pos + 1);
         }
+        Ok(())
     }
 }
