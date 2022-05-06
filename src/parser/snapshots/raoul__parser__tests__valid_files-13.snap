@@ -1,9 +1,0 @@
----
-source: src/parser/tests.rs
-expression: res.unwrap()
----
-Main(([], [
-    Assignment(false, Id(a), Integer(1)),
-    While(BinaryOperation(Lt, Id(a), Integer(10)), [Assignment(false, Id(a), BinaryOperation(Sum, Id(a), Integer(1)))]),
-    Write([Id(a)]),
-]))

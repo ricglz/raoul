@@ -1,8 +1,0 @@
----
-source: src/parser/tests.rs
-expression: res.unwrap()
----
-Main(([], [
-    Assignment(false, Id(a), Read),
-    Write([Id(a)]),
-]))
