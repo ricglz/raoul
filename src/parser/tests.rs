@@ -3,7 +3,7 @@ use std::fs::read_dir;
 
 #[test]
 fn valid_files() {
-    let paths = read_dir("examples/valid").unwrap();
+    let paths = read_dir("src/examples/valid").unwrap();
     for path in paths {
         let file_path = path.expect("File must exist").path();
         let file = file_path.to_str().unwrap();
@@ -20,7 +20,7 @@ fn valid_files() {
 
 #[test]
 fn invalid_file() {
-    let filename = "examples/invalid/syntax/syntax-error.ra";
+    let filename = "src/examples/invalid/syntax/syntax-error.ra";
     let program = std::fs::read_to_string(filename).expect(filename);
     let res = parse(&program, true);
     assert!(res.is_err());
