@@ -35,7 +35,12 @@ impl Variable {
                 let name: String = assignee.into();
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                let dimensions = value.get_dimensions();
+                let res = value.get_dimensions();
+                if let Err((expected, given)) = res {
+                    let kind = RaoulErrorKind::InconsistentSize { expected, given };
+                    return Err(RaoulError::new_vec(node, kind));
+                }
+                let dimensions = res.unwrap();
                 let address = match global {
                     true => global_fn.get_variable_address(&name, &data_type, dimensions),
                     false => current_fn.get_variable_address(&name, &data_type, dimensions),

@@ -182,7 +182,7 @@ impl fmt::Debug for AstNodeKind<'_> {
     }
 }
 
-impl AstNodeKind<'_> {
+impl<'a> AstNodeKind<'a> {
     pub fn is_array(&self) -> bool {
         match self {
             Self::Array(_) | Self::ArrayDeclaration { .. } => true,
@@ -190,18 +190,29 @@ impl AstNodeKind<'_> {
         }
     }
 
-    pub fn get_dimensions(&self) -> Dimensions {
+    pub fn get_dimensions(&self) -> Result<Dimensions, Dimensions> {
         if !self.is_array() {
-            return (None, None);
+            return Ok((None, None));
         }
         match self {
-            Self::ArrayDeclaration { dim1, dim2, .. } => (Some(*dim1), dim2.to_owned()),
+            Self::ArrayDeclaration { dim1, dim2, .. } => Ok((Some(*dim1), dim2.to_owned())),
             Self::Array(exprs) => {
                 let dim1 = Some(exprs.len());
-                let dim2 = exprs.get(0).unwrap().get_dimensions().0;
-                match exprs.into_iter().all(|v| v.get_dimensions().0 == dim2) {
-                    true => (dim1, dim2),
-                    false => todo!("Return this as a `Result`"), // TODO
+                let dim2 = exprs.get(0).unwrap().get_dimensions()?.0;
+                let errors: Vec<_> = exprs
+                    .into_iter()
+                    .map(|expr| -> Result<(), Dimensions> {
+                        let expr_dim_1 = expr.get_dimensions()?.0;
+                        match expr_dim_1 == dim2 {
+                            true => Ok(()),
+                            false => Err((expr_dim_1, dim2)),
+                        }
+                    })
+                    .filter_map(|v| v.err())
+                    .collect();
+                match errors.is_empty() {
+                    true => Ok((dim1, dim2)),
+                    false => Err(errors.get(0).unwrap().clone()),
                 }
             }
             _ => unreachable!("{self:?}"),

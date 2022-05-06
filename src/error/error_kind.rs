@@ -32,6 +32,10 @@ pub enum RaoulErrorKind {
     NotList(String),
     NotMatrix(String),
     UsePrimitive,
+    InconsistentSize {
+        expected: Option<usize>,
+        given: Option<usize>,
+    },
 }
 
 impl fmt::Debug for RaoulErrorKind {
@@ -72,6 +76,14 @@ impl fmt::Debug for RaoulErrorKind {
             }
             Self::NotList(name) => write!(f, "`{name}` is not a list"),
             Self::NotMatrix(name) => write!(f, "`{name}` is not a matrix"),
+            Self::InconsistentSize { expected, given } => {
+                write!(
+                    f,
+                    "Expecting matrix with second dimmension being {} but received {}",
+                    expected.unwrap_or(0),
+                    given.unwrap_or(0)
+                )
+            }
         }
     }
 }
