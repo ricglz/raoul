@@ -1,15 +1,20 @@
 use std::io::Read;
 
-use super::{parse, parse_ast, QuadrupleManager, VM};
+use super::{parse, parse_ast, AstNode, QuadrupleManager, VM};
+
+fn get_ast(program: &str) -> AstNode {
+    let ast_response = parse(program, false);
+    assert!(ast_response.is_ok());
+    let ast = ast_response.unwrap();
+    insta::assert_debug_snapshot!(ast);
+    ast
+}
 
 fn parse_ast_has_error(filename: &str) {
     println!("Testing {:?}", filename);
     let program = std::fs::read_to_string(filename).expect(filename);
-    let debug = false;
-    let ast_response = parse(&program, debug);
-    assert!(ast_response.is_ok());
-    let ast = ast_response.unwrap();
-    let res = parse_ast(ast, debug);
+    let ast = get_ast(&program);
+    let res = parse_ast(ast, false);
     assert!(res.is_err());
     insta::assert_debug_snapshot!(res.unwrap_err());
 }
@@ -23,11 +28,8 @@ impl<R: Read> VM<R> {
 fn parse_ast_is_ok(filename: &str) -> QuadrupleManager {
     println!("Testing {:?}", filename);
     let program = std::fs::read_to_string(filename).expect(filename);
-    let debug = false;
-    let ast_response = parse(&program, debug);
-    assert!(ast_response.is_ok());
-    let ast = ast_response.unwrap();
-    let res = parse_ast(ast, debug);
+    let ast = get_ast(&program);
+    let res = parse_ast(ast, false);
     assert!(res.is_ok());
     let quad_manager = res.unwrap();
     insta::assert_display_snapshot!(quad_manager);

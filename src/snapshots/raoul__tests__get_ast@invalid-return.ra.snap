@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/invalid-return.ra
+---
+Main(([
+    Function(test, INT, [], [
+        Return(Bool(false)),
+    ]),
+], [
+    Assignment(false, Id(a), FunctionCall(test, [])),
+    Write([Id(a)]),
+]))

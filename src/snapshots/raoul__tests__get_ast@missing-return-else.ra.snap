@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/missing-return-else.ra
+---
+Main(([
+    Function(test, INT, [], [
+        Decision(BinaryOperation(Lt, Integer(0), Integer(1)), [Write([String(hola)])], Some(ElseBlock([Return(Integer(1))]))),
+    ]),
+], [
+    Write([FunctionCall(test, [])]),
+]))

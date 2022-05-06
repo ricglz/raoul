@@ -1,0 +1,10 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/dynamic/array-mat-index.ra
+---
+Main(([], [
+    Assignment(false, Id(a), ArrayDeclaration(INT, 3, Some(2))),
+    Assignment(false, ArrayDeclaration(a, Integer(3), Some(Integer(4))), Integer(2)),
+    Write([ArrayDeclaration(a, Integer(3), Some(Integer(4)))]),
+]))

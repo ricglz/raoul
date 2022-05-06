@@ -1,0 +1,15 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/redefined-function.ra
+---
+Main(([
+    Function(test, VOID, [], [
+        Assignment(false, Id(a), Integer(1)),
+    ]),
+    Function(test, INT, [], [
+        Assignment(false, Id(a), Integer(1)),
+    ]),
+], [
+    Assignment(false, Id(b), Integer(2)),
+]))
