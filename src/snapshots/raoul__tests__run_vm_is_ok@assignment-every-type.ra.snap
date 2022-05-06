@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/assignment-every-type.ra
+---
+[
+    "1",
+    "1",
+    "my string",
+    "false",
+    "\n",
+]

@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/primitive-index.ra
+---
+[
+     --> 3:3
+      |
+    3 |   a[1] = 2;␊
+      |   ^------^
+      |
+      = `a` is not a list,
+]

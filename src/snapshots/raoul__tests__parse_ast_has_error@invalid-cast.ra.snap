@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/invalid-cast.ra
+---
+[
+     --> 2:7
+      |
+    2 |   a = NOT "2";␊
+      |       ^-----^
+      |
+      = Cannot cast from STRING to BOOL,
+]

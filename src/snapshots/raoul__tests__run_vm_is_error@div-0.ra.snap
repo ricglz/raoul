@@ -1,0 +1,6 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/dynamic/div-0.ra
+---
+Attempt to divide by zero

@@ -2,7 +2,6 @@ use std::{
     cmp::Ordering,
     collections::HashMap,
     io::{stdin, Read},
-    process::exit,
 };
 
 use crate::{
@@ -99,13 +98,15 @@ impl<R: Read> VM<R> {
         VM::base_new(quad_manager, debug, None)
     }
 
-    fn add_call_stack(&mut self, function: Function) {
+    fn add_call_stack(&mut self, function: Function) -> VMResult<()> {
         self.stack_size += function.size();
-        if self.stack_size > STACK_SIZE_CAP {
-            println!("Stack overflow!");
-            exit(1);
+        match self.stack_size > STACK_SIZE_CAP {
+            true => Err("Stack overflow!"),
+            false => {
+                self.call_stack.push(VMContext::new(function));
+                Ok(())
+            }
         }
-        self.call_stack.push(VMContext::new(function));
     }
 
     #[inline]
@@ -279,11 +280,11 @@ impl<R: Read> VM<R> {
         Ok(self.write_value(value, quad.res.unwrap()))
     }
 
-    fn process_era(&mut self) {
+    fn process_era(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
         let first_quad = quad.op_2.unwrap();
         let function = self.get_function(first_quad);
-        self.add_call_stack(function);
+        self.add_call_stack(function)
     }
 
     fn process_go_sub(&mut self) {
@@ -341,7 +342,6 @@ impl<R: Read> VM<R> {
         let quad = self.get_current_quad();
         let index = self.get_value(quad.op_1.unwrap())?;
         let limit = self.get_value(quad.op_2.unwrap())?;
-        println!("{index:?} - {limit:?}");
         match limit <= index || VariableValue::Integer(0) > index {
             true => Err("Index out of range for array"),
             false => Ok(()),
@@ -384,7 +384,7 @@ impl<R: Read> VM<R> {
                 Operator::Not => self.unary_operation(|a| !a),
                 Operator::GotoF => Ok(quad_pos = self.conditional_goto(false)?),
                 Operator::Inc => self.process_inc(),
-                Operator::Era => Ok(self.process_era()),
+                Operator::Era => self.process_era(),
                 Operator::GoSub => {
                     self.process_go_sub();
                     continue;

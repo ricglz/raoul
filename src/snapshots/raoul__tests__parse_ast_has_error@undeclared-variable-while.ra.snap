@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/undeclared-variable-while.ra
+---
+[
+     --> 2:10
+      |
+    2 |   while (a < 2) {␊
+      |          ^
+      |
+      = Variable "a" was not declared,
+]

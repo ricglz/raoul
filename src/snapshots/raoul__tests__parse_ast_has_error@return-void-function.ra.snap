@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/return-void-function.ra
+---
+[
+     --> 2:10
+      |
+    2 |   return 1;␊
+      |          ^
+      |
+      = Cannot cast from INT to VOID,
+]

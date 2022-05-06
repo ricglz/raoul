@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/wrong-args-amount.ra
+---
+[
+     --> 6:3
+      |
+    6 |   test();␊
+      |   ^----^
+      |
+      = Wrong args amount: Expected 1, but were given 0,
+]

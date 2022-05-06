@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/invalid-return.ra
+---
+[
+     --> 2:10
+      |
+    2 |   return false;␊
+      |          ^---^
+      |
+      = Cannot cast from BOOL to INT,
+]

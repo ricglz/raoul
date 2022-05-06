@@ -1,0 +1,11 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/condition.ra
+---
+[
+    "1",
+    "2",
+    "1",
+    "\n",
+]

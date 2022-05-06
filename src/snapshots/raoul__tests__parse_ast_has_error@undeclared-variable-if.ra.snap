@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/undeclared-variable-if.ra
+---
+[
+     --> 2:7
+      |
+    2 |   if (a < 2) {␊
+      |       ^
+      |
+      = Variable "a" was not declared,
+]

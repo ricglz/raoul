@@ -1,0 +1,11 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/array-cte.ra
+---
+[
+    "0",
+    "1",
+    "2",
+    "\n",
+]

@@ -1,0 +1,46 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/aritmetic.ra
+---
+0 - Goto       -     -     1    
+1 - Or         3750  3751  2750 
+2 - Assignment 2750  -     1750 
+3 - And        3000  3750  2750 
+4 - Assignment 2750  -     1751 
+5 - Lte        3000  3001  2750 
+6 - Assignment 2750  -     1752 
+7 - Lt         3500  3001  2750 
+8 - Assignment 2750  -     1753 
+9 - Gte        3001  3000  2750 
+10 - Assignment 2750  -     1754 
+11 - Gt         3001  3000  2750 
+12 - Assignment 2750  -     1755 
+13 - Eq         3002  3002  2750 
+14 - Assignment 2750  -     1754 
+15 - Ne         3002  3001  2750 
+16 - Assignment 2750  -     1755 
+17 - Sum        3501  3250  2250 
+18 - Assignment 2250  -     1250 
+19 - Minus      3001  3250  2250 
+20 - Assignment 2250  -     1251 
+21 - Times      3003  3003  2000 
+22 - Assignment 2000  -     1000 
+23 - Div        3003  3003  2001 
+24 - Assignment 2001  -     1001 
+25 - Not        3751  -     2750 
+26 - Assignment 2750  -     1756 
+27 - Print      1750  -     -    
+28 - Print      1751  -     -    
+29 - Print      1752  -     -    
+30 - Print      1753  -     -    
+31 - Print      1754  -     -    
+32 - Print      1755  -     -    
+33 - Print      1250  -     -    
+34 - Print      1251  -     -    
+35 - Print      1000  -     -    
+36 - Print      1001  -     -    
+37 - Print      1756  -     -    
+38 - PrintNl    -     -     -    
+39 - End        -     -     -    
+

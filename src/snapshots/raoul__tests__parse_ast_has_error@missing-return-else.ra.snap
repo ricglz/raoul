@@ -1,0 +1,15 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/missing-return-else.ra
+---
+[
+     --> 1:1
+      |
+    1 | func test(): int {␊
+      | ...
+    7 | }␊
+      | ^
+      |
+      = In function test not all branches return a value,
+]

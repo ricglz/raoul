@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/wrong-arg-type.ra
+---
+[
+     --> 6:8
+      |
+    6 |   test(false);␊
+      |        ^---^
+      |
+      = Cannot cast from BOOL to STRING,
+]

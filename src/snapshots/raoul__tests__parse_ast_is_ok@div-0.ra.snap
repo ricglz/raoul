@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/invalid/dynamic/div-0.ra
+---
+0 - Goto       -     -     1    
+1 - Div        3000  3001  2000 
+2 - Assignment 2000  -     1000 
+3 - Print      1000  -     -    
+4 - PrintNl    -     -     -    
+5 - End        -     -     -    
+
