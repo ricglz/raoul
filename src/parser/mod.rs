@@ -560,10 +560,6 @@ impl LanguageParser {
     }
 
     fn function(input: Node) -> Result<AstNode> {
-        // TODO: Still misses some conditions
-        if *input.user_data() {
-            println!("function");
-        }
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [id(id), func_args(arguments), types(return_type), block(body)] => {
