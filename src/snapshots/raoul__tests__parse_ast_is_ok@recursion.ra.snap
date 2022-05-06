@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/invalid/dynamic/recursion.ra
+---
+0 - Goto       -     -     4    
+1 - Era        0     1     -    
+2 - GoSub      1     -     -    
+3 - EndProc    -     -     -    
+4 - Era        0     1     -    
+5 - GoSub      1     -     -    
+6 - End        -     -     -    
+

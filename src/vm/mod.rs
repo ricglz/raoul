@@ -99,7 +99,7 @@ impl<R: Read> VM<R> {
     }
 
     fn add_call_stack(&mut self, function: Function) -> VMResult<()> {
-        self.stack_size += function.size();
+        self.stack_size += function.size() + 1;
         match self.stack_size > STACK_SIZE_CAP {
             true => Err("Stack overflow!"),
             false => {
