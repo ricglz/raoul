@@ -1,0 +1,5 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+Index out of range for array

@@ -1,0 +1,113 @@
+---
+source: src/tests.rs
+expression: quad_manager
+---
+QuadrupleManager {
+    function_name: "main",
+    jump_list: [],
+    missing_return: false,
+    dir_func: DirFunc {
+        functions: {
+            "test": Function {
+                args: [],
+                local_addresses: AddressManager(0, 0, 0, 0),
+                name: "test",
+                return_type: INT,
+                temp_addresses: TempAddressManager({
+                    STRING: [],
+                    INT: [],
+                    FLOAT: [],
+                    BOOL: [
+                        2750,
+                    ],
+                }),
+                variables: {},
+                first_quad: 1,
+            },
+            "second_test": Function {
+                args: [],
+                local_addresses: AddressManager(0, 0, 0, 0),
+                name: "second_test",
+                return_type: INT,
+                temp_addresses: TempAddressManager({
+                    STRING: [],
+                    BOOL: [
+                        2750,
+                    ],
+                    INT: [],
+                    FLOAT: [],
+                }),
+                variables: {},
+                first_quad: 6,
+            },
+            "main": Function {
+                args: [],
+                local_addresses: AddressManager(0, 0, 0, 0),
+                name: "main",
+                return_type: VOID,
+                temp_addresses: TempAddressManager({
+                    STRING: [],
+                    INT: [],
+                    BOOL: [],
+                    FLOAT: [],
+                }),
+                variables: {},
+                first_quad: 0,
+            },
+        },
+        global_fn: GlobalScope {
+            addresses: AddressManager(2, 0, 0, 0),
+            variables: {
+                "test": Variable {
+                    address: 0,
+                    data_type: INT,
+                    dimensions: (
+                        None,
+                        None,
+                    ),
+                    name: "test",
+                },
+                "second_test": Variable {
+                    address: 1,
+                    data_type: INT,
+                    dimensions: (
+                        None,
+                        None,
+                    ),
+                    name: "second_test",
+                },
+            },
+        },
+    },
+    memory: ConstantMemory({FLOAT: [], INT: [1, 2, 3, 4, 5], STRING: [], BOOL: []}),
+    pointer_memory: PointerMemory {
+        counter: 4000,
+        pointers: {},
+    },
+    quad_list: [
+        Goto       -     -     16   ,
+        Lt         3000  3001  2750 ,
+        GotoF      2750  -     4    ,
+        Return     3000  -     -    ,
+        Return     3001  -     -    ,
+        EndProc    -     -     -    ,
+        Lt         3000  3001  2750 ,
+        GotoF      2750  -     10   ,
+        Return     3002  -     -    ,
+        Goto       -     -     15   ,
+        Lt         3000  3002  2750 ,
+        GotoF      2750  -     14   ,
+        Return     3003  -     -    ,
+        Goto       -     -     15   ,
+        Return     3004  -     -    ,
+        EndProc    -     -     -    ,
+        Era        1     1     -    ,
+        GoSub      1     -     -    ,
+        Era        1     6     -    ,
+        GoSub      6     -     -    ,
+        Print      0     -     -    ,
+        Print      1     -     -    ,
+        PrintNl    -     -     -    ,
+        End        -     -     -    ,
+    ],
+}

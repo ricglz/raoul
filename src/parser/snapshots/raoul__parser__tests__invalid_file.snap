@@ -1,0 +1,10 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap_err()
+---
+ --> 1:1
+  |
+1 | fn myFunction(v: integer): void {␊
+  | ^---
+  |
+  = expected function

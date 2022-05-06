@@ -1,0 +1,14 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+[
+     --> 1:1
+      |
+    1 | func test(): int {␊
+      | ...
+    5 | }␊
+      | ^
+      |
+      = In function test not all branches return a value,
+]

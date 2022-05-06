@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+[
+     --> 2:3
+      |
+    2 |   a = [[1], [2, 3]];␊
+      |   ^---------------^
+      |
+      = Expecting matrix with second dimmension being 2 but received 1,
+]

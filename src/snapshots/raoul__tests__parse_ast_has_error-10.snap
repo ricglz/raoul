@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+[
+     --> 6:8
+      |
+    6 |   test(false);␊
+      |        ^---^
+      |
+      = Cannot cast from BOOL to STRING,
+]

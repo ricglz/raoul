@@ -1,0 +1,10 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([], [
+    Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Assignment(false, Id(a), Integer(1))], Some(Decision(BinaryOperation(Lt, Integer(2), Integer(3)), [Assignment(false, Id(a), Integer(2))], Some(ElseBlock([Assignment(false, Id(a), Integer(3))]))))),
+    Decision(BinaryOperation(Gt, Integer(1), Integer(2)), [Assignment(false, Id(b), Integer(1))], Some(ElseBlock([Assignment(false, Id(b), Integer(2))]))),
+    Decision(BinaryOperation(Eq, Integer(1), Integer(1)), [Assignment(false, Id(c), Integer(1))], None),
+    Write([Id(a), Id(b), Id(c)]),
+]))

@@ -1,0 +1,175 @@
+---
+source: src/tests.rs
+expression: quad_manager
+---
+QuadrupleManager {
+    function_name: "main",
+    jump_list: [],
+    missing_return: false,
+    dir_func: DirFunc {
+        functions: {
+            "helper": Function {
+                args: [
+                    Variable {
+                        address: 1000,
+                        data_type: INT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "a",
+                    },
+                    Variable {
+                        address: 1250,
+                        data_type: FLOAT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "b",
+                    },
+                    Variable {
+                        address: 1500,
+                        data_type: STRING,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "c",
+                    },
+                    Variable {
+                        address: 1750,
+                        data_type: BOOL,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "d",
+                    },
+                ],
+                local_addresses: AddressManager(1, 1, 1, 1),
+                name: "helper",
+                return_type: VOID,
+                temp_addresses: TempAddressManager({
+                    INT: [],
+                    FLOAT: [],
+                    BOOL: [],
+                    STRING: [],
+                }),
+                variables: {
+                    "a": Variable {
+                        address: 1000,
+                        data_type: INT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "a",
+                    },
+                    "c": Variable {
+                        address: 1500,
+                        data_type: STRING,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "c",
+                    },
+                    "b": Variable {
+                        address: 1250,
+                        data_type: FLOAT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "b",
+                    },
+                    "d": Variable {
+                        address: 1750,
+                        data_type: BOOL,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "d",
+                    },
+                },
+                first_quad: 1,
+            },
+            "main": Function {
+                args: [],
+                local_addresses: AddressManager(1, 1, 1, 1),
+                name: "main",
+                return_type: VOID,
+                temp_addresses: TempAddressManager({
+                    STRING: [],
+                    INT: [],
+                    BOOL: [],
+                    FLOAT: [],
+                }),
+                variables: {
+                    "a": Variable {
+                        address: 1000,
+                        data_type: INT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "a",
+                    },
+                    "d": Variable {
+                        address: 1750,
+                        data_type: BOOL,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "d",
+                    },
+                    "b": Variable {
+                        address: 1250,
+                        data_type: FLOAT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "b",
+                    },
+                    "c": Variable {
+                        address: 1500,
+                        data_type: STRING,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "c",
+                    },
+                },
+                first_quad: 0,
+            },
+        },
+        global_fn: GlobalScope {
+            addresses: AddressManager(0, 0, 0, 0),
+            variables: {},
+        },
+    },
+    memory: ConstantMemory({INT: [1], FLOAT: [1], BOOL: [false], STRING: [my string]}),
+    pointer_memory: PointerMemory {
+        counter: 4000,
+        pointers: {},
+    },
+    quad_list: [
+        Goto       -     -     2    ,
+        EndProc    -     -     -    ,
+        Assignment 3000  -     1000 ,
+        Assignment 3250  -     1250 ,
+        Assignment 3500  -     1500 ,
+        Assignment 3750  -     1750 ,
+        Print      1000  -     -    ,
+        Print      1250  -     -    ,
+        Print      1500  -     -    ,
+        Print      1750  -     -    ,
+        PrintNl    -     -     -    ,
+        End        -     -     -    ,
+    ],
+}

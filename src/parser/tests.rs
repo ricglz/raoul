@@ -12,7 +12,9 @@ fn valid_files() {
         }
         let program = std::fs::read_to_string(file).expect(file);
         println!("Testing {:?}", file);
-        assert!(parse(&program, true).is_ok());
+        let res = parse(&program, true);
+        assert!(res.is_ok());
+        insta::assert_debug_snapshot!(res.unwrap());
     }
 }
 
@@ -20,5 +22,7 @@ fn valid_files() {
 fn invalid_file() {
     let filename = "examples/invalid/syntax/syntax-error.ra";
     let program = std::fs::read_to_string(filename).expect(filename);
-    assert!(parse(&program, true).is_err());
+    let res = parse(&program, true);
+    assert!(res.is_err());
+    insta::assert_display_snapshot!(res.unwrap_err());
 }

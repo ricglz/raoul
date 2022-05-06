@@ -14,7 +14,7 @@ use crate::{
     quadruple::quadruple::Quadruple,
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct QuadrupleManager {
     function_name: String,
     jump_list: Vec<usize>,
@@ -763,7 +763,7 @@ impl QuadrupleManager {
     }
 }
 
-impl fmt::Debug for QuadrupleManager {
+impl fmt::Display for QuadrupleManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value: String = self
             .quad_list

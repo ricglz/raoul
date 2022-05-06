@@ -1,0 +1,15 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([
+    Function(test, INT, [], [
+        Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(1))], None),
+        Return(Integer(2)),
+    ]),
+    Function(second_test, INT, [], [
+        Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(3))], Some(Decision(BinaryOperation(Lt, Integer(1), Integer(3)), [Return(Integer(4))], Some(ElseBlock([Return(Integer(5))]))))),
+    ]),
+], [
+    Write([FunctionCall(test, []), FunctionCall(second_test, [])]),
+]))

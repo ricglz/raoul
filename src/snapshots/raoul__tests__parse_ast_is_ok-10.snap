@@ -1,0 +1,90 @@
+---
+source: src/tests.rs
+expression: quad_manager
+---
+QuadrupleManager {
+    function_name: "main",
+    jump_list: [],
+    missing_return: false,
+    dir_func: DirFunc {
+        functions: {
+            "test": Function {
+                args: [],
+                local_addresses: AddressManager(1, 0, 0, 0),
+                name: "test",
+                return_type: INT,
+                temp_addresses: TempAddressManager({
+                    INT: [],
+                    BOOL: [
+                        2750,
+                    ],
+                    FLOAT: [],
+                    STRING: [],
+                }),
+                variables: {
+                    "a": Variable {
+                        address: 1000,
+                        data_type: INT,
+                        dimensions: (
+                            None,
+                            None,
+                        ),
+                        name: "a",
+                    },
+                },
+                first_quad: 1,
+            },
+            "main": Function {
+                args: [],
+                local_addresses: AddressManager(0, 0, 0, 0),
+                name: "main",
+                return_type: VOID,
+                temp_addresses: TempAddressManager({
+                    BOOL: [],
+                    INT: [],
+                    FLOAT: [],
+                    STRING: [],
+                }),
+                variables: {},
+                first_quad: 0,
+            },
+        },
+        global_fn: GlobalScope {
+            addresses: AddressManager(1, 0, 0, 0),
+            variables: {
+                "test": Variable {
+                    address: 0,
+                    data_type: INT,
+                    dimensions: (
+                        None,
+                        None,
+                    ),
+                    name: "test",
+                },
+            },
+        },
+    },
+    memory: ConstantMemory({INT: [1, 10], STRING: [], FLOAT: [], BOOL: []}),
+    pointer_memory: PointerMemory {
+        counter: 4000,
+        pointers: {},
+    },
+    quad_list: [
+        Goto       -     -     11   ,
+        Assignment 3000  -     1000 ,
+        Lt         1000  3001  2750 ,
+        GotoF      2750  -     9    ,
+        Print      1000  -     -    ,
+        PrintNl    -     -     -    ,
+        Sum        1000  3000  2000 ,
+        Assignment 2000  -     1000 ,
+        Goto       -     -     2    ,
+        Return     1000  -     -    ,
+        EndProc    -     -     -    ,
+        Era        3     1     -    ,
+        GoSub      1     -     -    ,
+        Print      0     -     -    ,
+        PrintNl    -     -     -    ,
+        End        -     -     -    ,
+    ],
+}

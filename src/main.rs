@@ -37,8 +37,7 @@ fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, QuadrupleManager>
     quad_manager.parse(ast.clone())?;
     if debug {
         println!("Quads created sucessfully");
-        println!("{:#?}", quad_manager.memory);
-        println!("{:?}", quad_manager);
+        println!("{}", quad_manager);
     }
     Ok(quad_manager)
 }

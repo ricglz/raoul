@@ -1,0 +1,8 @@
+---
+source: src/tests.rs
+expression: vm.messages
+---
+[
+    "Hello world!",
+    "\n",
+]

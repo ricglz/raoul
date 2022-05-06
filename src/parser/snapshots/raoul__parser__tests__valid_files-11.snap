@@ -1,0 +1,7 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([], [
+    Write([String(Hello world!)]),
+]))

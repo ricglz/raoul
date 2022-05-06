@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+[
+     --> 2:10
+      |
+    2 |   while (a < 2) {␊
+      |          ^
+      |
+      = Variable "a" was not declared,
+]

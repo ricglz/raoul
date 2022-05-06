@@ -55,7 +55,7 @@ pub struct VM<R: Read> {
     functions: HashMap<usize, Function>,
     global_memory: Memory,
     global_variables: VariablesTable,
-    messages: Vec<String>,
+    pub messages: Vec<String>,
     pointer_memory: PointerMemory,
     quad_list: Vec<Quadruple>,
     reader: Option<R>,

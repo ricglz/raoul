@@ -12,7 +12,9 @@ fn parse_ast_has_error(filename: &str) {
     let ast_response = parse(&program, debug);
     assert!(ast_response.is_ok());
     let ast = ast_response.unwrap();
-    assert!(parse_ast(ast, debug).is_err());
+    let res = parse_ast(ast, debug);
+    assert!(res.is_err());
+    insta::assert_debug_snapshot!(res.unwrap_err());
 }
 
 impl<R: Read> VM<R> {
@@ -30,19 +32,26 @@ fn parse_ast_is_ok(filename: &str) -> QuadrupleManager {
     let ast = ast_response.unwrap();
     let res = parse_ast(ast, debug);
     assert!(res.is_ok());
-    res.unwrap()
+    let quad_manager = res.unwrap();
+    insta::assert_debug_snapshot!(quad_manager);
+    quad_manager
 }
 
 fn run_vm_is_error(filename: &str) {
     let quad_manager = parse_ast_is_ok(filename);
     let mut vm = VM::new_with_reader(&quad_manager, false, b"test".as_ref());
-    assert!(vm.run().is_err());
+    let res = vm.run();
+    assert!(res.is_err());
+    insta::assert_display_snapshot!(res.unwrap_err());
+    insta::assert_debug_snapshot!(vm.messages);
 }
 
 fn run_vm_is_ok(filename: &str) {
     let quad_manager = parse_ast_is_ok(filename);
     let mut vm = VM::new_with_reader(&quad_manager, false, b"test".as_ref());
-    assert!(vm.run().is_ok());
+    let res = vm.run();
+    assert!(res.is_ok());
+    insta::assert_debug_snapshot!(vm.messages);
 }
 
 fn expect_paths<F>(paths: ReadDir, mut f: F)

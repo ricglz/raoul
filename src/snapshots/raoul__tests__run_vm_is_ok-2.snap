@@ -1,0 +1,11 @@
+---
+source: src/tests.rs
+expression: vm.messages
+---
+[
+    "1",
+    "1",
+    "my string",
+    "false",
+    "\n",
+]

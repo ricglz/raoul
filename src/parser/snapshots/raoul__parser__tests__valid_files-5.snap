@@ -1,0 +1,20 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([], [
+    Assignment(false, Id(a), BinaryOperation(Or, Bool(true), Bool(false))),
+    Assignment(false, Id(b), BinaryOperation(And, Integer(1), Bool(true))),
+    Assignment(false, Id(c), BinaryOperation(Lte, Integer(1), Integer(2))),
+    Assignment(false, Id(d), BinaryOperation(Lt, String(1), Integer(2))),
+    Assignment(false, Id(e), BinaryOperation(Gte, Integer(2), Integer(1))),
+    Assignment(false, Id(f), BinaryOperation(Gt, Integer(2), Integer(1))),
+    Assignment(false, Id(e), BinaryOperation(Eq, Integer(3), Integer(3))),
+    Assignment(false, Id(f), BinaryOperation(Ne, Integer(3), Integer(2))),
+    Assignment(false, Id(g), BinaryOperation(Sum, String(2.1), Float(2))),
+    Assignment(false, Id(h), BinaryOperation(Minus, Integer(2), Float(2))),
+    Assignment(false, Id(i), BinaryOperation(Times, Integer(4), Integer(4))),
+    Assignment(false, Id(j), BinaryOperation(Div, Integer(4), Integer(4))),
+    Assignment(false, Id(k), Unary(Not, Bool(false))),
+    Write([Id(a), Id(b), Id(c), Id(d), Id(e), Id(f), Id(g), Id(h), Id(i), Id(j), Id(k)]),
+]))

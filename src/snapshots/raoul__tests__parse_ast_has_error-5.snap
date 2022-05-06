@@ -1,0 +1,18 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+[
+     --> 2:7
+      |
+    2 |   a = b;␊
+      |       ^
+      |
+      = Variable "b" was not declared,
+     --> 3:7
+      |
+    3 |   c = d;␊
+      |       ^
+      |
+      = Variable "d" was not declared,
+]

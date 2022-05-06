@@ -1,0 +1,70 @@
+---
+source: src/tests.rs
+expression: quad_manager
+---
+QuadrupleManager {
+    function_name: "main",
+    jump_list: [],
+    missing_return: false,
+    dir_func: DirFunc {
+        functions: {
+            "main": Function {
+                args: [],
+                local_addresses: AddressManager(6, 0, 0, 0),
+                name: "main",
+                return_type: VOID,
+                temp_addresses: TempAddressManager({
+                    FLOAT: [],
+                    BOOL: [],
+                    INT: [
+                        2001,
+                        2002,
+                    ],
+                    STRING: [],
+                }),
+                variables: {
+                    "a": Variable {
+                        address: 1000,
+                        data_type: INT,
+                        dimensions: (
+                            Some(
+                                3,
+                            ),
+                            Some(
+                                2,
+                            ),
+                        ),
+                        name: "a",
+                    },
+                },
+                first_quad: 0,
+            },
+        },
+        global_fn: GlobalScope {
+            addresses: AddressManager(0, 0, 0, 0),
+            variables: {},
+        },
+    },
+    memory: ConstantMemory({STRING: [], BOOL: [], FLOAT: [], INT: [1000, 3, 2, 4]}),
+    pointer_memory: PointerMemory {
+        counter: 4002,
+        pointers: {},
+    },
+    quad_list: [
+        Goto       -     -     1    ,
+        Ver        3001  3001  -    ,
+        Times      3001  3002  2000 ,
+        Ver        3003  3002  -    ,
+        Sum        3000  2000  2001 ,
+        Sum        2001  3003  4000 ,
+        Assignment 3002  -     4000 ,
+        Ver        3001  3001  -    ,
+        Times      3001  3002  2001 ,
+        Ver        3003  3002  -    ,
+        Sum        3000  2001  2002 ,
+        Sum        2002  3003  4001 ,
+        Print      4001  -     -    ,
+        PrintNl    -     -     -    ,
+        End        -     -     -    ,
+    ],
+}

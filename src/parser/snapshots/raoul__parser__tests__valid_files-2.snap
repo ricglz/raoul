@@ -1,0 +1,13 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([
+    Function(helper, VOID, [Argument(INT, a), Argument(FLOAT, b), Argument(STRING, c), Argument(BOOL, d)], []),
+], [
+    Assignment(false, Id(a), Integer(1)),
+    Assignment(false, Id(b), Float(1)),
+    Assignment(false, Id(c), String(my string)),
+    Assignment(false, Id(d), Bool(false)),
+    Write([Id(a), Id(b), Id(c), Id(d)]),
+]))

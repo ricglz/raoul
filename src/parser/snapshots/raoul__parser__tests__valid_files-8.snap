@@ -1,0 +1,9 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([], [
+    Assignment(false, Id(b), Integer(5)),
+    For(BinaryOperation(Lte, Id(a), BinaryOperation(Sum, Id(b), Integer(1))), [Assignment(false, Id(c), Id(a)), Write([Id(c)])], Assignment(false, Id(a), Integer(1))),
+    Write([Id(a), Id(b)]),
+]))

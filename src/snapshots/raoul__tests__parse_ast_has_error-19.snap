@@ -1,0 +1,14 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+---
+[
+     --> 5:1
+      |
+    5 | func test(): int {␊
+      | ...
+    7 | }␊
+      | ^
+      |
+      = Function "test" was already declared before,
+]

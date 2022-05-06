@@ -1,0 +1,11 @@
+---
+source: src/parser/tests.rs
+expression: res.unwrap()
+---
+Main(([], [
+    Assignment(false, Id(c), ArrayDeclaration(INT, 3, None)),
+    Assignment(false, ArrayDeclaration(c, Integer(0), None), Integer(1)),
+    Assignment(false, ArrayDeclaration(c, Integer(1), None), Integer(2)),
+    Assignment(false, ArrayDeclaration(c, Integer(2), None), Integer(3)),
+    Write([ArrayDeclaration(c, Integer(0), None), ArrayDeclaration(c, Integer(1), None), ArrayDeclaration(c, Integer(2), None), ArrayDeclaration(c, Integer(1), None), ArrayDeclaration(c, Integer(0), None)]),
+]))

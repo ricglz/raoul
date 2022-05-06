@@ -1,0 +1,42 @@
+---
+source: src/tests.rs
+expression: quad_manager
+---
+QuadrupleManager {
+    function_name: "main",
+    jump_list: [],
+    missing_return: false,
+    dir_func: DirFunc {
+        functions: {
+            "main": Function {
+                args: [],
+                local_addresses: AddressManager(0, 0, 0, 0),
+                name: "main",
+                return_type: VOID,
+                temp_addresses: TempAddressManager({
+                    BOOL: [],
+                    FLOAT: [],
+                    INT: [],
+                    STRING: [],
+                }),
+                variables: {},
+                first_quad: 0,
+            },
+        },
+        global_fn: GlobalScope {
+            addresses: AddressManager(0, 0, 0, 0),
+            variables: {},
+        },
+    },
+    memory: ConstantMemory({INT: [], FLOAT: [], STRING: [Hello world!], BOOL: []}),
+    pointer_memory: PointerMemory {
+        counter: 4000,
+        pointers: {},
+    },
+    quad_list: [
+        Goto       -     -     1    ,
+        Print      3500  -     -    ,
+        PrintNl    -     -     -    ,
+        End        -     -     -    ,
+    ],
+}
