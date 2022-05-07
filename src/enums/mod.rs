@@ -14,6 +14,7 @@ pub enum Types {
     FLOAT,
     STRING,
     BOOL,
+    Dataframe,
 }
 
 impl Types {
@@ -117,7 +118,9 @@ impl Types {
         let clone = v.clone();
         match &v.kind {
             AstNodeKind::Integer(_) => Ok(Types::INT),
-            AstNodeKind::Float(_) => Ok(Types::FLOAT),
+            AstNodeKind::Float(_)
+            | AstNodeKind::UnaryDataframeOp { .. }
+            | AstNodeKind::Correlation { .. } => Ok(Types::FLOAT),
             AstNodeKind::String(_) => Ok(Types::STRING),
             AstNodeKind::Bool(_) => Ok(Types::BOOL),
             AstNodeKind::Id(name) => match Types::get_variable(name, variables, global) {
@@ -201,6 +204,7 @@ impl Types {
                 }
                 _ => unreachable!("{:?}", operator),
             },
+            AstNodeKind::ReadCSV(_) => Ok(Self::Dataframe),
             kind => unreachable!("{:?}", kind),
         }
     }

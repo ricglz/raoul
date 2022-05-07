@@ -93,10 +93,13 @@ impl GenericAddressManager for AddressManager {
         self.counter.clone()
     }
     fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize> {
+        if data_type == &Types::Dataframe {
+            return Some(10_000);
+        }
         let type_counter = self
             .counter
             .get_mut(data_type)
-            .expect(format!("Get address received {:?}", data_type).as_str());
+            .expect(format!("{:?}", data_type).as_str());
         let prev = type_counter.clone();
         let amount = get_amount(dimensions);
         let new_counter = prev + amount;
