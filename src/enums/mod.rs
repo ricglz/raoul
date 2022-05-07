@@ -252,6 +252,7 @@ pub enum Operator {
     Mode,
     Variance,
     Corr,
+    ReadCSV,
 }
 
 impl Operator {

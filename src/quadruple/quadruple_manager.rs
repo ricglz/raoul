@@ -339,6 +339,20 @@ impl QuadrupleManager {
         Ok((address, v.data_type))
     }
 
+    fn assert_dataframe<'a>(&mut self, name: &str, node: AstNode<'a>) -> Results<'a, ()> {
+        let data_type = self.get_variable(name, node.clone())?.data_type;
+        match data_type == Types::Dataframe {
+            true => Ok(()),
+            false => {
+                let kind = RaoulErrorKind::InvalidCast {
+                    from: data_type,
+                    to: Types::Dataframe,
+                };
+                Err(RaoulError::new_vec(node, kind))
+            }
+        }
+    }
+
     fn parse_expr<'a>(&mut self, node: AstNode<'a>) -> Results<'a, Operand> {
         let node_clone = node.clone();
         match node.kind {
@@ -408,6 +422,41 @@ impl QuadrupleManager {
                 idx_1,
                 idx_2,
             } => self.get_array_val_operand(name, node_clone, idx_1, idx_2),
+            AstNodeKind::UnaryDataframeOp {
+                operator,
+                name,
+                column,
+            } => {
+                self.assert_dataframe(&name, node_clone.clone())?;
+                let (column_address, _) = self.assert_expr_type(*column, Types::STRING)?;
+                let data_type = Types::FLOAT;
+                let res = self.safe_add_temp(&data_type, node_clone)?;
+                self.add_quad(Quadruple {
+                    operator,
+                    op_1: Some(column_address),
+                    op_2: None,
+                    res: Some(res),
+                });
+                Ok((res, data_type))
+            }
+            AstNodeKind::Correlation {
+                name,
+                column_1,
+                column_2,
+            } => {
+                self.assert_dataframe(&name, node_clone.clone())?;
+                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::STRING)?;
+                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::STRING)?;
+                let data_type = Types::FLOAT;
+                let res = self.safe_add_temp(&data_type, node_clone)?;
+                self.add_quad(Quadruple {
+                    operator: Operator::Corr,
+                    op_1: Some(column_1_address),
+                    op_2: Some(column_2_address),
+                    res: Some(res),
+                });
+                Ok((res, data_type))
+            }
             kind => unreachable!("{kind:?}"),
         }
     }
@@ -495,6 +544,82 @@ impl QuadrupleManager {
         }))
     }
 
+    fn parse_array<'a>(
+        &mut self,
+        assignee: AstNode<'a>,
+        exprs: Vec<AstNode<'a>>,
+        node: AstNode<'a>,
+    ) -> Results<'a, ()> {
+        let name = String::from(assignee.clone());
+        let variable = self.get_variable(&name, assignee)?.clone();
+        let dim_2 = variable.dimensions.1;
+        match dim_2.is_none() {
+            true => {
+                let errors: Vec<_> = exprs
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, expr)| -> Results<()> {
+                        let idx_1 = Box::new(AstNode::new(
+                            AstNodeKind::Integer(i.try_into().unwrap()),
+                            expr.span.clone(),
+                        ));
+                        let (variable_address, _) =
+                            self.get_array_val_operand(&name, node.clone(), idx_1, None)?;
+                        self.add_assign_quad(variable_address, expr)
+                    })
+                    .filter_map(|v| v.err())
+                    .flatten()
+                    .collect();
+                match errors.is_empty() {
+                    true => Ok(()),
+                    false => Err(errors),
+                }
+            }
+            false => {
+                let errors: Vec<_> = exprs
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, exprs)| -> Results<()> {
+                        let idx_1 = Box::new(AstNode::new(
+                            AstNodeKind::Integer(i.try_into().unwrap()),
+                            node.span.clone(),
+                        ));
+                        let errors: Vec<_> = exprs
+                            .expand_array()
+                            .into_iter()
+                            .enumerate()
+                            .map(|(j, expr)| -> Results<()> {
+                                let idx_2 = Box::new(AstNode::new(
+                                    AstNodeKind::Integer(j.try_into().unwrap()),
+                                    expr.span.clone(),
+                                ));
+                                let (variable_address, _) = self.get_array_val_operand(
+                                    &name,
+                                    node.clone(),
+                                    idx_1.clone(),
+                                    Some(idx_2),
+                                )?;
+                                self.add_assign_quad(variable_address, expr.clone())
+                            })
+                            .filter_map(|v| v.err())
+                            .flatten()
+                            .collect();
+                        match errors.is_empty() {
+                            true => Ok(()),
+                            false => return Err(errors),
+                        }
+                    })
+                    .filter_map(|v| v.err())
+                    .flatten()
+                    .collect();
+                match errors.is_empty() {
+                    true => Ok(()),
+                    false => return Err(errors),
+                }
+            }
+        }
+    }
+
     fn parse_function<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let node_clone = node.clone();
         match node.kind {
@@ -502,108 +627,36 @@ impl QuadrupleManager {
                 assignee,
                 global,
                 value,
-            } => {
-                if value.is_array() {
-                    match value.kind {
-                        AstNodeKind::Array(exprs) => {
-                            let name = String::from(*assignee.clone());
-                            let variable = self.get_variable(&name, *assignee)?.clone();
-                            let dim_2 = variable.dimensions.1;
-                            match dim_2.is_none() {
-                                true => {
-                                    let errors: Vec<_> = exprs
-                                        .into_iter()
-                                        .enumerate()
-                                        .map(|(i, expr)| -> Results<()> {
-                                            let idx_1 = Box::new(AstNode::new(
-                                                AstNodeKind::Integer(i.try_into().unwrap()),
-                                                expr.span.clone(),
-                                            ));
-                                            let (variable_address, _) = self
-                                                .get_array_val_operand(
-                                                    &name,
-                                                    node_clone.clone(),
-                                                    idx_1,
-                                                    None,
-                                                )?;
-                                            self.add_assign_quad(variable_address, expr)
-                                        })
-                                        .filter_map(|v| v.err())
-                                        .flatten()
-                                        .collect();
-                                    match errors.is_empty() {
-                                        true => (),
-                                        false => return Err(errors),
-                                    }
-                                }
-                                false => {
-                                    let errors: Vec<_> = exprs
-                                        .into_iter()
-                                        .enumerate()
-                                        .map(|(i, exprs)| -> Results<()> {
-                                            let idx_1 = Box::new(AstNode::new(
-                                                AstNodeKind::Integer(i.try_into().unwrap()),
-                                                node_clone.span.clone(),
-                                            ));
-                                            let errors: Vec<_> = exprs
-                                                .expand_array()
-                                                .into_iter()
-                                                .enumerate()
-                                                .map(|(j, expr)| -> Results<()> {
-                                                    let idx_2 = Box::new(AstNode::new(
-                                                        AstNodeKind::Integer(j.try_into().unwrap()),
-                                                        expr.span.clone(),
-                                                    ));
-                                                    let (variable_address, _) = self
-                                                        .get_array_val_operand(
-                                                            &name,
-                                                            node_clone.clone(),
-                                                            idx_1.clone(),
-                                                            Some(idx_2),
-                                                        )?;
-                                                    self.add_assign_quad(
-                                                        variable_address,
-                                                        expr.clone(),
-                                                    )
-                                                })
-                                                .filter_map(|v| v.err())
-                                                .flatten()
-                                                .collect();
-                                            match errors.is_empty() {
-                                                true => Ok(()),
-                                                false => return Err(errors),
-                                            }
-                                        })
-                                        .filter_map(|v| v.err())
-                                        .flatten()
-                                        .collect();
-                                    match errors.is_empty() {
-                                        true => (),
-                                        false => return Err(errors),
-                                    }
-                                }
-                            }
-                        }
-                        _ => (),
-                    };
-                    return Ok(());
+            } => match value.kind {
+                AstNodeKind::ArrayDeclaration { .. } => Ok(()),
+                AstNodeKind::Array(exprs) => self.parse_array(*assignee, exprs, node_clone),
+                AstNodeKind::ReadCSV(file_node) => {
+                    let (file_address, _) = self.assert_expr_type(*file_node, Types::STRING)?;
+                    Ok(self.add_quad(Quadruple {
+                        operator: Operator::ReadCSV,
+                        op_1: Some(file_address),
+                        op_2: None,
+                        res: None,
+                    }))
                 }
-                let variable_address: usize = match assignee.kind {
-                    AstNodeKind::ArrayVal {
-                        ref name,
-                        idx_1,
-                        idx_2,
-                    } => {
-                        let op = self.get_array_val_operand(name, node_clone, idx_1, idx_2)?;
-                        op.0
-                    }
-                    _ => {
-                        let name: String = assignee.into();
-                        self.get_variable_address(global, &name)
-                    }
-                };
-                self.add_assign_quad(variable_address, *value)
-            }
+                _ => {
+                    let variable_address: usize = match assignee.kind {
+                        AstNodeKind::ArrayVal {
+                            ref name,
+                            idx_1,
+                            idx_2,
+                        } => {
+                            let op = self.get_array_val_operand(name, node_clone, idx_1, idx_2)?;
+                            op.0
+                        }
+                        _ => {
+                            let name: String = assignee.into();
+                            self.get_variable_address(global, &name)
+                        }
+                    };
+                    self.add_assign_quad(variable_address, *value)
+                }
+            },
             AstNodeKind::Write { exprs } => {
                 let addresses = self.parse_exprs(exprs)?;
                 addresses.into_iter().for_each(|(address, _)| {
