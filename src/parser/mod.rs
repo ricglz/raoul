@@ -317,9 +317,6 @@ impl LanguageParser {
     }
 
     fn operand_value(input: Node) -> Result<AstNode> {
-        if *input.user_data() {
-            println!("operand_value");
-        }
         Ok(match_nodes!(input.into_children();
             [expr(expr)] => expr,
             [int_cte(number)] => number,
@@ -347,9 +344,6 @@ impl LanguageParser {
     }
 
     fn assignment_exp(input: Node) -> Result<AstNode> {
-        if *input.user_data() {
-            println!("assignment_exp");
-        }
         Ok(match_nodes!(input.into_children();
             [expr(value)] => value,
             [read(value)] => value,
