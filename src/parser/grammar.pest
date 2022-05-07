@@ -53,14 +53,14 @@ INPUT  = _{"input"}
 TRUE  = _{"true"}
 FALSE = _{"false"}
 
-READ_CSV_KEY = _{"read_csv"}
-AVERAGE_KEY  = _{"average"}
-STD_KEY      = _{"std"}
-MODE_KEY     = _{"mode"}
-VARIANCE_KEY = _{"variance"}
-CORRELATION_KEY = {"correlation"}
-PLOT_KEY = {"plot"}
-HISTOGRAM_KEY = {"histogram"}
+READ_CSV_KEY    = _{"read_csv"}
+average         = {"average"}
+std             = {"std"}
+mode            = {"mode"}
+variance        = {"variance"}
+CORRELATION_KEY = _{"correlation"}
+PLOT_KEY        = {"plot"}
+HISTOGRAM_KEY   = {"histogram"}
 
 RETURN_KEY = _{"return"}
 
@@ -96,10 +96,10 @@ KEYWORD_TYPE = _{
   TRUE            |
   FALSE           |
   READ_CSV_KEY    |
-  AVERAGE_KEY     |
-  STD_KEY         |
-  MODE_KEY        |
-  VARIANCE_KEY    |
+  average     |
+  std         |
+  mode        |
+  variance    |
   CORRELATION_KEY |
   PLOT_KEY        |
   HISTOGRAM_KEY   |
@@ -119,7 +119,7 @@ STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
 ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
 arr_index    = _{ L_SQUARE ~ expr ~ R_SQUARE }
 arr_val      = { id ~ arr_index{1,2} }
-NON_CTE      = _{ DATAFRAME_VALUE_OPS | func_call | arr_val | id }
+NON_CTE      = _{ dataframe_value_ops | func_call | arr_val | id }
 VAR_VAL      = _{ ATOM_CTE | NON_CTE }
 
 expr          = { and_term ~ (OR ~ and_term)* }
@@ -144,7 +144,7 @@ list_cte = { L_SQUARE ~ exprs ~ R_SQUARE }
 mat_cte  = {L_SQUARE ~ list_cte ~ ( COMMA ~ list_cte )* ~ R_SQUARE }
 arr_cte  = { list_cte | mat_cte }
 
-assignment_exp = { read | READ_CSV | expr | declare_arr | arr_cte }
+assignment_exp = { read | read_csv | expr | declare_arr | arr_cte }
 assignee       = { arr_val | id }
 assignment     = { global? ~ assignee ~ ASGN ~ assignment_exp }
 
@@ -168,19 +168,16 @@ while_loop = {WHILE ~ COND_EXPR ~ block}
 
 for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
 
-POSSIBLE_STR        = {STRING_CTE | NON_CTE}
-READ_CSV_EXTRA      = {(COMMA ~ id){2}}
-READ_CSV            = {READ_CSV_KEY ~ L_PAREN ~ POSSIBLE_STR ~ READ_CSV_EXTRA? ~ R_PAREN}
-ONE_COLUMN_FUNC     = {L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ R_PAREN}
-AVERAGE             = {AVERAGE_KEY ~ ONE_COLUMN_FUNC}
-STD                 = {STD_KEY ~ ONE_COLUMN_FUNC}
-MODE                = {MODE_KEY ~ ONE_COLUMN_FUNC}
-VARIANCE            = {VARIANCE_KEY ~ ONE_COLUMN_FUNC}
-TWO_COLUMNS_FUNC    = {L_PAREN ~ id ~ (COMMA ~ POSSIBLE_STR){2} ~ R_PAREN}
-CORRELATION         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
+possible_str        = {STRING_CTE | NON_CTE}
+READ_CSV_EXTRA      = _{(COMMA ~ id){2}}
+read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ READ_CSV_EXTRA? ~ R_PAREN}
+unary_dataframe_key = { average | std | mode | variance }
+unary_dataframe_op = { unary_dataframe_key ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ R_PAREN }
+TWO_COLUMNS_FUNC    = _{L_PAREN ~ id ~ (COMMA ~ possible_str){2} ~ R_PAREN}
+correlation         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
+dataframe_value_ops = {unary_dataframe_op | correlation}
 PLOT                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
-HISTOGRAM           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ COMMA ~ expr ~ R_PAREN}
-DATAFRAME_VALUE_OPS = _{AVERAGE | STD | MODE | VARIANCE | CORRELATION}
+HISTOGRAM           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ COMMA ~ expr ~ R_PAREN}
 DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
 
 return_statement = { RETURN_KEY ~ expr }

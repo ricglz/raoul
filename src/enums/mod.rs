@@ -242,6 +242,12 @@ pub enum Operator {
     Param,
     // Arrays
     Ver,
+    // Dataframe
+    Average,
+    Std,
+    Mode,
+    Variance,
+    Corr,
 }
 
 impl Operator {

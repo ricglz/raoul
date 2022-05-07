@@ -196,6 +196,16 @@ impl LanguageParser {
         ))
     }
 
+    fn possible_str(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [expr(expr)] => expr,
+            [string_value(string)] => string,
+            [id(id)] => id,
+            [func_call(call)] => call,
+            [arr_val(id)] => id,
+        ))
+    }
+
     // ID
     fn id(input: Node) -> Result<AstNode> {
         Ok(AstNode {
@@ -307,7 +317,6 @@ impl LanguageParser {
     }
 
     fn operand_value(input: Node) -> Result<AstNode> {
-        // TODO: Still misses some conditions
         if *input.user_data() {
             println!("operand_value");
         }
@@ -320,6 +329,7 @@ impl LanguageParser {
             [id(id)] => id,
             [func_call(call)] => call,
             [arr_val(id)] => id,
+            [dataframe_value_ops(id)] => id,
         ))
     }
 
@@ -337,7 +347,6 @@ impl LanguageParser {
     }
 
     fn assignment_exp(input: Node) -> Result<AstNode> {
-        // TODO: Still misses some conditions
         if *input.user_data() {
             println!("assignment_exp");
         }
@@ -346,6 +355,7 @@ impl LanguageParser {
             [read(value)] => value,
             [declare_arr(value)] => value,
             [arr_cte(arr)] => arr,
+            [read_csv(v)] => v,
         ))
     }
 
@@ -410,6 +420,78 @@ impl LanguageParser {
                 let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: Some(Box::new(idx_2)) };
                 AstNode::new(kind, span)
             },
+        ))
+    }
+
+    // Dataframe
+    fn read_csv(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [possible_str(file)] => {
+                let node = Box::new(file);
+                AstNode::new(AstNodeKind::ReadCSV(node), span)
+            },
+        ))
+    }
+
+    fn average(_input: Node) -> Result<Operator> {
+        Ok(Operator::Average)
+    }
+
+    fn std(_input: Node) -> Result<Operator> {
+        Ok(Operator::Std)
+    }
+
+    fn mode(_input: Node) -> Result<Operator> {
+        Ok(Operator::Mode)
+    }
+
+    fn variance(_input: Node) -> Result<Operator> {
+        Ok(Operator::Variance)
+    }
+
+    fn unary_dataframe_key(input: Node) -> Result<Operator> {
+        Ok(match_nodes!(input.into_children();
+            [average(op)] => op,
+            [std(op)] => op,
+            [mode(op)] => op,
+            [variance(op)] => op,
+        ))
+    }
+
+    fn unary_dataframe_op(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [unary_dataframe_key(operator), id(id), possible_str(col)] => {
+                let name = String::from(id);
+                let column = Box::new(col);
+                let kind = AstNodeKind::UnaryDataframeOp {
+                    name, column, operator
+                };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
+    fn correlation(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [id(id), possible_str(col_1), possible_str(col_2)] => {
+                let name = String::from(id);
+                let column_1 = Box::new(col_1);
+                let column_2 = Box::new(col_2);
+                let kind = AstNodeKind::Correlation {
+                    name, column_1, column_2
+                };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
+    fn dataframe_value_ops(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [unary_dataframe_op(node)] => node,
+            [correlation(node)] => node,
         ))
     }
 

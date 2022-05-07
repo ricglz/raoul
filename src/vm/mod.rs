@@ -399,6 +399,7 @@ impl<R: Read> VM<R> {
                     continue;
                 }
                 Operator::Ver => self.process_ver(),
+                op => todo!("{op}"),
             }?;
             self.update_quad_pos(quad_pos + 1);
         }

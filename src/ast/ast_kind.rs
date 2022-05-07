@@ -77,6 +77,17 @@ pub enum AstNodeKind<'a> {
         exprs: Vec<AstNode<'a>>,
     },
     Return(Box<AstNode<'a>>),
+    ReadCSV(Box<AstNode<'a>>),
+    UnaryDataframeOp {
+        operator: Operator,
+        name: String,
+        column: Box<AstNode<'a>>,
+    },
+    Correlation {
+        name: String,
+        column_1: Box<AstNode<'a>>,
+        column_2: Box<AstNode<'a>>,
+    },
 }
 
 impl<'a> From<AstNodeKind<'a>> for String {
@@ -104,12 +115,12 @@ impl<'a> From<AstNodeKind<'a>> for usize {
 impl fmt::Debug for AstNodeKind<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            AstNodeKind::Id(s) => write!(f, "Id({})", s),
-            AstNodeKind::Integer(n) => write!(f, "Integer({})", n),
-            AstNodeKind::Float(n) => write!(f, "Float({})", n),
-            AstNodeKind::String(s) => write!(f, "String({})", s),
-            AstNodeKind::Bool(s) => write!(f, "Bool({})", s),
-            AstNodeKind::Array(s) => write!(f, "Array({s:?})"),
+            Self::Id(s) => write!(f, "Id({})", s),
+            Self::Integer(n) => write!(f, "Integer({})", n),
+            Self::Float(n) => write!(f, "Float({})", n),
+            Self::String(s) => write!(f, "String({})", s),
+            Self::Bool(s) => write!(f, "Bool({})", s),
+            Self::Array(s) => write!(f, "Array({s:?})"),
             Self::ArrayDeclaration {
                 data_type,
                 dim1,
@@ -120,24 +131,20 @@ impl fmt::Debug for AstNodeKind<'_> {
             Self::ArrayVal { name, idx_1, idx_2 } => {
                 write!(f, "ArrayDeclaration({name}, {idx_1:?}, {idx_2:?})")
             }
-            AstNodeKind::Assignment {
+            Self::Assignment {
                 assignee,
                 global,
                 value,
             } => write!(f, "Assignment({}, {:?}, {:?})", global, assignee, value),
-            AstNodeKind::UnaryOperation {
+            Self::UnaryOperation {
                 operator: operation,
                 operand,
             } => {
                 write!(f, "Unary({:?}, {:?})", operation, operand)
             }
-            AstNodeKind::Main { functions, body } => {
-                write!(f, "Main(({:#?}, {:#?}))", functions, body)
-            }
-            AstNodeKind::Argument { arg_type, name } => {
-                write!(f, "Argument({:?}, {})", arg_type, name)
-            }
-            AstNodeKind::Function {
+            Self::Main { functions, body } => write!(f, "Main(({:#?}, {:#?}))", functions, body),
+            Self::Argument { arg_type, name } => write!(f, "Argument({:?}, {})", arg_type, name),
+            Self::Function {
                 arguments,
                 body,
                 name,
@@ -149,35 +156,44 @@ impl fmt::Debug for AstNodeKind<'_> {
                     name, return_type, arguments, body
                 )
             }
-            AstNodeKind::Write { exprs } => write!(f, "Write({:?})", exprs),
-            AstNodeKind::Read => write!(f, "Read"),
-            AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
+            Self::Write { exprs } => write!(f, "Write({:?})", exprs),
+            Self::Read => write!(f, "Read"),
+            Self::BinaryOperation { operator, lhs, rhs } => {
                 write!(f, "BinaryOperation({:?}, {:?}, {:?})", operator, lhs, rhs)
             }
-            AstNodeKind::Decision {
+            Self::Decision {
                 expr,
                 statements,
                 else_block,
             } => {
                 write!(f, "Decision({expr:?}, {statements:?}, {else_block:?})")
             }
-            AstNodeKind::ElseBlock { statements } => {
-                write!(f, "ElseBlock({:?})", statements)
-            }
-            AstNodeKind::While { expr, statements } => {
-                write!(f, "While({:?}, {:?})", expr, statements)
-            }
-            AstNodeKind::For {
+            Self::ElseBlock { statements } => write!(f, "ElseBlock({:?})", statements),
+            Self::While { expr, statements } => write!(f, "While({:?}, {:?})", expr, statements),
+            Self::For {
                 expr,
                 statements,
                 assignment,
             } => {
                 write!(f, "For({expr:?}, {statements:?}, {assignment:?})")
             }
-            AstNodeKind::FuncCall { name, exprs } => {
-                write!(f, "FunctionCall({name}, {exprs:?})")
+            Self::FuncCall { name, exprs } => write!(f, "FunctionCall({name}, {exprs:?})"),
+            Self::Return(expr) => write!(f, "Return({expr:?})"),
+            Self::ReadCSV(file) => write!(f, "ReadCSV({file:?})"),
+            Self::UnaryDataframeOp {
+                operator,
+                name,
+                column,
+            } => {
+                write!(f, "UnaryDataframeOp({operator:?}, {name}, {column:?})")
             }
-            AstNodeKind::Return(expr) => write!(f, "Return({expr:?})"),
+            Self::Correlation {
+                name,
+                column_1,
+                column_2,
+            } => {
+                write!(f, "Correlation({name}, {column_1:?}, {column_2:?})")
+            }
         }
     }
 }
