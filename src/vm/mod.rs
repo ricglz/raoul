@@ -193,7 +193,7 @@ impl<R: Read> VM<R> {
 
     fn print_message(&mut self, message: &str) {
         self.messages.push(message.to_string());
-        println!("{message}")
+        print!("{message} ")
     }
 
     fn process_print(&mut self) -> VMResult<()> {
