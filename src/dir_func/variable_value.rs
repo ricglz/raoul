@@ -78,6 +78,11 @@ impl From<&VariableValue> for f64 {
     }
 }
 
+impl From<f64> for VariableValue {
+    fn from(v: f64) -> Self {
+        Self::Float(v)
+    }
+}
 impl From<VariableValue> for bool {
     fn from(v: VariableValue) -> Self {
         match v {
@@ -104,6 +109,15 @@ impl From<VariableValue> for usize {
     fn from(v: VariableValue) -> Self {
         match v {
             VariableValue::Integer(v) => v.try_into().unwrap(),
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl From<VariableValue> for String {
+    fn from(v: VariableValue) -> Self {
+        match v {
+            VariableValue::String(v) => v,
             _ => unreachable!(),
         }
     }

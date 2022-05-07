@@ -4,6 +4,12 @@ use std::{
     io::{stdin, Read},
 };
 
+use polars::{
+    datatypes::AnyValue,
+    io::SerReader,
+    prelude::{DataFrame, Series},
+};
+
 use crate::{
     address::{Address, ConstantMemory, Memory, PointerMemory, TOTAL_SIZE},
     dir_func::{
@@ -54,14 +60,24 @@ pub struct VM<R: Read> {
     functions: HashMap<usize, Function>,
     global_memory: Memory,
     global_variables: VariablesTable,
-    pub messages: Vec<String>,
     pointer_memory: PointerMemory,
+    pub messages: Vec<String>,
     quad_list: Vec<Quadruple>,
     reader: Option<R>,
     stack_size: usize,
+    data_frame: Option<DataFrame>,
 }
 
 const STACK_SIZE_CAP: usize = 1024;
+
+fn cast_to_f64(v: AnyValue) -> f64 {
+    match v {
+        AnyValue::Float64(v) => v,
+        AnyValue::Float32(v) => v.try_into().unwrap(),
+        AnyValue::Int64(v) => v.to_string().parse::<f64>().unwrap(),
+        _ => unreachable!(),
+    }
+}
 
 impl<R: Read> VM<R> {
     pub fn base_new(quad_manager: &QuadrupleManager, debug: bool, reader: Option<R>) -> Self {
@@ -79,6 +95,7 @@ impl<R: Read> VM<R> {
             call_stack: vec![],
             constant_memory,
             contexts_stack: vec![initial_context],
+            data_frame: None,
             debug,
             functions: functions
                 .into_iter()
@@ -193,7 +210,11 @@ impl<R: Read> VM<R> {
 
     fn print_message(&mut self, message: &str) {
         self.messages.push(message.to_string());
-        print!("{message} ")
+        let separator = match message.contains("\n") {
+            true => "",
+            false => " ",
+        };
+        print!("{message}{separator}")
     }
 
     fn process_print(&mut self) -> VMResult<()> {
@@ -355,6 +376,59 @@ impl<R: Read> VM<R> {
         }
     }
 
+    fn read_csv(&mut self) -> VMResult<()> {
+        let quad = self.get_current_quad();
+        let filename = String::from(self.get_value(quad.op_1.unwrap())?);
+        let res = polars::io::csv::CsvReader::from_path(&filename);
+        if res.is_err() {
+            return Err("Could not read the file");
+        }
+        let res = res.unwrap().has_header(true).finish();
+        if res.is_err() {
+            return Err("File is not a valid CSV with headers");
+        }
+        Ok(self.data_frame = Some(res.unwrap()))
+    }
+
+    fn unary_df_operation<F>(&mut self, f: F) -> VMResult<()>
+    where
+        F: FnOnce(&Series) -> f64,
+    {
+        let quad = self.get_current_quad();
+        let column_name = String::from(self.get_value(quad.op_1.unwrap())?);
+        if self.data_frame.is_none() {
+            return Err("No data frame was created. You need to create one using `read_csv`");
+        }
+        let data_frame = self.data_frame.as_ref().unwrap();
+        let column = data_frame.column(&column_name);
+        if column.is_err() {
+            return Err("Invalid column");
+        }
+        let value = f(column.unwrap()).into();
+        Ok(self.write_value(value, quad.res.unwrap()))
+    }
+
+    fn correlation(&mut self) -> VMResult<()> {
+        let quad = self.get_current_quad();
+        if self.data_frame.is_none() {
+            return Err("No data frame was created. You need to create one using `read_csv`");
+        }
+        let data_frame = self.data_frame.as_ref().unwrap();
+        let col_1_name = String::from(self.get_value(quad.op_1.unwrap())?);
+        let col_2_name = String::from(self.get_value(quad.op_2.unwrap())?);
+        let _column_1 = match data_frame.column(&col_1_name) {
+            Ok(column) => column,
+            Err(_) => return Err("Invalid column"),
+        };
+        let _column_2 = match data_frame.column(&col_2_name) {
+            Ok(column) => column,
+            Err(_) => return Err("Invalid column"),
+        };
+        // TODO: HOW!
+        let value = 0.0.into();
+        Ok(self.write_value(value, quad.res.unwrap()))
+    }
+
     pub fn run(&mut self) -> VMResult<()> {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
@@ -399,7 +473,14 @@ impl<R: Read> VM<R> {
                     continue;
                 }
                 Operator::Ver => self.process_ver(),
-                op => todo!("{op}"),
+                Operator::ReadCSV => self.read_csv(),
+                Operator::Average => self.unary_df_operation(|c| c.mean().unwrap_or(0.0)),
+                Operator::Std => self.unary_df_operation(|c| cast_to_f64(c.std_as_series().get(0))),
+                Operator::Variance => {
+                    self.unary_df_operation(|c| cast_to_f64(c.var_as_series().get(0)))
+                }
+                Operator::Mode => self.unary_df_operation(|c| c.median().unwrap_or(0.0)),
+                Operator::Corr => self.correlation(),
             }?;
             self.update_quad_pos(quad_pos + 1);
         }

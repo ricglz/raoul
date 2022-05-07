@@ -56,7 +56,7 @@ FALSE = _{"false"}
 READ_CSV_KEY    = _{"read_csv"}
 average         = {"average"}
 std             = {"std"}
-mode            = {"mode"}
+median          = {"median"}
 variance        = {"variance"}
 CORRELATION_KEY = _{"correlation"}
 PLOT_KEY        = {"plot"}
@@ -98,7 +98,7 @@ KEYWORD_TYPE = _{
   READ_CSV_KEY    |
   average     |
   std         |
-  mode        |
+  median        |
   variance    |
   CORRELATION_KEY |
   PLOT_KEY        |
@@ -171,7 +171,7 @@ for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
 possible_str        = {STRING_CTE | NON_CTE}
 READ_CSV_EXTRA      = _{(COMMA ~ id){2}}
 read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ READ_CSV_EXTRA? ~ R_PAREN}
-unary_dataframe_key = { average | std | mode | variance }
+unary_dataframe_key = { average | std | median | variance }
 unary_dataframe_op = { unary_dataframe_key ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ R_PAREN }
 TWO_COLUMNS_FUNC    = _{L_PAREN ~ id ~ (COMMA ~ possible_str){2} ~ R_PAREN}
 correlation         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}

@@ -436,7 +436,7 @@ impl LanguageParser {
         Ok(Operator::Std)
     }
 
-    fn mode(_input: Node) -> Result<Operator> {
+    fn median(_input: Node) -> Result<Operator> {
         Ok(Operator::Mode)
     }
 
@@ -448,7 +448,7 @@ impl LanguageParser {
         Ok(match_nodes!(input.into_children();
             [average(op)] => op,
             [std(op)] => op,
-            [mode(op)] => op,
+            [median(op)] => op,
             [variance(op)] => op,
         ))
     }

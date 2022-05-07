@@ -3,7 +3,7 @@ func main(): void {
   avg = average(dataframe, "song_duration_ms");
   col = "danceability";
   danceability_std = std(dataframe, col);
-  danceability_mode = mode(dataframe, col);
+  danceability_mode = median(dataframe, col);
   danceability_var = variance(dataframe, col);
   corr = correlation(dataframe, col, "song_duration_ms");
   print(avg, danceability_std, danceability_mode, danceability_var, corr);
