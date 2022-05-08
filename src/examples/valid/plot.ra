@@ -1,5 +1,5 @@
 func main(): void {
   dataframe = read_csv("song_data_clean.csv");
-  histogram(dataframe, "song_duration_ms", 5);
+  histogram(dataframe, "danceability", 5);
   plot(dataframe, "song_duration_ms", "danceability");
 }

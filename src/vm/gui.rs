@@ -3,7 +3,7 @@ use egui::{
     plot::{Bar, BarChart, Line, LineStyle, Plot, Value, Values},
     Color32, InnerResponse, Ui,
 };
-use polars::prelude::{ChunkSort, DataFrame};
+use polars::prelude::DataFrame;
 
 enum AppType {
     Plot,
@@ -53,21 +53,31 @@ impl App {
     }
 
     fn plot_histogram(&self) -> BarChart {
+        let bins = self.bins.unwrap() + 1;
+        let mut data: Vec<(f64, f64)> = vec![(0.0, f64::MAX); bins];
         let column = &self.data["column"];
-        let bins = self.bins.unwrap();
-        let bins_len = column.len() / bins;
-        let column = column.f64().unwrap();
-        let column: Vec<_> = column.sort(false).into_iter().map(Option::unwrap).collect();
-        let column: Vec<_> = column.chunks(bins_len).collect();
-        let bars: Vec<_> = column
+        let min = column.min::<f64>().unwrap();
+        let max = column.max::<f64>().unwrap();
+        let step = (max - min) / bins.to_string().parse::<f64>().unwrap();
+        let chunked_arr = column.f64().unwrap();
+        chunked_arr.into_iter().for_each(|v| {
+            let value = v.unwrap();
+            let index: usize = match (value - min) / step {
+                x if x >= (bins as f64) => bins - 1,
+                x => x.floor().to_string().parse().unwrap(),
+            };
+            let (count, start) = data.get_mut(index).unwrap();
+            *count += 1.0;
+            if *start > value {
+                *start = value;
+            }
+        });
+        let bars: Vec<Bar> = data
             .windows(2)
             .map(|v| {
-                let first_arr = v[0];
-                let second_arr = v[1];
-                let value: f64 = first_arr.len().to_string().parse().unwrap();
-                let first = first_arr[0];
-                let limit = second_arr[0];
-                Bar::new(first, value).width((limit - first) * 0.25)
+                let (count, start) = v[0];
+                let limit = v[1].1;
+                Bar::new(start, count).width((limit - start) * 0.95)
             })
             .collect();
         BarChart::new(bars)
