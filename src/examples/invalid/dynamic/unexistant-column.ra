@@ -1,0 +1,6 @@
+func main(): void {
+  dataframe = read_csv("song_data_clean.csv");
+  avg = average(dataframe, "why");
+  print(avg);
+}
+

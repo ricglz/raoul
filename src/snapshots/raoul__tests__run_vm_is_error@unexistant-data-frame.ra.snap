@@ -1,0 +1,6 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/dynamic/unexistant-data-frame.ra
+---
+Could not read the file
