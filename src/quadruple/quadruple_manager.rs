@@ -755,6 +755,34 @@ impl QuadrupleManager {
             AstNodeKind::FuncCall { name, exprs } => {
                 self.parse_func_call(&name, node_clone.clone(), exprs)
             }
+            AstNodeKind::Plot {
+                name,
+                column_1,
+                column_2,
+            } => {
+                self.assert_dataframe(&name, node_clone.clone())?;
+                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::STRING)?;
+                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::STRING)?;
+                self.add_quad(Quadruple {
+                    operator: Operator::Plot,
+                    op_1: Some(column_1_address),
+                    op_2: Some(column_2_address),
+                    res: None,
+                });
+                Ok(())
+            }
+            AstNodeKind::Histogram { bins, column, name } => {
+                self.assert_dataframe(&name, node_clone.clone())?;
+                let (column_address, _) = self.assert_expr_type(*column, Types::STRING)?;
+                let (bins_address, _) = self.assert_expr_type(*bins, Types::INT)?;
+                self.add_quad(Quadruple {
+                    operator: Operator::Histogram,
+                    op_1: Some(column_address),
+                    op_2: Some(bins_address),
+                    res: None,
+                });
+                Ok(())
+            }
             kind => unreachable!("{kind:?}"),
         }
     }

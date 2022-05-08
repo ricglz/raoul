@@ -253,6 +253,8 @@ pub enum Operator {
     Variance,
     Corr,
     ReadCSV,
+    Plot,
+    Histogram,
 }
 
 impl Operator {

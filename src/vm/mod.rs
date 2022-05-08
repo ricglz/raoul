@@ -483,6 +483,7 @@ impl<R: Read> VM<R> {
                 }
                 Operator::Mode => self.unary_df_operation(|c| c.median().unwrap_or(0.0)),
                 Operator::Corr => self.correlation(),
+                kind => todo!("{kind:?}"),
             }?;
             self.update_quad_pos(quad_pos + 1);
         }
