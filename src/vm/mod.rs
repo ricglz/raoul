@@ -460,6 +460,32 @@ impl<R: Read> VM<R> {
         );
     }
 
+    fn histogram(&mut self) -> VMResult<()> {
+        let quad = self.get_current_quad();
+        if self.data_frame.is_none() {
+            return Err("No data frame was created. You need to create one using `read_csv`");
+        }
+        let data_frame = self.data_frame.as_ref().unwrap();
+        let col_name = String::from(self.get_value(quad.op_1.unwrap())?);
+        let bins_value = self.get_value(quad.op_2.unwrap())?;
+        let bins = match bins_value {
+            VariableValue::Integer(a) if a <= 0 => Err("The amount of bins should be possitive"),
+            _ => Ok(usize::from(bins_value)),
+        }?;
+        let temp = data_frame
+            .clone()
+            .lazy()
+            .select([col(&col_name).cast(DataType::Float64).alias("column")])
+            .collect()
+            .unwrap();
+        let app = App::new_histogram(temp, bins);
+        eframe::run_native(
+            "Raoul",
+            eframe::NativeOptions::default(),
+            Box::new(|_cc| Box::new(app)),
+        );
+    }
+
     pub fn run(&mut self) -> VMResult<()> {
         loop {
             let mut quad_pos = self.current_context().quad_pos;
@@ -513,7 +539,7 @@ impl<R: Read> VM<R> {
                 Operator::Mode => self.unary_df_operation(|c| c.median().unwrap_or(0.0)),
                 Operator::Corr => self.correlation(),
                 Operator::Plot => self.plot(),
-                kind => todo!("{kind:?}"),
+                Operator::Histogram => self.histogram(),
             }?;
             self.update_quad_pos(quad_pos + 1);
         }
