@@ -1,0 +1,15 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/dataframe.ra
+---
+Main(([], [
+    Assignment(false, Id(dataframe), ReadCSV(String(song_data_clean.csv))),
+    Assignment(false, Id(avg), UnaryDataframeOp(Average, dataframe, String(song_duration_ms))),
+    Assignment(false, Id(col), String(danceability)),
+    Assignment(false, Id(danceability_std), UnaryDataframeOp(Std, dataframe, Id(col))),
+    Assignment(false, Id(danceability_mode), UnaryDataframeOp(Mode, dataframe, Id(col))),
+    Assignment(false, Id(danceability_var), UnaryDataframeOp(Variance, dataframe, Id(col))),
+    Assignment(false, Id(corr), Correlation(dataframe, Id(col), String(song_duration_ms))),
+    Write([Id(avg), Id(danceability_std), Id(danceability_mode), Id(danceability_var), Id(corr)]),
+]))

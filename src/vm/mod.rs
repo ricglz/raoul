@@ -5,10 +5,11 @@ use std::{
 };
 
 use polars::{
-    datatypes::AnyValue,
+    datatypes::{AnyValue, DataType},
     io::SerReader,
     prelude::{DataFrame, Series},
 };
+use polars_lazy::prelude::{col, pearson_corr, IntoLazy};
 
 use crate::{
     address::{Address, ConstantMemory, Memory, PointerMemory, TOTAL_SIZE},
@@ -416,16 +417,17 @@ impl<R: Read> VM<R> {
         let data_frame = self.data_frame.as_ref().unwrap();
         let col_1_name = String::from(self.get_value(quad.op_1.unwrap())?);
         let col_2_name = String::from(self.get_value(quad.op_2.unwrap())?);
-        let _column_1 = match data_frame.column(&col_1_name) {
-            Ok(column) => column,
-            Err(_) => return Err("Invalid column"),
-        };
-        let _column_2 = match data_frame.column(&col_2_name) {
-            Ok(column) => column,
-            Err(_) => return Err("Invalid column"),
-        };
-        // TODO: HOW!
-        let value = 0.0.into();
+        let temp = data_frame
+            .clone()
+            .lazy()
+            .select([pearson_corr(
+                col(&col_1_name).cast(DataType::Float64),
+                col(&col_2_name).cast(DataType::Float64),
+            )
+            .alias("correlation")])
+            .collect()
+            .unwrap();
+        let value = cast_to_f64(temp.column("correlation").unwrap().get(0)).into();
         Ok(self.write_value(value, quad.res.unwrap()))
     }
 

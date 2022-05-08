@@ -1024,6 +1024,7 @@ dependencies = [
  "pest_consume",
  "pest_derive",
  "polars",
+ "polars-lazy",
 ]
 
 [[package]]

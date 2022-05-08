@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/dataframe.ra
+---
+[
+    "218645.22944916878",
+    "0.15916777771148127",
+    "0.637",
+    "0.025334381461611516",
+    "-0.08547008157088816",
+    "\n",
+]

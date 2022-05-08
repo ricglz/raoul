@@ -5,11 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+lto = true
 [dependencies]
 pest_consume = "1.1.1"
 pest = "2.1.3"
 pest_derive = "2.1.0"
 clap = "3.1.8"
 polars = "0.21.1"
+polars-lazy = "0.21.1"
 [dev-dependencies]
 insta = { version="1.13.0", features = ["glob"] }
