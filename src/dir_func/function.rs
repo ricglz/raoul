@@ -5,7 +5,7 @@ use crate::{
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
-    error::{error_kind::RaoulErrorKind, RaoulError, Results},
+    error::{error_kind::RaoulErrorKind, RaoulError, Result, Results},
 };
 
 use super::variable::{Dimensions, Variable};
@@ -189,6 +189,7 @@ impl Scope for Function {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct GlobalScope {
+    has_dataframe: bool,
     pub addresses: AddressManager,
     pub variables: VariablesTable,
 }
@@ -198,6 +199,14 @@ impl GlobalScope {
         Self {
             addresses: AddressManager::new(0),
             variables: HashMap::new(),
+            has_dataframe: false,
+        }
+    }
+
+    pub fn add_dataframe<'a>(&mut self, node: AstNode<'a>) -> Result<'a, ()> {
+        match self.has_dataframe {
+            false => Ok(self.has_dataframe = true),
+            true => Err(RaoulError::new(node, RaoulErrorKind::OnlyOneDataframe)),
         }
     }
 }

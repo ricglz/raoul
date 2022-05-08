@@ -36,6 +36,7 @@ pub enum RaoulErrorKind {
         expected: Option<usize>,
         given: Option<usize>,
     },
+    OnlyOneDataframe,
 }
 
 impl fmt::Debug for RaoulErrorKind {
@@ -84,6 +85,7 @@ impl fmt::Debug for RaoulErrorKind {
                     given.unwrap_or(0)
                 )
             }
+            Self::OnlyOneDataframe => write!(f, "Only one dataframe is allowed per program"),
         }
     }
 }

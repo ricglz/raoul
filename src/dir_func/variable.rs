@@ -33,14 +33,19 @@ impl Variable {
                 global,
             } => {
                 let name: String = assignee.into();
-                let data_type =
-                    Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
                 let res = value.get_dimensions();
                 if let Err((expected, given)) = res {
                     let kind = RaoulErrorKind::InconsistentSize { expected, given };
                     return Err(RaoulError::new_vec(node, kind));
                 }
                 let dimensions = res.unwrap();
+                let data_type =
+                    Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
+                if data_type == Types::Dataframe {
+                    if let Err(error) = global_fn.add_dataframe(node.clone()) {
+                        return Err(vec![error]);
+                    }
+                }
                 let address = match global {
                     true => global_fn.get_variable_address(&name, &data_type, dimensions),
                     false => current_fn.get_variable_address(&name, &data_type, dimensions),
