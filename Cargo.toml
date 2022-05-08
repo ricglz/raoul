@@ -8,6 +8,8 @@ edition = "2021"
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.
 lto = true
+codegen-units = 1
+panic = "abort"
 [dependencies]
 pest_consume = "1.1.1"
 pest = "2.1.3"
@@ -15,5 +17,7 @@ pest_derive = "2.1.0"
 clap = "3.1.8"
 polars = "0.21.1"
 polars-lazy = "0.21.1"
+egui = "0.18.1"
+eframe = "0.18.0"
 [dev-dependencies]
 insta = { version="1.13.0", features = ["glob"] }

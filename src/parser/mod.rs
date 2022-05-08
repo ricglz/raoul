@@ -489,6 +489,34 @@ impl LanguageParser {
         ))
     }
 
+    fn plot(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [id(id), possible_str(col_1), possible_str(col_2)] => {
+                let name = String::from(id);
+                let column_1 = Box::new(col_1);
+                let column_2 = Box::new(col_2);
+                let kind = AstNodeKind::Plot {
+                    name, column_1, column_2
+                };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
+    fn histogram(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [id(id), possible_str(col), expr(bins)] => {
+                let name = String::from(id);
+                let column = Box::new(col);
+                let bins = Box::new(bins);
+                let kind = AstNodeKind::Histogram { name, column, bins };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
     // Condition
     fn else_block(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
@@ -597,10 +625,6 @@ impl LanguageParser {
     }
 
     fn statement(input: Node) -> Result<AstNode> {
-        // TODO: Still misses some conditions
-        if *input.user_data() {
-            println!("statement");
-        }
         Ok(match_nodes!(input.into_children();
             [assignment(node)] => node,
             [write(node)] => node,
@@ -609,6 +633,8 @@ impl LanguageParser {
             [for_loop(node)] => node,
             [func_call(node)] => node,
             [return_statement(node)] => node,
+            [plot(node)] => node,
+            [histogram(node)] => node,
         ))
     }
 

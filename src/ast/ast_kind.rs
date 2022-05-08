@@ -79,14 +79,24 @@ pub enum AstNodeKind<'a> {
     Return(Box<AstNode<'a>>),
     ReadCSV(Box<AstNode<'a>>),
     UnaryDataframeOp {
-        operator: Operator,
-        name: String,
         column: Box<AstNode<'a>>,
+        name: String,
+        operator: Operator,
     },
     Correlation {
         name: String,
         column_1: Box<AstNode<'a>>,
         column_2: Box<AstNode<'a>>,
+    },
+    Plot {
+        name: String,
+        column_1: Box<AstNode<'a>>,
+        column_2: Box<AstNode<'a>>,
+    },
+    Histogram {
+        column: Box<AstNode<'a>>,
+        name: String,
+        bins: Box<AstNode<'a>>,
     },
 }
 
@@ -193,6 +203,14 @@ impl fmt::Debug for AstNodeKind<'_> {
                 column_2,
             } => {
                 write!(f, "Correlation({name}, {column_1:?}, {column_2:?})")
+            }
+            Self::Plot {
+                name,
+                column_1,
+                column_2,
+            } => write!(f, "Plot({name}, {column_1:?}, {column_2:?})"),
+            Self::Histogram { column, name, bins } => {
+                write!(f, "Histogram({column:?}, {name}, {bins:?})")
             }
         }
     }
