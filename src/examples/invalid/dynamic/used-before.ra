@@ -1,0 +1,4 @@
+func main(): void {
+  print(col);
+  col = "danceability";
+}
