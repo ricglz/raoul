@@ -5,5 +5,5 @@ input_file: src/examples/invalid/static/mixing-types-list.ra
 ---
 Main(([], [
     Assignment(false, Id(a), Array([Integer(1), String(3), Bool(false)])),
-    Write([ArrayDeclaration(a, Integer(0), None), ArrayDeclaration(a, Integer(1), None), ArrayDeclaration(a, Integer(2), None)]),
+    Write([ArrayVal(a, Integer(0), None), ArrayVal(a, Integer(1), None), ArrayVal(a, Integer(2), None)]),
 ]))

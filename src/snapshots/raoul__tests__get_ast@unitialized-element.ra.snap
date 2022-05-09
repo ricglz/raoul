@@ -5,5 +5,5 @@ input_file: src/examples/invalid/dynamic/unitialized-element.ra
 ---
 Main(([], [
     Assignment(false, Id(a), ArrayDeclaration(INT, 3, None)),
-    Write([ArrayDeclaration(a, Integer(0), None)]),
+    Write([ArrayVal(a, Integer(0), None)]),
 ]))

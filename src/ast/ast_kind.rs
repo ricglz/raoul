@@ -139,7 +139,7 @@ impl fmt::Debug for AstNodeKind<'_> {
                 write!(f, "ArrayDeclaration({data_type:?}, {dim1}, {dim2:?})")
             }
             Self::ArrayVal { name, idx_1, idx_2 } => {
-                write!(f, "ArrayDeclaration({name}, {idx_1:?}, {idx_2:?})")
+                write!(f, "ArrayVal({name}, {idx_1:?}, {idx_2:?})")
             }
             Self::Assignment {
                 assignee,

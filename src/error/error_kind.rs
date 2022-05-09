@@ -6,6 +6,7 @@ use crate::enums::Types;
 pub enum RaoulErrorKind {
     Invalid,
     MemoryExceded,
+    EnteredUnreachable(String),
     UndeclaredVar {
         name: String,
     },
@@ -86,6 +87,7 @@ impl fmt::Debug for RaoulErrorKind {
                 )
             }
             Self::OnlyOneDataframe => write!(f, "Only one dataframe is allowed per program"),
+            Self::EnteredUnreachable(kind) => write!(f, "Entered an unreachable statement: {kind}"),
         }
     }
 }

@@ -123,15 +123,17 @@ impl Types {
             | AstNodeKind::Correlation { .. } => Ok(Types::FLOAT),
             AstNodeKind::String(_) => Ok(Types::STRING),
             AstNodeKind::Bool(_) => Ok(Types::BOOL),
-            AstNodeKind::Id(name) => match Types::get_variable(name, variables, global) {
-                Some(variable) => Ok(variable.data_type),
-                None => Err(RaoulError::new_vec(
-                    clone,
-                    RaoulErrorKind::UndeclaredVar {
-                        name: name.to_string(),
-                    },
-                )),
-            },
+            AstNodeKind::Id(name) | AstNodeKind::ArrayVal { name, .. } => {
+                match Types::get_variable(name, variables, global) {
+                    Some(variable) => Ok(variable.data_type),
+                    None => Err(RaoulError::new_vec(
+                        clone,
+                        RaoulErrorKind::UndeclaredVar {
+                            name: name.to_string(),
+                        },
+                    )),
+                }
+            }
             AstNodeKind::FuncCall { name, .. } => {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
@@ -205,7 +207,10 @@ impl Types {
                 _ => unreachable!("{:?}", operator),
             },
             AstNodeKind::ReadCSV(_) => Ok(Self::Dataframe),
-            kind => unreachable!("{:?}", kind),
+            kind => Err(RaoulError::new_vec(
+                clone,
+                RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
+            )),
         }
     }
 }
