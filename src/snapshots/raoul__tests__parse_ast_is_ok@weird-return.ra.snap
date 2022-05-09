@@ -1,0 +1,17 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/non-plot/weird-return.ra
+---
+0 - Goto       -     -     6    
+1 - Return     3000  -     -    
+2 - Lt         3000  3001  2750 
+3 - GotoF      2750  -     5    
+4 - Return     3001  -     -    
+5 - EndProc    -     -     -    
+6 - Era        1     1     -    
+7 - GoSub      1     -     -    
+8 - Print      0     -     -    
+9 - PrintNl    -     -     -    
+10 - End        -     -     -    
+
