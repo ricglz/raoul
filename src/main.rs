@@ -9,9 +9,11 @@ mod error;
 mod parser;
 mod quadruple;
 
+use ast::AstNode;
 use dir_func::DirFunc;
+use error::Results;
 use parser::parse;
-use quadruple::QuadrupleManager;
+use quadruple::quadruple_manager::QuadrupleManager;
 
 // ANCHOR: Testing the examples
 mod test_parser;
@@ -21,6 +23,22 @@ extern crate pest_derive;
 use std::process::exit;
 
 use args::parse_args;
+
+fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, ()> {
+    let mut dir_func = DirFunc::new();
+    dir_func.build_dir_func(ast.clone())?;
+    if debug {
+        println!("Dir func created sucessfully");
+        println!("{:#?}", dir_func);
+    }
+    let mut quad_manager = QuadrupleManager::new(&mut dir_func);
+    quad_manager.parse(ast.clone())?;
+    Ok(if debug {
+        println!("Quads created sucessfully");
+        println!("{:#?}", quad_manager.memory);
+        println!("{:?}", quad_manager);
+    })
+}
 
 fn main() {
     let matches = parse_args();
@@ -40,28 +58,11 @@ fn main() {
         println!("Parsing ended sucessfully");
         println!("AST:\n{:?}", ast);
     }
-    let mut dir_func = DirFunc::new();
-    if let Err(errors) = dir_func.build_dir_func(ast.clone()) {
+    if let Err(errors) = parse_ast(ast, debug) {
         for error in errors {
             println!("{:?}", error);
         }
         exit(1);
-    }
-    if debug {
-        println!("Dir func created sucessfully");
-        println!("{:#?}", dir_func);
-    }
-    let mut quad_manager = QuadrupleManager::new(&mut dir_func);
-    if let Err(errors) = quad_manager.parse(ast.clone()) {
-        for error in errors {
-            println!("{:?}", error);
-        }
-        exit(1);
-    }
-    if debug {
-        println!("Quads created sucessfully");
-        println!("{:#?}", quad_manager.memory);
-        println!("{:#?}", quad_manager.quad_list);
     }
 }
 

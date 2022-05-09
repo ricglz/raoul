@@ -41,6 +41,23 @@ pub enum AstNodeKind<'a> {
         exprs: Vec<AstNode<'a>>,
     },
     Read,
+    Decision {
+        expr: Box<AstNode<'a>>,
+        statements: Vec<AstNode<'a>>,
+        else_block: Option<Box<AstNode<'a>>>,
+    },
+    ElseBlock {
+        statements: Vec<AstNode<'a>>,
+    },
+    While {
+        expr: Box<AstNode<'a>>,
+        statements: Vec<AstNode<'a>>,
+    },
+    For {
+        assignment: Box<AstNode<'a>>,
+        expr: Box<AstNode<'a>>,
+        statements: Vec<AstNode<'a>>,
+    },
 }
 
 impl<'a> From<AstNodeKind<'a>> for String {
@@ -49,6 +66,7 @@ impl<'a> From<AstNodeKind<'a>> for String {
             AstNodeKind::Integer(n) => n.to_string(),
             AstNodeKind::Id(s) => s.to_string(),
             AstNodeKind::String(s) => s.to_string(),
+            AstNodeKind::Assignment { name, .. } => name,
             node => unreachable!("Node {:?}, cannot be a string", node),
         }
     }
@@ -95,6 +113,26 @@ impl fmt::Debug for AstNodeKind<'_> {
             AstNodeKind::Read => write!(f, "Read"),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 write!(f, "BinaryOperation({:?}, {:?}, {:?})", operator, lhs, rhs)
+            }
+            AstNodeKind::Decision {
+                expr,
+                statements,
+                else_block,
+            } => {
+                write!(f, "Decision({expr:?}, {statements:?}, {else_block:?})")
+            }
+            AstNodeKind::ElseBlock { statements } => {
+                write!(f, "ElseBlock({:?})", statements)
+            }
+            AstNodeKind::While { expr, statements } => {
+                write!(f, "While({:?}, {:?})", expr, statements)
+            }
+            AstNodeKind::For {
+                expr,
+                statements,
+                assignment,
+            } => {
+                write!(f, "For({expr:?}, {statements:?}, {assignment:?})")
             }
         }
     }

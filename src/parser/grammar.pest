@@ -151,16 +151,16 @@ function      = { FUNC_HEADER ~ block }
 MAIN_FUNCTION = _{ FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ void ~ block }
 FUNC_CALL     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }
 
-COND_EXPR  = { L_PAREN ~ expr ~ R_PAREN }
-IF_BLOCK   = { IF ~ COND_EXPR ~ block }
-ELSE_BLOCK = { ELSE ~ (block | DECISION) }
-DECISION   = { IF_BLOCK ~ ELSE_BLOCK? }
+COND_EXPR  = _{ L_PAREN ~ expr ~ R_PAREN }
+if_block   = _{ IF ~ COND_EXPR ~ block }
+else_block = { ELSE ~ (block | decision) }
+decision   = { if_block ~ else_block? }
 
 write = {PRINT ~ L_PAREN ~ exprs? ~ R_PAREN }
 
-WHILE_LOOP = {WHILE ~ COND_EXPR ~ block}
+while_loop = {WHILE ~ COND_EXPR ~ block}
 
-FOR_LOOP = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
+for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
 
 POSSIBLE_STR        = {STRING_CTE | NON_CTE}
 READ_CSV_EXTRA      = {(COMMA ~ id){2}}
@@ -179,7 +179,7 @@ DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
 
 RETURN = { RETURN_KEY ~ expr }
 
-BLOCK_STATEMENT  = _{ DECISION | WHILE_LOOP | FOR_LOOP }
+BLOCK_STATEMENT  = _{ decision | while_loop | for_loop }
 INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | RETURN | FUNC_CALL }
 statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
 
