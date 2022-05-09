@@ -1,7 +1,7 @@
 ---
 source: src/tests.rs
 expression: quad_manager
-input_file: src/examples/valid/array-simple.ra
+input_file: src/examples/valid/non-plot/array-simple.ra
 ---
 0 - Goto       -     -     1    
 1 - Ver        3001  3002  -    
@@ -15,18 +15,18 @@ input_file: src/examples/valid/array-simple.ra
 9 - Assignment 3002  -     4002 
 10 - Ver        3001  3002  -    
 11 - Sum        3000  3001  4003 
-12 - Ver        3003  3002  -    
-13 - Sum        3000  3003  4004 
-14 - Ver        3004  3002  -    
-15 - Sum        3000  3004  4005 
-16 - Ver        3003  3002  -    
-17 - Sum        3000  3003  4006 
-18 - Ver        3001  3002  -    
-19 - Sum        3000  3001  4007 
-20 - Print      4003  -     -    
-21 - Print      4004  -     -    
-22 - Print      4005  -     -    
-23 - Print      4006  -     -    
+12 - Print      4003  -     -    
+13 - Ver        3003  3002  -    
+14 - Sum        3000  3003  4004 
+15 - Print      4004  -     -    
+16 - Ver        3004  3002  -    
+17 - Sum        3000  3004  4005 
+18 - Print      4005  -     -    
+19 - Ver        3003  3002  -    
+20 - Sum        3000  3003  4006 
+21 - Print      4006  -     -    
+22 - Ver        3001  3002  -    
+23 - Sum        3000  3001  4007 
 24 - Print      4007  -     -    
 25 - PrintNl    -     -     -    
 26 - End        -     -     -    

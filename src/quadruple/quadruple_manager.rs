@@ -139,20 +139,6 @@ impl QuadrupleManager {
         Ok((variable.address, variable.data_type))
     }
 
-    fn parse_exprs<'a>(&mut self, exprs: Vec<AstNode<'a>>) -> Results<'a, Vec<(usize, Types)>> {
-        let (addresses, errors): (Vec<_>, Vec<_>) = exprs
-            .into_iter()
-            .map(|node| self.parse_expr(node))
-            .partition(|res| res.is_ok());
-        match errors.is_empty() {
-            true => Ok(addresses.into_iter().map(|res| res.unwrap()).collect()),
-            false => Err(errors
-                .into_iter()
-                .flat_map(|res| res.unwrap_err())
-                .collect()),
-        }
-    }
-
     fn assert_type<'a>(&self, from: Types, to: Types, node: AstNode<'a>) -> Result<'a, ()> {
         match from.can_cast(to) {
             true => Ok(()),
@@ -658,21 +644,29 @@ impl QuadrupleManager {
                 }
             },
             AstNodeKind::Write { exprs } => {
-                let addresses = self.parse_exprs(exprs)?;
-                addresses.into_iter().for_each(|(address, _)| {
-                    self.add_quad(Quadruple {
-                        operator: Operator::Print,
-                        op_1: Some(address),
+                let errors: Vec<_> = exprs
+                    .into_iter()
+                    .map(|expr| -> Results<()> {
+                        let (address, _) = self.parse_expr(expr)?;
+                        Ok(self.add_quad(Quadruple {
+                            operator: Operator::Print,
+                            op_1: Some(address),
+                            op_2: None,
+                            res: None,
+                        }))
+                    })
+                    .filter_map(|r| r.err())
+                    .flatten()
+                    .collect();
+                match errors.is_empty() {
+                    true => Ok(self.add_quad(Quadruple {
+                        operator: Operator::PrintNl,
+                        op_1: None,
                         op_2: None,
                         res: None,
-                    })
-                });
-                Ok(self.add_quad(Quadruple {
-                    operator: Operator::PrintNl,
-                    op_1: None,
-                    op_2: None,
-                    res: None,
-                }))
+                    })),
+                    false => Err(errors),
+                }
             }
             AstNodeKind::Decision {
                 expr,
