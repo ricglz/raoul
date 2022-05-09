@@ -1,0 +1,10 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/non-plot/factorial.ra
+---
+[
+    "120",
+    "120",
+    "\n",
+]

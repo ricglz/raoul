@@ -1,0 +1,43 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/non-plot/factorial.ra
+---
+0 - Goto       -     -     22   
+1 - Assignment 3000  -     1001 
+2 - Assignment 3001  -     1002 
+3 - Lte        1002  1000  2750 
+4 - GotoF      2750  -     9    
+5 - Times      1001  1002  2000 
+6 - Assignment 2000  -     1001 
+7 - Inc        -     -     1002 
+8 - Goto       -     -     3    
+9 - Return     1001  -     -    
+10 - EndProc    -     -     -    
+11 - Eq         1000  3002  2750 
+12 - GotoF      2750  -     14   
+13 - Return     3000  -     -    
+14 - Era        2     11    -    
+15 - Minus      1000  3000  2000 
+16 - Param      2000  -     0    
+17 - GoSub      11    -     -    
+18 - Assignment 1     -     2001 
+19 - Times      1000  2001  2002 
+20 - Return     2002  -     -    
+21 - EndProc    -     -     -    
+22 - Assignment 3003  -     1000 
+23 - Era        5     1     -    
+24 - Param      1000  -     0    
+25 - GoSub      1     -     -    
+26 - Assignment 0     -     2000 
+27 - Assignment 2000  -     1001 
+28 - Era        5     11    -    
+29 - Param      1000  -     0    
+30 - GoSub      11    -     -    
+31 - Assignment 1     -     2001 
+32 - Assignment 2001  -     1002 
+33 - Print      1001  -     -    
+34 - Print      1002  -     -    
+35 - PrintNl    -     -     -    
+36 - End        -     -     -    
+

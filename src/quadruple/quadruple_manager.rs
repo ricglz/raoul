@@ -401,7 +401,16 @@ impl QuadrupleManager {
             }
             AstNodeKind::FuncCall { name, exprs } => {
                 self.parse_func_call(&name, node_clone.clone(), exprs)?;
-                self.get_variable_name_address(&name, node_clone)
+                let (fn_address, return_type) =
+                    self.get_variable_name_address(&name, node_clone.clone())?;
+                let temp_address = self.safe_add_temp(&return_type, node_clone.clone())?;
+                self.add_quad(Quadruple {
+                    operator: Operator::Assignment,
+                    op_1: Some(fn_address),
+                    op_2: None,
+                    res: Some(temp_address),
+                });
+                Ok((temp_address, return_type))
             }
             AstNodeKind::ArrayVal {
                 ref name,

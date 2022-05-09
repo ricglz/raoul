@@ -1,0 +1,25 @@
+func fibo(n: int): int {
+  if (n <= 1) {
+    return n;
+  }
+  a = 0;
+  b = 1;
+  for (i = 2 to n) {
+    next = a + b;
+    a = b;
+    b = next;
+  }
+  return next;
+}
+
+func recursiveFibo(n: int): int {
+  if (n <= 1) {
+    return n;
+  }
+  return recursiveFibo(n - 2) + recursiveFibo(n - 1);
+}
+
+func main(): void {
+  n = 5;
+  print(fibo(n), recursiveFibo(n));
+}

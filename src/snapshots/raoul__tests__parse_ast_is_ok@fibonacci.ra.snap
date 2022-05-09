@@ -1,0 +1,52 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/non-plot/fibonacci.ra
+---
+0 - Goto       -     -     33   
+1 - Lte        1000  3000  2750 
+2 - GotoF      2750  -     4    
+3 - Return     1000  -     -    
+4 - Assignment 3001  -     1001 
+5 - Assignment 3000  -     1002 
+6 - Assignment 3002  -     1003 
+7 - Lte        1003  1000  2750 
+8 - GotoF      2750  -     15   
+9 - Sum        1001  1002  2000 
+10 - Assignment 2000  -     1004 
+11 - Assignment 1002  -     1001 
+12 - Assignment 1004  -     1002 
+13 - Inc        -     -     1003 
+14 - Goto       -     -     7    
+15 - Return     1004  -     -    
+16 - EndProc    -     -     -    
+17 - Lte        1000  3000  2750 
+18 - GotoF      2750  -     20   
+19 - Return     1000  -     -    
+20 - Era        2     17    -    
+21 - Minus      1000  3002  2000 
+22 - Param      2000  -     0    
+23 - GoSub      17    -     -    
+24 - Assignment 1     -     2001 
+25 - Era        4     17    -    
+26 - Minus      1000  3000  2002 
+27 - Param      2002  -     0    
+28 - GoSub      17    -     -    
+29 - Assignment 1     -     2002 
+30 - Sum        2001  2002  2003 
+31 - Return     2003  -     -    
+32 - EndProc    -     -     -    
+33 - Assignment 3003  -     1000 
+34 - Era        7     1     -    
+35 - Param      1000  -     0    
+36 - GoSub      1     -     -    
+37 - Assignment 0     -     2000 
+38 - Print      2000  -     -    
+39 - Era        6     17    -    
+40 - Param      1000  -     0    
+41 - GoSub      17    -     -    
+42 - Assignment 1     -     2001 
+43 - Print      2001  -     -    
+44 - PrintNl    -     -     -    
+45 - End        -     -     -    
+
