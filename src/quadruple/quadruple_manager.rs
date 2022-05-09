@@ -123,9 +123,7 @@ impl QuadrupleManager {
             Some(var) => Ok(var),
             None => Err(RaoulError::new_vec(
                 node,
-                RaoulErrorKind::UndeclaredVar {
-                    name: name.to_owned(),
-                },
+                RaoulErrorKind::UndeclaredVar(name.to_string()),
             )),
         }
     }
@@ -755,8 +753,14 @@ impl QuadrupleManager {
                     res: None,
                 }))
             }
-            AstNodeKind::FuncCall { name, exprs } => {
-                self.parse_func_call(&name, node_clone.clone(), exprs)
+            AstNodeKind::FuncCall { ref name, exprs } => {
+                match self.dir_func.functions.get(name).is_some() {
+                    true => self.parse_func_call(name, node_clone, exprs),
+                    false => {
+                        let kind = RaoulErrorKind::UndeclaredFunction2(name.to_string());
+                        Err(RaoulError::new_vec(node_clone, kind))
+                    }
+                }
             }
             AstNodeKind::Plot {
                 name,

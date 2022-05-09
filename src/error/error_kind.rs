@@ -7,15 +7,10 @@ pub enum RaoulErrorKind {
     Invalid,
     MemoryExceded,
     EnteredUnreachable(String),
-    UndeclaredVar {
-        name: String,
-    },
-    UndeclaredFunction {
-        name: String,
-    },
-    RedeclaredFunction {
-        name: String,
-    },
+    UndeclaredVar(String),
+    UndeclaredFunction(String),
+    UndeclaredFunction2(String),
+    RedeclaredFunction(String),
     RedefinedType {
         name: String,
         from: Types,
@@ -45,15 +40,18 @@ impl fmt::Debug for RaoulErrorKind {
         match self {
             Self::Invalid => unreachable!(),
             Self::UsePrimitive => write!(f, "We can't handle using the complete array"),
-            Self::UndeclaredVar { name } => write!(f, "Variable \"{name}\" was not declared"),
-            Self::UndeclaredFunction { name } => {
+            Self::UndeclaredVar(name) => write!(f, "Variable \"{name}\" was not declared"),
+            Self::UndeclaredFunction(name) => {
                 write!(
                     f,
                     "Function \"{}\" was not declared or does not return a non-void value",
                     name
                 )
             }
-            Self::RedeclaredFunction { name } => {
+            Self::UndeclaredFunction2(name) => {
+                write!(f, "Function \"{}\" was not declared", name)
+            }
+            Self::RedeclaredFunction(name) => {
                 write!(f, "Function \"{name}\" was already declared before")
             }
             Self::RedefinedType { name, from, to } => {

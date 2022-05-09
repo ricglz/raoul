@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/undeclared-function-2.ra
+---
+[
+     --> 2:3
+      |
+    2 |   test();␊
+      |   ^----^
+      |
+      = Function "test" was not declared,
+]

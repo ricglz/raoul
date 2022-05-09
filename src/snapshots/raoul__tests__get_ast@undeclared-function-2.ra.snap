@@ -1,0 +1,8 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/undeclared-function-2.ra
+---
+Main(([], [
+    FunctionCall(test, []),
+]))

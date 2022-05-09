@@ -38,7 +38,7 @@ impl DirFunc {
         match self.functions.get(&name) {
             Some(_) => Err(RaoulError::new(
                 node,
-                RaoulErrorKind::RedeclaredFunction { name },
+                RaoulErrorKind::RedeclaredFunction(name),
             )),
             None => {
                 self.functions.insert(name, function);

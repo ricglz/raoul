@@ -128,9 +128,7 @@ impl Types {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
                         clone,
-                        RaoulErrorKind::UndeclaredVar {
-                            name: name.to_string(),
-                        },
+                        RaoulErrorKind::UndeclaredVar(name.to_string()),
                     )),
                 }
             }
@@ -139,9 +137,7 @@ impl Types {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
                         clone,
-                        RaoulErrorKind::UndeclaredFunction {
-                            name: name.to_string(),
-                        },
+                        RaoulErrorKind::UndeclaredFunction(name.to_string()),
                     )),
                 }
             }
