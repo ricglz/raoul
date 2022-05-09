@@ -1,0 +1,19 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/functions-2.ra
+---
+Main(([
+    Function(printer, VOID, [Argument(FLOAT, text)], [
+        Write([Id(text)]),
+    ]),
+    Function(func1, FLOAT, [Argument(FLOAT, bar)], [
+        Assignment(false, Id(j), BinaryOperation(Times, Id(bar), Integer(100))),
+        FunctionCall(printer, [Id(j)]),
+        Return(BinaryOperation(Sum, Id(j), Integer(1))),
+    ]),
+], [
+    Assignment(false, Id(foo), Integer(100)),
+    Assignment(false, Id(baz), FunctionCall(func1, [Id(foo)])),
+    FunctionCall(printer, [Id(baz)]),
+]))

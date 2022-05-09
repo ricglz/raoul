@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/non-linear.ra
+---
+Main(([], [
+    Assignment(false, Id(d), Integer(10)),
+    Assignment(false, Id(a), Integer(1)),
+    While(BinaryOperation(Lt, Id(a), Id(d)), [Write([Id(a)]), Assignment(false, Id(a), BinaryOperation(Sum, Id(a), Integer(1)))]),
+    For(BinaryOperation(Lte, Id(i), Id(a)), [Write([Id(i)])], Assignment(false, Id(i), Integer(0))),
+    Decision(BinaryOperation(Gte, Id(i), Id(a)), [Assignment(false, Id(c), Integer(9001))], None),
+    Decision(BinaryOperation(Gte, Id(c), Integer(9001)), [Write([String(It's over 9000!)])], Some(Decision(BinaryOperation(Gte, Id(c), Integer(1000)), [Write([String(It's over 1000!)])], Some(ElseBlock([Write([String(It's something!)])]))))),
+]))

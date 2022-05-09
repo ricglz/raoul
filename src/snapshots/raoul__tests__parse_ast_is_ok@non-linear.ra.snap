@@ -1,0 +1,39 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/non-plot/non-linear.ra
+---
+0 - Goto       -     -     1    
+1 - Assignment 3000  -     1000 
+2 - Assignment 3001  -     1001 
+3 - Lt         1001  1000  2750 
+4 - GotoF      2750  -     10   
+5 - Print      1001  -     -    
+6 - PrintNl    -     -     -    
+7 - Sum        1001  3001  2000 
+8 - Assignment 2000  -     1001 
+9 - Goto       -     -     3    
+10 - Assignment 3002  -     1002 
+11 - Lte        1002  1001  2750 
+12 - GotoF      2750  -     17   
+13 - Print      1002  -     -    
+14 - PrintNl    -     -     -    
+15 - Inc        -     -     1002 
+16 - Goto       -     -     11   
+17 - Gte        1002  1001  2750 
+18 - GotoF      2750  -     20   
+19 - Assignment 3003  -     1003 
+20 - Gte        1003  3003  2750 
+21 - GotoF      2750  -     25   
+22 - Print      3500  -     -    
+23 - PrintNl    -     -     -    
+24 - Goto       -     -     32   
+25 - Gte        1003  3004  2750 
+26 - GotoF      2750  -     30   
+27 - Print      3501  -     -    
+28 - PrintNl    -     -     -    
+29 - Goto       -     -     32   
+30 - Print      3502  -     -    
+31 - PrintNl    -     -     -    
+32 - End        -     -     -    
+

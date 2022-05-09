@@ -1,0 +1,11 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/non-plot/functions-2.ra
+---
+[
+    "10000",
+    "\n",
+    "10001",
+    "\n",
+]
