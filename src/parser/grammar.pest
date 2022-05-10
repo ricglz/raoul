@@ -151,6 +151,7 @@ assignment        = { global? ~ assignment_base }
 global_assignment = { assignment_base ~ SEMI_COLON }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
+block_or_statement = { block | inline_statement }
 
 func_arg      = { id ~ COLON ~ atomic_types }
 func_args     = { func_arg ~ (COMMA ~ func_arg)* }
@@ -160,15 +161,15 @@ MAIN_FUNCTION = _{ FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ void ~ block }
 func_call     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }
 
 COND_EXPR  = _{ L_PAREN ~ expr ~ R_PAREN }
-if_block   = _{ IF ~ COND_EXPR ~ block }
-else_block = { ELSE ~ (block | decision) }
+if_block   = _{ IF ~ COND_EXPR ~ block_or_statement }
+else_block = { ELSE ~ (block_or_statement | decision) }
 decision   = { if_block ~ else_block? }
 
 write = {PRINT ~ L_PAREN ~ exprs? ~ R_PAREN }
 
-while_loop = {WHILE ~ COND_EXPR ~ block}
+while_loop = {WHILE ~ COND_EXPR ~ block_or_statement}
 
-for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
+for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block_or_statement}
 
 possible_str        = {STRING_CTE | NON_CTE}
 READ_CSV_EXTRA      = _{(COMMA ~ id){2}}
@@ -186,7 +187,8 @@ return_statement = { RETURN_KEY ~ expr }
 
 BLOCK_STATEMENT  = _{ decision | while_loop | for_loop }
 INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | return_statement | func_call }
-statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
+inline_statement = { INLINE_STATEMENT ~ SEMI_COLON }
+statement        = { inline_statement | BLOCK_STATEMENT }
 
 global_assignments = { global_assignment* }
 program = { SOI ~ global_assignments ~ function* ~ MAIN_FUNCTION ~ EOI }

@@ -1,0 +1,9 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/non-plot/block-or-statement.ra
+---
+[
+    "42",
+    "\n",
+]

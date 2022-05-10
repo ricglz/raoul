@@ -3,9 +3,7 @@ b = declare_arr<int>(11);
 limit = 11;
 
 func printArr(): void {
-  for (i = 0 to limit - 1) {
-    print(a[i]);
-  }
+  for (i = 0 to limit - 1) print(a[i]);
 }
 
 func merge(low: int, mid: int, high: int): void {
@@ -37,9 +35,7 @@ func merge(low: int, mid: int, high: int): void {
     l2 = l2 + 1;
   }
 
-  for (i = low to high) {
-    global a[i] = b[i];
-  }
+  for (i = low to high) global a[i] = b[i];
 }
 
 func sort(low: int, high: int): void {

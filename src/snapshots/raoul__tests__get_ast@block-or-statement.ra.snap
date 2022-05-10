@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/block-or-statement.ra
+---
+Main(([], [
+    Function(test, INT, [], [
+        Decision(Bool(true), [Return(Integer(42))], None),
+        Return(Integer(248)),
+    ]),
+], [
+    Write([FunctionCall(test, [])]),
+]))

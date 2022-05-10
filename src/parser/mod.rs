@@ -521,7 +521,7 @@ impl LanguageParser {
     fn else_block(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [block(statements)] => {
+            [block_or_statement(statements)] => {
                 let kind = AstNodeKind::ElseBlock { statements };
                 AstNode {kind, span}
             },
@@ -532,7 +532,7 @@ impl LanguageParser {
     fn decision(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [expr(expr), block(statements)] => {
+            [expr(expr), block_or_statement(statements)] => {
                 let kind = AstNodeKind::Decision {
                     expr: Box::new(expr),
                     statements,
@@ -540,7 +540,7 @@ impl LanguageParser {
                 };
                 AstNode {kind, span}
             },
-            [expr(expr), block(statements), else_block(else_block)] => {
+            [expr(expr), block_or_statement(statements), else_block(else_block)] => {
                 let kind = AstNodeKind::Decision {
                     expr: Box::new(expr),
                     statements,
@@ -555,7 +555,7 @@ impl LanguageParser {
     fn while_loop(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [expr(expr), block(statements)] => {
+            [expr(expr), block_or_statement(statements)] => {
                 let kind = AstNodeKind::While {
                     expr: Box::new(expr),
                     statements,
@@ -568,7 +568,7 @@ impl LanguageParser {
     fn for_loop(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [assignment(assignment), expr(stop_expr), block(statements)] => {
+            [assignment(assignment), expr(stop_expr), block_or_statement(statements)] => {
                 let assignment_clone = assignment.clone();
                 let expr_clone = stop_expr.clone();
                 let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment_clone.kind)), assignment_clone.span);
@@ -634,13 +634,10 @@ impl LanguageParser {
         ))
     }
 
-    fn statement(input: Node) -> Result<AstNode> {
+    fn inline_statement(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
             [assignment(node)] => node,
             [write(node)] => node,
-            [decision(node)] => node,
-            [while_loop(node)] => node,
-            [for_loop(node)] => node,
             [func_call(node)] => node,
             [return_statement(node)] => node,
             [plot(node)] => node,
@@ -648,9 +645,25 @@ impl LanguageParser {
         ))
     }
 
+    fn statement(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [inline_statement(node)] => node,
+            [decision(node)] => node,
+            [while_loop(node)] => node,
+            [for_loop(node)] => node,
+        ))
+    }
+
     fn block<'a>(input: Node<'a>) -> Result<Vec<AstNode<'a>>> {
         Ok(match_nodes!(input.into_children();
             [statement(statements)..] => statements.collect(),
+        ))
+    }
+
+    fn block_or_statement<'a>(input: Node<'a>) -> Result<Vec<AstNode<'a>>> {
+        Ok(match_nodes!(input.into_children();
+            [inline_statement(statements)] => vec![statements],
+            [block(block)] => block,
         ))
     }
 
@@ -690,6 +703,7 @@ impl LanguageParser {
             [global_assignment(args)..] => args.collect(),
         ))
     }
+
     fn program(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
