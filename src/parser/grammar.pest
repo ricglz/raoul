@@ -144,9 +144,11 @@ list_cte = { L_SQUARE ~ exprs ~ R_SQUARE }
 mat_cte  = {L_SQUARE ~ list_cte ~ ( COMMA ~ list_cte )* ~ R_SQUARE }
 arr_cte  = { list_cte | mat_cte }
 
-assignment_exp = { read | read_csv | expr | declare_arr | arr_cte }
-assignee       = { arr_val | id }
-assignment     = { global? ~ assignee ~ ASGN ~ assignment_exp }
+assignment_exp    = { read | read_csv | expr | declare_arr | arr_cte }
+assignee          = { arr_val | id }
+assignment_base   = _{ assignee ~ ASGN ~ assignment_exp }
+assignment        = { global? ~ assignment_base }
+global_assignment = { assignment_base ~ SEMI_COLON }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
 
@@ -186,4 +188,5 @@ BLOCK_STATEMENT  = _{ decision | while_loop | for_loop }
 INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | return_statement | func_call }
 statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
 
-program = { SOI ~ function* ~ MAIN_FUNCTION ~ EOI }
+global_assignments = { global_assignment* }
+program = { SOI ~ global_assignments ~ function* ~ MAIN_FUNCTION ~ EOI }

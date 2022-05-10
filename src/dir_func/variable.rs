@@ -19,7 +19,61 @@ pub struct Variable {
     pub name: String,
 }
 
+fn get_value_dimensions<'a>(
+    value: &Box<AstNode<'a>>,
+    node: AstNode<'a>,
+) -> Results<'a, Dimensions> {
+    match value.get_dimensions() {
+        Ok(dimensions) => Ok(dimensions),
+        Err((expected, given)) => {
+            let kind = RaoulErrorKind::InconsistentSize { expected, given };
+            Err(RaoulError::new_vec(node, kind))
+        }
+    }
+}
+
+fn assert_dataframe<'a>(
+    data_type: &Types,
+    global_fn: &mut GlobalScope,
+    node: AstNode<'a>,
+) -> Results<'a, ()> {
+    if data_type != &Types::Dataframe {
+        return Ok(());
+    }
+    match global_fn.add_dataframe() {
+        true => Ok(()),
+        false => Err(RaoulError::new_vec(node, RaoulErrorKind::OnlyOneDataframe)),
+    }
+}
+
 impl Variable {
+    pub fn from_global<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Variable> {
+        match &v.kind {
+            AstNodeKind::Assignment {
+                assignee, value, ..
+            } => {
+                let data_type =
+                    Types::from_node(&*value, &global_fn.variables, &global_fn.variables)?;
+                assert_dataframe(&data_type, global_fn, v.clone())?;
+                let dimensions = get_value_dimensions(value, v.clone())?;
+                let name: String = assignee.into();
+                match global_fn.get_variable_address(&name, &data_type, dimensions) {
+                    Some(address) => Ok(Variable {
+                        data_type,
+                        dimensions,
+                        name,
+                        address,
+                    }),
+                    None => Err(RaoulError::new_vec(v, RaoulErrorKind::MemoryExceded)),
+                }
+            }
+            kind => Err(RaoulError::new_vec(
+                v.clone(),
+                RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
+            )),
+        }
+    }
+
     pub fn from_node<'a>(
         v: AstNode<'a>,
         current_fn: &mut Function,
@@ -32,20 +86,11 @@ impl Variable {
                 value,
                 global,
             } => {
-                let name: String = assignee.into();
-                let res = value.get_dimensions();
-                if let Err((expected, given)) = res {
-                    let kind = RaoulErrorKind::InconsistentSize { expected, given };
-                    return Err(RaoulError::new_vec(node, kind));
-                }
-                let dimensions = res.unwrap();
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                if data_type == Types::Dataframe {
-                    if let Err(error) = global_fn.add_dataframe(node.clone()) {
-                        return Err(vec![error]);
-                    }
-                }
+                assert_dataframe(&data_type, global_fn, node.clone())?;
+                let dimensions = get_value_dimensions(&value, node.clone())?;
+                let name: String = assignee.into();
                 let address = match global {
                     true => global_fn.get_variable_address(&name, &data_type, dimensions),
                     false => current_fn.get_variable_address(&name, &data_type, dimensions),

@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/valid/non-plot/array.ra
 ---
-Main(([], [
+Main(([], [], [
     Write([String(Array 'a')]),
     Assignment(false, Id(a), Array([Integer(1), Integer(2), Integer(3)])),
     For(BinaryOperation(Lte, Id(i), Integer(2)), [Write([ArrayVal(a, Id(i), None)])], Assignment(false, Id(i), Integer(0))),

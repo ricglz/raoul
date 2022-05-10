@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/dynamic/unitialized-element.ra
 ---
-Main(([], [
+Main(([], [], [
     Assignment(false, Id(a), ArrayDeclaration(INT, 3, None)),
     Write([ArrayVal(a, Integer(0), None)]),
 ]))

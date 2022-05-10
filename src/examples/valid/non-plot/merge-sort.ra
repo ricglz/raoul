@@ -1,6 +1,8 @@
+a = [4, 1, 5, 12, 42, 13, 69, 25, 3, 0, 2];
+b = declare_arr<int>(11);
+limit = 11;
+
 func printArr(): void {
-  global a = declare_arr<int>(11);
-  global b = declare_arr<int>(11);
   for (i = 0 to limit - 1) {
     print(a[i]);
   }
@@ -50,8 +52,6 @@ func sort(low: int, high: int): void {
 }
 
 func main(): void {
-  global a = [4, 1, 5, 12, 42, 13, 69, 25, 3, 0, 2];
-  global limit = 11;
   print("Before");
   printArr();
   sort(0, limit - 1);

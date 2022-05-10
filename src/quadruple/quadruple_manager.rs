@@ -795,14 +795,18 @@ impl QuadrupleManager {
     }
 
     #[inline]
-    pub fn update_quad(&mut self, first_quad: usize) {
+    fn update_quad(&mut self, first_quad: usize) {
         self.function_mut().update_quad(first_quad);
     }
 
     pub fn parse<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let clone = node.clone();
         match node.kind {
-            AstNodeKind::Main { body, functions } => {
+            AstNodeKind::Main {
+                body,
+                functions,
+                assignments,
+            } => {
                 self.add_goto(Operator::Goto, None);
                 let errors: Vec<_> = functions
                     .into_iter()
@@ -814,6 +818,14 @@ impl QuadrupleManager {
                 }
                 self.fill_goto();
                 self.function_name = "main".to_owned();
+                let errors: Vec<_> = assignments
+                    .into_iter()
+                    .filter_map(|node| self.parse_function(node).err())
+                    .flatten()
+                    .collect();
+                if !errors.is_empty() {
+                    return Err(errors);
+                }
                 self.parse_body(body)?;
                 Ok(self.add_quad(Quadruple {
                     operator: Operator::End,

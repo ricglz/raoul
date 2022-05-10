@@ -4,9 +4,11 @@ expression: ast
 input_file: src/examples/valid/non-plot/merge-sort.ra
 ---
 Main(([
+    Assignment(true, Id(a), Array([Integer(4), Integer(1), Integer(5), Integer(12), Integer(42), Integer(13), Integer(69), Integer(25), Integer(3), Integer(0), Integer(2)])),
+    Assignment(true, Id(b), ArrayDeclaration(INT, 11, None)),
+    Assignment(true, Id(limit), Integer(11)),
+], [
     Function(printArr, VOID, [], [
-        Assignment(true, Id(a), ArrayDeclaration(INT, 11, None)),
-        Assignment(true, Id(b), ArrayDeclaration(INT, 11, None)),
         For(BinaryOperation(Lte, Id(i), BinaryOperation(Minus, Id(limit), Integer(1))), [Write([ArrayVal(a, Id(i), None)])], Assignment(false, Id(i), Integer(0))),
     ]),
     Function(merge, VOID, [Argument(INT, low), Argument(INT, mid), Argument(INT, high)], [
@@ -22,8 +24,6 @@ Main(([
         Decision(BinaryOperation(Lt, Id(low), Id(high)), [Assignment(false, Id(mid), BinaryOperation(Div, BinaryOperation(Sum, Id(low), Id(high)), Integer(2))), FunctionCall(sort, [Id(low), Id(mid)]), FunctionCall(sort, [BinaryOperation(Sum, Id(mid), Integer(1)), Id(high)]), FunctionCall(merge, [Id(low), Id(mid), Id(high)])], None),
     ]),
 ], [
-    Assignment(true, Id(a), Array([Integer(4), Integer(1), Integer(5), Integer(12), Integer(42), Integer(13), Integer(69), Integer(25), Integer(3), Integer(0), Integer(2)])),
-    Assignment(true, Id(limit), Integer(11)),
     Write([String(Before)]),
     FunctionCall(printArr, []),
     FunctionCall(sort, [Integer(0), BinaryOperation(Minus, Id(limit), Integer(1))]),

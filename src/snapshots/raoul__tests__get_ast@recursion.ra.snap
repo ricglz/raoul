@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/dynamic/recursion.ra
 ---
-Main(([
+Main(([], [
     Function(test, VOID, [], [
         FunctionCall(test, []),
     ]),

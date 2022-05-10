@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/valid/non-plot/quick-sort.ra
 ---
-Main(([
+Main(([], [
     Function(printArr, VOID, [], [
         Assignment(true, Id(a), ArrayDeclaration(INT, 11, None)),
         For(BinaryOperation(Lte, Id(i), BinaryOperation(Minus, Id(limit), Integer(1))), [Write([ArrayVal(a, Id(i), None)])], Assignment(false, Id(i), Integer(0))),

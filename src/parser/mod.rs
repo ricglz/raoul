@@ -606,6 +606,16 @@ impl LanguageParser {
         ))
     }
 
+    fn global_assignment(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [assignee(id), assignment_exp(value)] => {
+                let kind = AstNodeKind::Assignment { global: true, assignee: id, value: Box::new(value) };
+                AstNode { kind, span }
+            },
+        ))
+    }
+
     fn write(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
@@ -675,11 +685,20 @@ impl LanguageParser {
         ))
     }
 
+    fn global_assignments(input: Node) -> Result<Vec<AstNode>> {
+        Ok(match_nodes!(input.into_children();
+            [global_assignment(args)..] => args.collect(),
+        ))
+    }
     fn program(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [function(functions).., _, block(body), _] => {
-                let kind = AstNodeKind::Main { functions: functions.collect(), body: body };
+            [global_assignments(nodes), function(functions).., _, block(body), _] => {
+                let kind = AstNodeKind::Main {
+                    assignments: nodes,
+                    body: body,
+                    functions: functions.collect(),
+                };
                 AstNode { kind, span }
             },
         ))

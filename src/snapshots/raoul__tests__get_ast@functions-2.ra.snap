@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/valid/non-plot/functions-2.ra
 ---
-Main(([
+Main(([], [
     Function(printer, VOID, [Argument(FLOAT, text)], [
         Write([Id(text)]),
     ]),

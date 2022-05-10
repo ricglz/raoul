@@ -38,8 +38,9 @@ pub enum AstNodeKind<'a> {
         rhs: Box<AstNode<'a>>,
     },
     Main {
-        functions: Vec<AstNode<'a>>,
+        assignments: Vec<AstNode<'a>>,
         body: Vec<AstNode<'a>>,
+        functions: Vec<AstNode<'a>>,
     },
     Argument {
         arg_type: Types,
@@ -152,7 +153,11 @@ impl fmt::Debug for AstNodeKind<'_> {
             } => {
                 write!(f, "Unary({:?}, {:?})", operation, operand)
             }
-            Self::Main { functions, body } => write!(f, "Main(({:#?}, {:#?}))", functions, body),
+            Self::Main {
+                assignments,
+                body,
+                functions,
+            } => write!(f, "Main(({assignments:#?}, {:#?}, {:#?}))", functions, body),
             Self::Argument { arg_type, name } => write!(f, "Argument({:?}, {})", arg_type, name),
             Self::Function {
                 arguments,

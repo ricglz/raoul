@@ -1,9 +1,9 @@
 ---
 source: src/tests.rs
 expression: ast
-input_file: src/examples/valid/assignment-every-type.ra
+input_file: src/examples/valid/non-plot/assignment-every-type.ra
 ---
-Main(([
+Main(([], [
     Function(helper, VOID, [Argument(INT, a), Argument(FLOAT, b), Argument(STRING, c), Argument(BOOL, d)], []),
 ], [
     Assignment(false, Id(a), Integer(1)),

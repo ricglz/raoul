@@ -5,7 +5,7 @@ use crate::{
     ast::ast_kind::AstNodeKind,
     ast::AstNode,
     enums::Types,
-    error::{error_kind::RaoulErrorKind, RaoulError, Result, Results},
+    error::{error_kind::RaoulErrorKind, RaoulError, Results},
 };
 
 use super::variable::{Dimensions, Variable};
@@ -203,10 +203,13 @@ impl GlobalScope {
         }
     }
 
-    pub fn add_dataframe<'a>(&mut self, node: AstNode<'a>) -> Result<'a, ()> {
+    pub fn add_dataframe(&mut self) -> bool {
         match self.has_dataframe {
-            false => Ok(self.has_dataframe = true),
-            true => Err(RaoulError::new(node, RaoulErrorKind::OnlyOneDataframe)),
+            false => {
+                self.has_dataframe = true;
+                true
+            }
+            true => false,
         }
     }
 }

@@ -3,6 +3,6 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/static/undeclared-variable-while.ra
 ---
-Main(([], [
+Main(([], [], [
     While(BinaryOperation(Lt, Id(a), Integer(2)), [Write([Integer(2)])]),
 ]))

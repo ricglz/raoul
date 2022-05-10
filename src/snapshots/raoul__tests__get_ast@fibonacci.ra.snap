@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/valid/non-plot/fibonacci.ra
 ---
-Main(([
+Main(([], [
     Function(fibo, INT, [Argument(INT, n)], [
         Decision(BinaryOperation(Lte, Id(n), Integer(1)), [Return(Id(n))], None),
         Assignment(false, Id(a), Integer(0)),

@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/static/missing-return-if.ra
 ---
-Main(([
+Main(([], [
     Function(test, INT, [], [
         Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(1))], None),
     ]),

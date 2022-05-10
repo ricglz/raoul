@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/dynamic/array-list-negative.ra
 ---
-Main(([], [
+Main(([], [], [
     Assignment(false, Id(a), ArrayDeclaration(INT, 3, None)),
     Assignment(false, ArrayVal(a, Integer(0), None), Integer(0)),
     Assignment(false, ArrayVal(a, BinaryOperation(Minus, ArrayVal(a, Integer(0), None), Integer(1)), None), Integer(0)),

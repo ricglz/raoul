@@ -24,6 +24,12 @@ impl From<Box<AstNode<'_>>> for String {
     }
 }
 
+impl From<&Box<AstNode<'_>>> for String {
+    fn from(val: &Box<AstNode>) -> Self {
+        String::from(*val.clone())
+    }
+}
+
 impl<'a> From<AstNode<'a>> for usize {
     fn from(val: AstNode) -> Self {
         val.kind.into()

@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/static/return-void-function.ra
 ---
-Main(([
+Main(([], [
     Function(test, VOID, [], [
         Return(Integer(1)),
     ]),

@@ -79,11 +79,31 @@ impl DirFunc {
     pub fn build_dir_func<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let clone = node.clone();
         match node.kind {
-            AstNodeKind::Main { functions, .. } => {
-                let errors: Vec<RaoulError> = functions
+            AstNodeKind::Main {
+                functions,
+                assignments,
+                ..
+            } => {
+                let errors: Vec<_> = assignments
+                    .into_iter()
+                    .map(|node| -> Results<()> {
+                        let variable = Variable::from_global(node.clone(), &mut self.global_fn)?;
+                        match self.global_fn.insert_variable(variable) {
+                            Ok(_) => Ok(()),
+                            Err(kind) => Err(RaoulError::new_vec(node, kind)),
+                        }
+                    })
+                    .filter_map(|v| v.err())
+                    .flatten()
+                    .collect();
+                if !errors.is_empty() {
+                    return Err(errors);
+                }
+                let errors: Vec<_> = functions
                     .into_iter()
                     .chain(Some(clone))
-                    .filter_map(|node| self.insert_function_from_node(node).err())
+                    .map(|node| self.insert_function_from_node(node))
+                    .filter_map(|v| v.err())
                     .flatten()
                     .collect();
                 if errors.is_empty() {
