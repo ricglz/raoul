@@ -302,7 +302,7 @@ impl<R: Read> VM<R> {
     fn process_inc(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
         let a = self.get_value(quad.res.unwrap())?;
-        let value = a + VariableValue::Integer(1);
+        let value = a.increase();
         Ok(self.write_value(value, quad.res.unwrap()))
     }
 

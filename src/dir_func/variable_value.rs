@@ -36,6 +36,16 @@ impl VariableValue {
             _ => self.clone(),
         }
     }
+
+    pub fn increase(&self) -> Self {
+        match self {
+            Self::Integer(v) => Self::Integer(v + 1),
+            v => match v.is_number() {
+                true => self.cast_to_float() + Self::Float(1.0),
+                false => unreachable!()
+            }
+        }
+    }
 }
 
 impl From<&VariableValue> for Types {
@@ -83,6 +93,7 @@ impl From<f64> for VariableValue {
         Self::Float(v)
     }
 }
+
 impl From<VariableValue> for bool {
     fn from(v: VariableValue) -> Self {
         match v {
