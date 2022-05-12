@@ -30,7 +30,7 @@ mod tests {
 
     #[test]
     fn valid_files() {
-        let paths = read_dir("src/examples/valid/non-plot").unwrap();
+        let paths = read_dir("src/examples/valid").unwrap();
         for path in paths {
             let file_path = path.expect("File must exist").path();
             let file = file_path.to_str().unwrap();

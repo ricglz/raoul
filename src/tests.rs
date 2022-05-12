@@ -75,5 +75,5 @@ fn vm_running_invalid_files() {
 
 #[test]
 fn valid_files() {
-    expect_paths("examples/valid/non-plot/*", run_vm_is_ok);
+    expect_paths("examples/valid/*", run_vm_is_ok);
 }
