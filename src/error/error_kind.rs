@@ -44,12 +44,11 @@ impl fmt::Debug for RaoulErrorKind {
             Self::UndeclaredFunction(name) => {
                 write!(
                     f,
-                    "Function \"{}\" was not declared or does not return a non-void value",
-                    name
+                    "Function \"{name}\" was not declared or does not return a non-void value",
                 )
             }
             Self::UndeclaredFunction2(name) => {
-                write!(f, "Function \"{}\" was not declared", name)
+                write!(f, "Function \"{name}\" was not declared")
             }
             Self::RedeclaredFunction(name) => {
                 write!(f, "Function \"{name}\" was already declared before")
@@ -57,13 +56,10 @@ impl fmt::Debug for RaoulErrorKind {
             Self::RedefinedType { name, from, to } => {
                 write!(
                     f,
-                    "\"{}\" was originally defined as {:?} and you're attempting to redefined it as a {:?}",
-                    name,
-                    from,
-                    to,
+                    "\"{name}\" was originally defined as {from:?} and you're attempting to redefined it as a {to:?}",
                 )
             }
-            Self::InvalidCast { from, to } => write!(f, "Cannot cast from {:?} to {:?}", from, to),
+            Self::InvalidCast { from, to } => write!(f, "Cannot cast from {from:?} to {to:?}"),
             Self::MemoryExceded => write!(f, "Memory was exceded"),
             Self::UnmatchArgsAmount { expected, given } => {
                 write!(
@@ -79,7 +75,7 @@ impl fmt::Debug for RaoulErrorKind {
             Self::InconsistentSize { expected, given } => {
                 write!(
                     f,
-                    "Expecting matrix with second dimmension being {} but received {}",
+                    "Expecting matrix with second dimension being {} but received {}",
                     expected.unwrap_or(0),
                     given.unwrap_or(0)
                 )

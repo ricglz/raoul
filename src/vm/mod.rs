@@ -390,7 +390,7 @@ impl<R: Read> VM<R> {
         }
         let res = res.unwrap().has_header(true).finish();
         if res.is_err() {
-            return Err("File is not a valid CSV with headers");
+            return Err("File is not a valid CSV");
         }
         Ok(self.data_frame = Some(res.unwrap()))
     }
@@ -407,7 +407,7 @@ impl<R: Read> VM<R> {
         let data_frame = self.data_frame.as_ref().unwrap();
         let column = data_frame.column(&column_name);
         if column.is_err() {
-            return Err("Invalid column");
+            return Err("Dataframe key not found in file");
         }
         let value = f(column.unwrap()).into();
         Ok(self.write_value(value, quad.res.unwrap()))
@@ -469,7 +469,7 @@ impl<R: Read> VM<R> {
         let col_name = String::from(self.get_value(quad.op_1.unwrap())?);
         let bins_value = self.get_value(quad.op_2.unwrap())?;
         let bins = match bins_value {
-            VariableValue::Integer(a) if a <= 0 => Err("The amount of bins should be possitive"),
+            VariableValue::Integer(a) if a <= 0 => Err("The amount of bins should be positive"),
             _ => Ok(usize::from(bins_value)),
         }?;
         let temp = data_frame

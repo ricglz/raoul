@@ -20,7 +20,7 @@ pub trait Scope {
         let name = variable.name.clone();
         match self.get_variable(&name) {
             None => Ok(self._insert_variable(variable.name.clone(), variable)),
-            Some(stored_var) => match stored_var.data_type == variable.data_type {
+            Some(stored_var) => match stored_var.data_type.can_cast(variable.data_type) {
                 true => Ok(()),
                 false => Err(RaoulErrorKind::RedefinedType {
                     name,

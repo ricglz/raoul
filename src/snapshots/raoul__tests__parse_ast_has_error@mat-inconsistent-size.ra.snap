@@ -9,5 +9,5 @@ input_file: src/examples/invalid/static/mat-inconsistent-size.ra
     2 |   a = [[1], [2, 3]];␊
       |   ^---------------^
       |
-      = Expecting matrix with second dimmension being 2 but received 1,
+      = Expecting matrix with second dimension being 2 but received 1,
 ]
