@@ -50,7 +50,7 @@ impl DirFunc {
     fn insert_function_from_node<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let node_clone = node.clone();
         let function = Function::try_create(node, &mut self.global_fn)?;
-        if function.return_type != Types::VOID {
+        if function.return_type != Types::Void {
             let address = self
                 .global_fn
                 .addresses

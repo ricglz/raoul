@@ -27,23 +27,23 @@ impl LanguageParser {
 
     // Types
     fn void(_input: Node) -> Result<Types> {
-        Ok(Types::VOID)
+        Ok(Types::Void)
     }
 
     fn int(_input: Node) -> Result<Types> {
-        Ok(Types::INT)
+        Ok(Types::Int)
     }
 
     fn float(_input: Node) -> Result<Types> {
-        Ok(Types::FLOAT)
+        Ok(Types::Float)
     }
 
     fn string(_input: Node) -> Result<Types> {
-        Ok(Types::STRING)
+        Ok(Types::String)
     }
 
     fn bool(_input: Node) -> Result<Types> {
-        Ok(Types::BOOL)
+        Ok(Types::Bool)
     }
 
     fn atomic_types(input: Node) -> Result<Types> {

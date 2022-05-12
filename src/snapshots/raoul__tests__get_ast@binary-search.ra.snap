@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/valid/non-plot/binary-search.ra
 ---
 Main(([], [
-    Function(binarySearch, INT, [Argument(INT, left), Argument(INT, right), Argument(INT, target)], [
+    Function(binarySearch, Int, [Argument(Int, left), Argument(Int, right), Argument(Int, target)], [
         Decision(BinaryOperation(Lt, Id(right), Id(left)), [Return(Integer(-1))], None),
         Assignment(false, Id(mid), BinaryOperation(Sum, Id(left), BinaryOperation(Div, BinaryOperation(Minus, Id(right), Id(left)), Integer(2)))),
         Decision(BinaryOperation(Eq, ArrayVal(a, Id(mid), None), Id(target)), [Return(Id(mid))], None),

@@ -4,10 +4,10 @@ expression: ast
 input_file: src/examples/valid/non-plot/functions-2.ra
 ---
 Main(([], [
-    Function(printer, VOID, [Argument(FLOAT, text)], [
+    Function(printer, Void, [Argument(Float, text)], [
         Write([Id(text)]),
     ]),
-    Function(func1, FLOAT, [Argument(FLOAT, bar)], [
+    Function(func1, Float, [Argument(Float, bar)], [
         Assignment(false, Id(j), BinaryOperation(Times, Id(bar), Integer(100))),
         FunctionCall(printer, [Id(j)]),
         Return(BinaryOperation(Sum, Id(j), Integer(1))),

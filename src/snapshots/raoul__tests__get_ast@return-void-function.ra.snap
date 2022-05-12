@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/invalid/static/return-void-function.ra
 ---
 Main(([], [
-    Function(test, VOID, [], [
+    Function(test, Void, [], [
         Return(Integer(1)),
     ]),
 ], [

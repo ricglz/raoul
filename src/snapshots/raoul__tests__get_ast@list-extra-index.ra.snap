@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/invalid/static/list-extra-index.ra
 ---
 Main(([], [], [
-    Assignment(false, Id(a), ArrayDeclaration(INT, 3, None)),
+    Assignment(false, Id(a), ArrayDeclaration(Int, 3, None)),
     Assignment(false, ArrayVal(a, Integer(3), Some(Integer(4))), Integer(2)),
     Write([ArrayVal(a, Integer(3), Some(Integer(4)))]),
 ]))

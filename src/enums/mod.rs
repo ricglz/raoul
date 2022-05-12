@@ -9,33 +9,34 @@ use crate::error::{RaoulError, Results};
 
 #[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
 pub enum Types {
-    INT,
-    VOID,
-    FLOAT,
-    STRING,
-    BOOL,
+    Int,
+    Void,
+    Float,
+    String,
+    Bool,
     Dataframe,
 }
 
 impl Types {
     pub fn is_boolish(&self) -> bool {
         match self {
-            Types::INT | Types::BOOL => true,
+            Types::Int | Types::Bool => true,
             _ => false,
         }
     }
 
     fn is_number(&self) -> bool {
         match self {
-            Types::INT | Types::FLOAT | Types::STRING => true,
+            Types::Int | Types::Float | Types::String => true,
             _ => false,
         }
     }
 
     pub fn can_cast(&self, to: Types) -> bool {
         match to {
-            Types::BOOL => self.is_boolish(),
-            Types::FLOAT => self.is_number(),
+            Types::Bool => self.is_boolish(),
+            Types::Float => self.is_number(),
+            Types::Int => self.is_number(),
             _ => to == self.to_owned(),
         }
     }
@@ -47,7 +48,7 @@ impl Types {
     ) -> std::result::Result<Types, RaoulErrorKind> {
         match operator {
             Operator::Not | Operator::Or | Operator::And => {
-                let res_type = Types::BOOL;
+                let res_type = Types::Bool;
                 match (lhs_type.is_boolish(), rhs_type.is_boolish()) {
                     (true, true) => Ok(res_type),
                     (true, false) => Err(RaoulErrorKind::InvalidCast {
@@ -61,7 +62,7 @@ impl Types {
                 }
             }
             Operator::Gte | Operator::Lte | Operator::Gt | Operator::Lt => {
-                let res_type = Types::BOOL;
+                let res_type = Types::Bool;
                 match (lhs_type.is_number(), rhs_type.is_number()) {
                     (true, true) => Ok(res_type),
                     (true, false) => Err(RaoulErrorKind::InvalidCast {
@@ -75,17 +76,17 @@ impl Types {
                 }
             }
             Operator::Eq | Operator::Ne => match lhs_type == rhs_type {
-                true => Ok(Types::BOOL),
+                true => Ok(Types::Bool),
                 false => Err(RaoulErrorKind::InvalidCast {
                     from: lhs_type,
                     to: rhs_type,
                 }),
             },
             Operator::Sum | Operator::Minus | Operator::Times | Operator::Div => {
-                if lhs_type == rhs_type && lhs_type == Types::INT {
-                    return Ok(Types::INT);
+                if lhs_type == rhs_type && lhs_type == Types::Int {
+                    return Ok(Types::Int);
                 }
-                let res_type = Types::FLOAT;
+                let res_type = Types::Float;
                 match (lhs_type.is_number(), rhs_type.is_number()) {
                     (true, true) => Ok(res_type),
                     (true, false) => Err(RaoulErrorKind::InvalidCast {
@@ -117,12 +118,12 @@ impl Types {
     ) -> Results<'a, Types> {
         let clone = v.clone();
         match &v.kind {
-            AstNodeKind::Integer(_) => Ok(Types::INT),
+            AstNodeKind::Integer(_) => Ok(Types::Int),
             AstNodeKind::Float(_)
             | AstNodeKind::UnaryDataframeOp { .. }
-            | AstNodeKind::Correlation { .. } => Ok(Types::FLOAT),
-            AstNodeKind::String(_) => Ok(Types::STRING),
-            AstNodeKind::Bool(_) => Ok(Types::BOOL),
+            | AstNodeKind::Correlation { .. } => Ok(Types::Float),
+            AstNodeKind::String(_) => Ok(Types::String),
+            AstNodeKind::Bool(_) => Ok(Types::Bool),
             AstNodeKind::Id(name) | AstNodeKind::ArrayVal { name, .. } => {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
@@ -177,7 +178,7 @@ impl Types {
                     false => Err(errors.into_iter().flat_map(|v| v.unwrap_err()).collect()),
                 }
             }
-            AstNodeKind::Read => Ok(Types::STRING),
+            AstNodeKind::Read => Ok(Types::String),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;
                 let rhs_type = Types::from_node(&*rhs, variables, global)?;
@@ -190,12 +191,12 @@ impl Types {
                 Operator::Not => {
                     let operand_type = Types::from_node(&*operand, variables, global)?;
                     match operand_type.is_boolish() {
-                        true => Ok(Types::BOOL),
+                        true => Ok(Types::Bool),
                         false => Err(RaoulError::new_vec(
                             clone,
                             RaoulErrorKind::InvalidCast {
                                 from: operand_type,
-                                to: Types::BOOL,
+                                to: Types::Bool,
                             },
                         )),
                     }

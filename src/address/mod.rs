@@ -45,10 +45,10 @@ type AddressCounter = HashMap<Types, usize>;
 
 fn get_type_base(data_type: &Types) -> usize {
     match data_type {
-        Types::INT => 0,
-        Types::FLOAT => THRESHOLD,
-        Types::STRING => THRESHOLD * 2,
-        Types::BOOL => THRESHOLD * 3,
+        Types::Int => 0,
+        Types::Float => THRESHOLD,
+        Types::String => THRESHOLD * 2,
+        Types::Bool => THRESHOLD * 3,
         _ => unreachable!(),
     }
 }
@@ -78,10 +78,10 @@ pub struct AddressManager {
 impl AddressManager {
     pub fn new(base: usize) -> Self {
         let counter = HashMap::from([
-            (Types::INT, 0),
-            (Types::FLOAT, 0),
-            (Types::STRING, 0),
-            (Types::BOOL, 0),
+            (Types::Int, 0),
+            (Types::Float, 0),
+            (Types::String, 0),
+            (Types::Bool, 0),
         ]);
         debug_assert_eq!(counter.len(), COUNTER_SIZE);
         AddressManager { base, counter }
@@ -128,10 +128,10 @@ impl GenericAddressManager for AddressManager {
 
 impl fmt::Debug for AddressManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let int_counter = self.counter.get(&Types::INT).unwrap();
-        let float_counter = self.counter.get(&Types::FLOAT).unwrap();
-        let string_counter = self.counter.get(&Types::STRING).unwrap();
-        let bool_counter = self.counter.get(&Types::BOOL).unwrap();
+        let int_counter = self.counter.get(&Types::Int).unwrap();
+        let float_counter = self.counter.get(&Types::Float).unwrap();
+        let string_counter = self.counter.get(&Types::String).unwrap();
+        let bool_counter = self.counter.get(&Types::Bool).unwrap();
         write!(
             f,
             "AddressManager({:?}, {:?}, {:?}, {:?})",
@@ -149,10 +149,10 @@ pub struct TempAddressManager {
 impl TempAddressManager {
     pub fn new() -> Self {
         let released = HashMap::from([
-            (Types::INT, Vec::new()),
-            (Types::FLOAT, Vec::new()),
-            (Types::STRING, Vec::new()),
-            (Types::BOOL, Vec::new()),
+            (Types::Int, Vec::new()),
+            (Types::Float, Vec::new()),
+            (Types::String, Vec::new()),
+            (Types::Bool, Vec::new()),
         ]);
         debug_assert_eq!(released.len(), COUNTER_SIZE);
         TempAddressManager {
@@ -165,10 +165,10 @@ impl TempAddressManager {
         let contextless_address = address - self.address_manager.base;
         let type_determinant = contextless_address / THRESHOLD;
         match type_determinant {
-            0 => Types::INT,
-            1 => Types::FLOAT,
-            2 => Types::STRING,
-            3 => Types::BOOL,
+            0 => Types::Int,
+            1 => Types::Float,
+            2 => Types::String,
+            3 => Types::Bool,
             _ => unreachable!(
                 "{:?}, {:?}, {:?}",
                 address, contextless_address, type_determinant
@@ -223,10 +223,10 @@ fn get_address_info(address: usize, base: usize) -> (usize, usize, Types) {
     let contextless_address = address - base;
     let type_determinant = contextless_address / THRESHOLD;
     let address_type = match type_determinant {
-        0 => Types::INT,
-        1 => Types::FLOAT,
-        2 => Types::STRING,
-        3 => Types::BOOL,
+        0 => Types::Int,
+        1 => Types::Float,
+        2 => Types::String,
+        3 => Types::Bool,
         _ => unreachable!(),
     };
     (contextless_address, type_determinant, address_type)
@@ -235,10 +235,10 @@ fn get_address_info(address: usize, base: usize) -> (usize, usize, Types) {
 impl ConstantMemory {
     pub fn new() -> Self {
         let memory = HashMap::from([
-            (Types::INT, vec![]),
-            (Types::FLOAT, vec![]),
-            (Types::STRING, vec![]),
-            (Types::BOOL, vec![]),
+            (Types::Int, vec![]),
+            (Types::Float, vec![]),
+            (Types::String, vec![]),
+            (Types::Bool, vec![]),
         ]);
         ConstantMemory {
             base: TOTAL_SIZE * 3,
@@ -304,10 +304,10 @@ impl Memory {
         let counter = manager.get_address_counter();
         let base = manager.get_base();
         let int_pointer: usize = 0;
-        let float_pointer = int_pointer + counter.get(&Types::INT).unwrap();
-        let string_pointer = float_pointer + counter.get(&Types::FLOAT).unwrap();
-        let bool_pointer = string_pointer + counter.get(&Types::STRING).unwrap();
-        let total_size = bool_pointer + counter.get(&Types::BOOL).unwrap();
+        let float_pointer = int_pointer + counter.get(&Types::Int).unwrap();
+        let string_pointer = float_pointer + counter.get(&Types::Float).unwrap();
+        let bool_pointer = string_pointer + counter.get(&Types::String).unwrap();
+        let total_size = bool_pointer + counter.get(&Types::Bool).unwrap();
         let space = vec![None; total_size];
         Memory {
             base,
@@ -323,10 +323,10 @@ impl Memory {
         let (contextless_address, _, address_type) = get_address_info(address, self.base);
         let type_index = contextless_address % THRESHOLD;
         let pointer = match address_type {
-            Types::INT => self.int_pointer,
-            Types::FLOAT => self.float_pointer,
-            Types::STRING => self.string_pointer,
-            Types::BOOL => self.bool_pointer,
+            Types::Int => self.int_pointer,
+            Types::Float => self.float_pointer,
+            Types::String => self.string_pointer,
+            Types::Bool => self.bool_pointer,
             data_type => unreachable!("{:?}", data_type),
         };
         (type_index + pointer, address_type)

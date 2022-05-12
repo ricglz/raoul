@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/invalid/static/assign-to-void.ra
 ---
 Main(([], [
-    Function(test, VOID, [], [
+    Function(test, Void, [], [
         Assignment(false, Id(a), Integer(1)),
     ]),
 ], [

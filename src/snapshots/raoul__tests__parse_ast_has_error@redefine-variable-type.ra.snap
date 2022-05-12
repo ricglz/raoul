@@ -6,8 +6,8 @@ input_file: src/examples/invalid/static/redefine-variable-type.ra
 [
      --> 3:3
       |
-    3 |   a = "2";␊
-      |   ^-----^
+    3 |   a = false;␊
+      |   ^-------^
       |
-      = "a" was originally defined as INT and you're attempting to redefined it as a STRING,
+      = "a" was originally defined as Int and you're attempting to redefined it as a Bool,
 ]

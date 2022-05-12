@@ -30,10 +30,16 @@ impl VariableValue {
         Ok(Self::Float(f64::try_from(self)?))
     }
 
+    #[inline]
+    fn cast_to_int(&self) -> VMResult<VariableValue> {
+        Ok(Self::Integer(i64::try_from(self)?))
+    }
+
     pub fn cast_to(&self, to: Types) -> VMResult<VariableValue> {
         match to {
-            Types::BOOL => Ok(self.cast_to_bool()),
-            Types::FLOAT => self.cast_to_float(),
+            Types::Bool => Ok(self.cast_to_bool()),
+            Types::Float => self.cast_to_float(),
+            Types::Int => self.cast_to_int(),
             _ => Ok(self.clone()),
         }
     }
@@ -52,10 +58,10 @@ impl VariableValue {
 impl From<&VariableValue> for Types {
     fn from(v: &VariableValue) -> Self {
         match v {
-            VariableValue::Integer(_) => Types::INT,
-            VariableValue::Float(_) => Types::FLOAT,
-            VariableValue::String(_) => Types::STRING,
-            VariableValue::Bool(_) => Types::BOOL,
+            VariableValue::Integer(_) => Types::Int,
+            VariableValue::Float(_) => Types::Float,
+            VariableValue::String(_) => Types::String,
+            VariableValue::Bool(_) => Types::Bool,
         }
     }
 }
@@ -143,6 +149,34 @@ impl From<VariableValue> for String {
             VariableValue::String(v) => v,
             _ => unreachable!(),
         }
+    }
+}
+
+impl TryFrom<VariableValue> for i64 {
+    type Error = &'static str;
+
+    fn try_from(v: VariableValue) -> VMResult<Self> {
+        use VariableValue::*;
+        if let Integer(a) = &v {
+            return Ok(*a);
+        }
+        let string = match v {
+            VariableValue::Float(a) => a.floor().to_string(),
+            VariableValue::String(a) => a,
+            _ => unreachable!(),
+        };
+        match string.parse::<Self>() {
+            Ok(a) => Ok(a),
+            Err(_) => Err("Could not parse to float"),
+        }
+    }
+}
+
+impl TryFrom<&VariableValue> for i64 {
+    type Error = &'static str;
+
+    fn try_from(v: &VariableValue) -> VMResult<Self> {
+        Self::try_from(v.to_owned())
     }
 }
 

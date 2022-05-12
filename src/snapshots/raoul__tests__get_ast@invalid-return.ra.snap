@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/invalid/static/invalid-return.ra
 ---
 Main(([], [
-    Function(test, INT, [], [
+    Function(test, Int, [], [
         Return(Bool(false)),
     ]),
 ], [

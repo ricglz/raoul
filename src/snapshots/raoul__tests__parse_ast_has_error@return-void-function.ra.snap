@@ -9,5 +9,5 @@ input_file: src/examples/invalid/static/return-void-function.ra
     2 |   return 1;␊
       |          ^
       |
-      = Cannot cast from INT to VOID,
+      = Cannot cast from Int to Void,
 ]

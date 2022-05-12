@@ -7,22 +7,22 @@ Main(([
     Assignment(true, Id(a), Array([Integer(4), Integer(1), Integer(5), Integer(12), Integer(42), Integer(13), Integer(69), Integer(25), Integer(3), Integer(0), Integer(2)])),
     Assignment(true, Id(limit), Integer(11)),
 ], [
-    Function(printArr, VOID, [], [
+    Function(printArr, Void, [], [
         For(BinaryOperation(Lte, Id(i), BinaryOperation(Minus, Id(limit), Integer(1))), [Write([ArrayVal(a, Id(i), None)])], Assignment(false, Id(i), Integer(0))),
     ]),
-    Function(swap, VOID, [Argument(INT, x), Argument(INT, y)], [
+    Function(swap, Void, [Argument(Int, x), Argument(Int, y)], [
         Assignment(false, Id(temp), ArrayVal(a, Id(x), None)),
         Assignment(true, ArrayVal(a, Id(x), None), ArrayVal(a, Id(y), None)),
         Assignment(true, ArrayVal(a, Id(y), None), Id(temp)),
     ]),
-    Function(partition, INT, [Argument(INT, low), Argument(INT, high)], [
+    Function(partition, Int, [Argument(Int, low), Argument(Int, high)], [
         Assignment(false, Id(pivot), ArrayVal(a, Id(high), None)),
         Assignment(false, Id(i), BinaryOperation(Minus, Id(low), Integer(1))),
         For(BinaryOperation(Lte, Id(j), Id(high)), [Decision(BinaryOperation(Lt, ArrayVal(a, Id(j), None), Id(pivot)), [Assignment(false, Id(i), BinaryOperation(Sum, Id(i), Integer(1))), FunctionCall(swap, [Id(i), Id(j)])], None)], Assignment(false, Id(j), Id(low))),
         FunctionCall(swap, [BinaryOperation(Sum, Id(i), Integer(1)), Id(high)]),
         Return(BinaryOperation(Sum, Id(i), Integer(1))),
     ]),
-    Function(sort, VOID, [Argument(INT, low), Argument(INT, high)], [
+    Function(sort, Void, [Argument(Int, low), Argument(Int, high)], [
         Decision(BinaryOperation(Lt, Id(low), Id(high)), [Assignment(false, Id(pi), FunctionCall(partition, [Id(low), Id(high)])), FunctionCall(sort, [Id(low), BinaryOperation(Minus, Id(pi), Integer(1))]), FunctionCall(sort, [BinaryOperation(Sum, Id(pi), Integer(1)), Id(high)])], None),
     ]),
 ], [

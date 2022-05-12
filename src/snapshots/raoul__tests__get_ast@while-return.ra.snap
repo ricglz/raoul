@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/valid/non-plot/while-return.ra
 ---
 Main(([], [
-    Function(test, INT, [], [
+    Function(test, Int, [], [
         Assignment(false, Id(a), Integer(1)),
         While(BinaryOperation(Lt, Id(a), Integer(10)), [Write([Id(a)]), Assignment(false, Id(a), BinaryOperation(Sum, Id(a), Integer(1)))]),
         Return(Id(a)),

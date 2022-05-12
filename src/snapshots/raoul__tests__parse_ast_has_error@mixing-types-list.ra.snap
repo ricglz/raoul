@@ -4,16 +4,10 @@ expression: res.unwrap_err()
 input_file: src/examples/invalid/static/mixing-types-list.ra
 ---
 [
-     --> 2:12
-      |
-    2 |   a = [1, "3", false];␊
-      |            ^
-      |
-      = Cannot cast from STRING to INT,
      --> 2:16
       |
     2 |   a = [1, "3", false];␊
       |                ^---^
       |
-      = Cannot cast from BOOL to INT,
+      = Cannot cast from Bool to Int,
 ]

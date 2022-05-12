@@ -278,7 +278,7 @@ impl QuadrupleManager {
             _ => Ok(()),
         }?;
         let v_address_op = self.safe_add_cte(v.address.into(), node.clone())?;
-        let idx_1_op = self.assert_expr_type(*idx_1, Types::INT)?;
+        let idx_1_op = self.assert_expr_type(*idx_1, Types::Int)?;
         let dim_1_op = self.safe_add_cte(dim_1.unwrap().into(), node.clone())?;
         self.add_quad(Quadruple {
             operator: Operator::Ver,
@@ -301,7 +301,7 @@ impl QuadrupleManager {
                 let dim_2_op = self.safe_add_cte(dim_2.unwrap().into(), node.clone())?;
                 let mult_op =
                     self.add_binary_op_quad(Operator::Times, idx_1_op, dim_2_op, node.clone())?;
-                let idx_2_op = self.assert_expr_type(*idx_2, Types::INT)?;
+                let idx_2_op = self.assert_expr_type(*idx_2, Types::Int)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Ver,
                     op_1: Some(idx_2_op.0),
@@ -350,11 +350,11 @@ impl QuadrupleManager {
                 let (op, op_type) = self.parse_expr(*operand)?;
                 let res_type = match operator {
                     Operator::Not => match op_type {
-                        Types::BOOL | Types::INT => Types::BOOL,
+                        Types::Bool | Types::Int => Types::Bool,
                         op_type => {
                             let kind = RaoulErrorKind::InvalidCast {
                                 from: op_type,
-                                to: Types::BOOL,
+                                to: Types::Bool,
                             };
                             return Err(vec![RaoulError::new(node_clone, kind)]);
                         }
@@ -382,7 +382,7 @@ impl QuadrupleManager {
                 }
             }
             AstNodeKind::Read => {
-                let data_type = Types::STRING;
+                let data_type = Types::String;
                 let res = self.safe_add_temp(&data_type, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Read,
@@ -421,8 +421,8 @@ impl QuadrupleManager {
                 column,
             } => {
                 self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_address, _) = self.assert_expr_type(*column, Types::STRING)?;
-                let data_type = Types::FLOAT;
+                let (column_address, _) = self.assert_expr_type(*column, Types::String)?;
+                let data_type = Types::Float;
                 let res = self.safe_add_temp(&data_type, node_clone)?;
                 self.add_quad(Quadruple {
                     operator,
@@ -438,9 +438,9 @@ impl QuadrupleManager {
                 column_2,
             } => {
                 self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::STRING)?;
-                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::STRING)?;
-                let data_type = Types::FLOAT;
+                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::String)?;
+                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::String)?;
+                let data_type = Types::Float;
                 let res = self.safe_add_temp(&data_type, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Corr,
@@ -624,7 +624,7 @@ impl QuadrupleManager {
                 AstNodeKind::ArrayDeclaration { .. } => Ok(()),
                 AstNodeKind::Array(exprs) => self.parse_array(*assignee, exprs, node_clone),
                 AstNodeKind::ReadCSV(file_node) => {
-                    let (file_address, _) = self.assert_expr_type(*file_node, Types::STRING)?;
+                    let (file_address, _) = self.assert_expr_type(*file_node, Types::String)?;
                     Ok(self.add_quad(Quadruple {
                         operator: Operator::ReadCSV,
                         op_1: Some(file_address),
@@ -680,7 +680,7 @@ impl QuadrupleManager {
                 statements,
                 else_block,
             } => {
-                let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
+                let (res_address, _) = self.assert_expr_type(*expr, Types::Bool)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
                 let if_misses_return = self.parse_return_body(statements)?;
                 Ok(if let Some(node) = else_block {
@@ -699,7 +699,7 @@ impl QuadrupleManager {
             AstNodeKind::ElseBlock { statements } => Ok(self.parse_body(statements)?),
             AstNodeKind::While { expr, statements } => {
                 self.jump_list.push(self.quad_list.len());
-                let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
+                let (res_address, _) = self.assert_expr_type(*expr, Types::Bool)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
                 self.parse_return_body(statements)?;
                 let index = self.jump_list.pop().unwrap();
@@ -720,12 +720,12 @@ impl QuadrupleManager {
                 let name = String::from(*assignment.clone());
                 self.parse_function(*assignment)?;
                 self.jump_list.push(self.quad_list.len());
-                let (res_address, _) = self.assert_expr_type(*expr, Types::BOOL)?;
+                let (res_address, _) = self.assert_expr_type(*expr, Types::Bool)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
                 self.parse_return_body(statements)?;
                 let (var_address, var_type) =
                     self.get_variable_name_address(&name, node_clone.clone())?;
-                self.assert_type_results(var_type, Types::INT, node_clone)?;
+                self.assert_type_results(var_type, Types::Int, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Inc,
                     op_1: None,
@@ -768,8 +768,8 @@ impl QuadrupleManager {
                 column_2,
             } => {
                 self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::STRING)?;
-                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::STRING)?;
+                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::String)?;
+                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::String)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Plot,
                     op_1: Some(column_1_address),
@@ -780,8 +780,8 @@ impl QuadrupleManager {
             }
             AstNodeKind::Histogram { bins, column, name } => {
                 self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_address, _) = self.assert_expr_type(*column, Types::STRING)?;
-                let (bins_address, _) = self.assert_expr_type(*bins, Types::INT)?;
+                let (column_address, _) = self.assert_expr_type(*column, Types::String)?;
+                let (bins_address, _) = self.assert_expr_type(*bins, Types::Int)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Histogram,
                     op_1: Some(column_address),
@@ -843,7 +843,7 @@ impl QuadrupleManager {
                 self.function_name = name;
                 let first_quad = self.quad_list.len();
                 self.update_quad(first_quad);
-                if return_type != Types::VOID {
+                if return_type != Types::Void {
                     self.missing_return = true;
                 }
                 self.parse_body(body)?;

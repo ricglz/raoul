@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/invalid/dynamic/recursion.ra
 ---
 Main(([], [
-    Function(test, VOID, [], [
+    Function(test, Void, [], [
         FunctionCall(test, []),
     ]),
 ], [

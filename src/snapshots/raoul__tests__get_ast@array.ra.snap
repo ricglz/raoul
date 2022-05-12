@@ -11,9 +11,9 @@ Main(([], [], [
     Assignment(false, Id(b), Array([Array([Integer(1), Integer(2), Integer(3)]), Array([Integer(1), Integer(2), Integer(3)])])),
     For(BinaryOperation(Lte, Id(i), Integer(1)), [For(BinaryOperation(Lte, Id(j), Integer(2)), [Write([ArrayVal(b, Id(i), Some(Id(j)))])], Assignment(false, Id(j), Integer(0)))], Assignment(false, Id(i), Integer(0))),
     Write([String(Array 'c')]),
-    Assignment(false, Id(c), ArrayDeclaration(INT, 3, None)),
+    Assignment(false, Id(c), ArrayDeclaration(Int, 3, None)),
     For(BinaryOperation(Lte, Id(i), Integer(2)), [Assignment(false, ArrayVal(c, Id(i), None), Id(i)), Write([ArrayVal(c, Id(i), None)])], Assignment(false, Id(i), Integer(0))),
     Write([String(Array 'd')]),
-    Assignment(false, Id(d), ArrayDeclaration(INT, 2, Some(2))),
+    Assignment(false, Id(d), ArrayDeclaration(Int, 2, Some(2))),
     For(BinaryOperation(Lte, Id(i), Integer(1)), [For(BinaryOperation(Lte, Id(j), Integer(1)), [Assignment(false, ArrayVal(d, Id(i), Some(Id(j))), BinaryOperation(Sum, BinaryOperation(Times, Id(i), Integer(2)), Id(j))), Write([ArrayVal(d, Id(i), Some(Id(j)))])], Assignment(false, Id(j), Integer(0)))], Assignment(false, Id(i), Integer(0))),
 ]))

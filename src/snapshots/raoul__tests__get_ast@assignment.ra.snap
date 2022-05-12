@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/valid/non-plot/assignment.ra
 ---
 Main(([], [
-    Function(my_function, VOID, [], [
+    Function(my_function, Void, [], [
         Assignment(false, Id(b), Integer(2)),
     ]),
 ], [

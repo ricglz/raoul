@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/valid/non-plot/weird-return.ra
 ---
 Main(([], [
-    Function(test, INT, [], [
+    Function(test, Int, [], [
         Return(Integer(1)),
         Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(2))], None),
     ]),

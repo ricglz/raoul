@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/valid/non-plot/block-or-statement.ra
 ---
 Main(([], [
-    Function(test, INT, [], [
+    Function(test, Int, [], [
         Decision(Bool(true), [Return(Integer(42))], None),
         Return(Integer(248)),
     ]),

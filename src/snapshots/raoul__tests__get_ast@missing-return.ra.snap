@@ -4,7 +4,7 @@ expression: ast
 input_file: src/examples/invalid/static/missing-return.ra
 ---
 Main(([], [
-    Function(test, INT, [], [
+    Function(test, Int, [], [
         Assignment(false, Id(a), Integer(1)),
     ]),
 ], [

@@ -4,6 +4,6 @@ expression: ast
 input_file: src/examples/invalid/dynamic/unitialized-element.ra
 ---
 Main(([], [], [
-    Assignment(false, Id(a), ArrayDeclaration(INT, 3, None)),
+    Assignment(false, Id(a), ArrayDeclaration(Int, 3, None)),
     Write([ArrayVal(a, Integer(0), None)]),
 ]))
