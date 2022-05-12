@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::{Add, BitAnd, BitOr, Div, Mul, Not, Sub};
 
+use crate::vm::VMResult;
 use crate::{ast::ast_kind::AstNodeKind, enums::Types};
 
 #[derive(Clone, PartialEq)]
@@ -25,25 +26,25 @@ impl VariableValue {
     }
 
     #[inline]
-    fn cast_to_float(&self) -> VariableValue {
-        Self::Float(f64::from(self))
+    fn cast_to_float(&self) -> VMResult<VariableValue> {
+        Ok(Self::Float(f64::try_from(self)?))
     }
 
-    pub fn cast_to(&self, to: Types) -> VariableValue {
+    pub fn cast_to(&self, to: Types) -> VMResult<VariableValue> {
         match to {
-            Types::BOOL => self.cast_to_bool(),
+            Types::BOOL => Ok(self.cast_to_bool()),
             Types::FLOAT => self.cast_to_float(),
-            _ => self.clone(),
+            _ => Ok(self.clone()),
         }
     }
 
-    pub fn increase(&self) -> Self {
+    pub fn increase(&self) -> VMResult<Self> {
         match self {
-            Self::Integer(v) => Self::Integer(v + 1),
+            Self::Integer(v) => Ok(Self::Integer(v + 1)),
             v => match v.is_number() {
-                true => self.cast_to_float() + Self::Float(1.0),
-                false => unreachable!()
-            }
+                true => self.cast_to_float()? + Self::Float(1.0),
+                false => unreachable!(),
+            },
         }
     }
 }
@@ -71,20 +72,31 @@ impl From<AstNodeKind<'_>> for VariableValue {
     }
 }
 
-impl From<VariableValue> for f64 {
-    fn from(v: VariableValue) -> Self {
-        match v {
-            VariableValue::Integer(a) => a.to_string().parse().unwrap(),
-            VariableValue::Float(a) => a,
-            VariableValue::String(a) => a.parse().unwrap(),
+impl TryFrom<VariableValue> for f64 {
+    type Error = &'static str;
+
+    fn try_from(v: VariableValue) -> VMResult<Self> {
+        use VariableValue::*;
+        if let Float(a) = &v {
+            return Ok(*a);
+        }
+        let string = match v {
+            VariableValue::Integer(a) => a.to_string(),
+            VariableValue::String(a) => a,
             _ => unreachable!(),
+        };
+        match string.parse::<Self>() {
+            Ok(a) => Ok(a),
+            Err(_) => Err("Could not parse to float"),
         }
     }
 }
 
-impl From<&VariableValue> for f64 {
-    fn from(v: &VariableValue) -> Self {
-        Self::from(v.to_owned())
+impl TryFrom<&VariableValue> for f64 {
+    type Error = &'static str;
+
+    fn try_from(v: &VariableValue) -> VMResult<Self> {
+        Self::try_from(v.to_owned())
     }
 }
 
@@ -147,43 +159,43 @@ impl fmt::Debug for VariableValue {
 }
 
 impl Add for VariableValue {
-    type Output = Self;
+    type Output = VMResult<Self>;
 
     fn add(self, other: Self) -> Self::Output {
         if let (Self::Integer(a), Self::Integer(b)) = (self.clone(), other.clone()) {
-            Self::Integer(a + b)
+            Ok(Self::Integer(a + b))
         } else {
-            Self::Float(f64::from(self) + f64::from(other))
+            Ok(Self::Float(f64::try_from(self)? + f64::try_from(other)?))
         }
     }
 }
 
 impl Sub for VariableValue {
-    type Output = Self;
+    type Output = VMResult<Self>;
 
     fn sub(self, other: Self) -> Self::Output {
         if let (Self::Integer(a), Self::Integer(b)) = (self.clone(), other.clone()) {
-            Self::Integer(a - b)
+            Ok(Self::Integer(a - b))
         } else {
-            Self::Float(f64::from(self) - f64::from(other))
+            Ok(Self::Float(f64::try_from(self)? - f64::try_from(other)?))
         }
     }
 }
 
 impl Mul for VariableValue {
-    type Output = Self;
+    type Output = VMResult<Self>;
 
     fn mul(self, other: Self) -> Self::Output {
         if let (Self::Integer(a), Self::Integer(b)) = (self.clone(), other.clone()) {
-            Self::Integer(a * b)
+            Ok(Self::Integer(a * b))
         } else {
-            Self::Float(f64::from(self) * f64::from(other))
+            Ok(Self::Float(f64::try_from(self)? * f64::try_from(other)?))
         }
     }
 }
 
 impl Div for VariableValue {
-    type Output = Result<Self, &'static str>;
+    type Output = VMResult<Self>;
 
     fn div(self, other: Self) -> Self::Output {
         if let (Self::Integer(a), Self::Integer(b)) = (self.clone(), other.clone()) {
@@ -192,7 +204,7 @@ impl Div for VariableValue {
                 b => Ok(Self::Integer(a / b)),
             }
         } else {
-            match (f64::from(self), f64::from(other)) {
+            match (f64::try_from(self)?, f64::try_from(other)?) {
                 (_, b) if b == 0.0 => Err("Attempt to divide by zero"),
                 (a, b) => Ok(Self::Float(a / b)),
             }
@@ -203,11 +215,10 @@ impl Div for VariableValue {
 impl PartialOrd for VariableValue {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self.is_number(), other.is_number()) {
-            (true, true) => {
-                let a = f64::from(self);
-                let b = f64::from(other);
-                a.partial_cmp(&b)
-            }
+            (true, true) => match (f64::try_from(self), f64::try_from(other)) {
+                (Ok(a), Ok(b)) => a.partial_cmp(&b),
+                _ => None,
+            },
             _ => match (self, other) {
                 (Self::Bool(a), Self::Bool(b)) => a.partial_cmp(b),
                 _ => None,

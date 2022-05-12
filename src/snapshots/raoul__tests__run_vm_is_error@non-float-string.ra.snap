@@ -1,0 +1,6 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/dynamic/non-float-string.ra
+---
+Could not parse to float

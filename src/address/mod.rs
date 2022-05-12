@@ -3,6 +3,7 @@ use std::{cmp::Ordering, collections::HashMap, fmt};
 use crate::{
     dir_func::{variable::Dimensions, variable_value::VariableValue},
     enums::Types,
+    vm::VMResult,
 };
 
 const THRESHOLD: usize = 250;
@@ -336,10 +337,10 @@ impl Memory {
         self.space.get(index).unwrap().to_owned()
     }
 
-    pub fn write(&mut self, address: usize, uncast: VariableValue) {
+    pub fn write(&mut self, address: usize, uncast: VariableValue) -> VMResult<()> {
         let (index, address_type) = self.get_index(address);
-        let value = uncast.cast_to(address_type);
-        *self.space.get_mut(index).unwrap() = Some(value);
+        let value = uncast.cast_to(address_type)?;
+        Ok(*self.space.get_mut(index).unwrap() = Some(value))
     }
 }
 

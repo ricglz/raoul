@@ -54,7 +54,7 @@ impl VMContext {
     }
 }
 
-type VMResult<T> = std::result::Result<T, &'static str>;
+pub type VMResult<T> = std::result::Result<T, &'static str>;
 
 #[derive(Debug)]
 pub struct VM<R: Read> {
@@ -189,10 +189,10 @@ impl<R: Read> VM<R> {
         }
     }
 
-    fn write_value(&mut self, value: VariableValue, address: usize) {
+    fn write_value(&mut self, value: VariableValue, address: usize) -> VMResult<()> {
         let determinant = address / TOTAL_SIZE;
         if determinant >= 4 {
-            return self.pointer_memory.write(address, value);
+            return Ok(self.pointer_memory.write(address, value));
         }
         let memory = match determinant {
             0 => &mut self.global_memory,
@@ -200,7 +200,7 @@ impl<R: Read> VM<R> {
             2 => self.temp_addresses_mut(),
             _ => unreachable!(),
         };
-        memory.write(address, value);
+        memory.write(address, value)
     }
 
     fn process_assign(&mut self) -> VMResult<()> {
@@ -210,7 +210,7 @@ impl<R: Read> VM<R> {
         if assignee.is_pointer_address() {
             assignee = self.pointer_memory.get(assignee);
         }
-        Ok(self.write_value(value, assignee))
+        self.write_value(value, assignee)
     }
 
     fn print_message(&mut self, message: &str) {
@@ -241,10 +241,10 @@ impl<R: Read> VM<R> {
         VariableValue::String(line)
     }
 
-    fn process_read(&mut self) {
+    fn process_read(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
         let value = self.create_value_from_stdin();
-        self.write_value(value, quad.res.unwrap());
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn unary_operation<F>(&mut self, f: F) -> VMResult<()>
@@ -254,7 +254,7 @@ impl<R: Read> VM<R> {
         let quad = self.get_current_quad();
         let a = self.get_value(quad.op_1.unwrap())?;
         let value = f(a);
-        Ok(self.write_value(value, quad.res.unwrap()))
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn binary_operation<F>(&mut self, f: F) -> VMResult<()>
@@ -265,7 +265,7 @@ impl<R: Read> VM<R> {
         let a = self.get_value(quad.op_1.unwrap())?;
         let b = self.get_value(quad.op_2.unwrap())?;
         let value = f(a, b)?;
-        Ok(self.write_value(value, quad.res.unwrap()))
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn comparison(&mut self) -> VMResult<()> {
@@ -286,7 +286,7 @@ impl<R: Read> VM<R> {
             },
         };
         let value = VariableValue::Bool(res);
-        Ok(self.write_value(value, quad.res.unwrap()))
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn conditional_goto(&mut self, approved: bool) -> VMResult<usize> {
@@ -302,8 +302,8 @@ impl<R: Read> VM<R> {
     fn process_inc(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
         let a = self.get_value(quad.res.unwrap())?;
-        let value = a.increase();
-        Ok(self.write_value(value, quad.res.unwrap()))
+        let value = a.increase()?;
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn process_era(&mut self) -> VMResult<()> {
@@ -335,12 +335,12 @@ impl<R: Read> VM<R> {
         self.call_stack.last_mut().unwrap()
     }
 
-    fn write_value_param(&mut self, value: VariableValue, address: usize) {
+    fn write_value_param(&mut self, value: VariableValue, address: usize) -> VMResult<()> {
         let memory = match address / TOTAL_SIZE {
             1 => &mut self.current_call_mut().local_memory,
             val => unreachable!("{val}"),
         };
-        memory.write(address, value);
+        memory.write(address, value)
     }
 
     fn process_param(&mut self) -> VMResult<()> {
@@ -348,7 +348,7 @@ impl<R: Read> VM<R> {
         let value = self.get_value(quad.op_1.unwrap())?;
         let index = quad.res.unwrap();
         let address = self.current_call().args.get(index).unwrap().clone();
-        Ok(self.write_value_param(value, address))
+        self.write_value_param(value, address)
     }
 
     fn get_context_global_address(&self) -> usize {
@@ -360,7 +360,7 @@ impl<R: Read> VM<R> {
         let quad = self.get_current_quad();
         let value = self.get_value(quad.op_1.unwrap())?;
         let address = self.get_context_global_address();
-        self.write_value(value, address);
+        self.write_value(value, address)?;
         Ok(self.process_end_proc())
     }
 
@@ -410,7 +410,7 @@ impl<R: Read> VM<R> {
             return Err("Dataframe key not found in file");
         }
         let value = f(column.unwrap()).into();
-        Ok(self.write_value(value, quad.res.unwrap()))
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn correlation(&mut self) -> VMResult<()> {
@@ -432,7 +432,7 @@ impl<R: Read> VM<R> {
             .collect()
             .unwrap();
         let value = cast_to_f64(temp.column("correlation").unwrap().get(0)).into();
-        Ok(self.write_value(value, quad.res.unwrap()))
+        self.write_value(value, quad.res.unwrap())
     }
 
     fn plot(&mut self) -> VMResult<()> {
@@ -499,12 +499,12 @@ impl<R: Read> VM<R> {
                 Operator::Assignment => self.process_assign(),
                 Operator::Print => self.process_print(),
                 Operator::PrintNl => Ok(self.print_message("\n")),
-                Operator::Read => Ok(self.process_read()),
+                Operator::Read => self.process_read(),
                 Operator::Or => self.binary_operation(|a, b| Ok(a | b)),
                 Operator::And => self.binary_operation(|a, b| Ok(a & b)),
-                Operator::Sum => self.binary_operation(|a, b| Ok(a + b)),
-                Operator::Minus => self.binary_operation(|a, b| Ok(a - b)),
-                Operator::Times => self.binary_operation(|a, b| Ok(a * b)),
+                Operator::Sum => self.binary_operation(|a, b| a + b),
+                Operator::Minus => self.binary_operation(|a, b| a - b),
+                Operator::Times => self.binary_operation(|a, b| a * b),
                 Operator::Div => self.binary_operation(|a, b| a / b),
                 Operator::Lt
                 | Operator::Lte

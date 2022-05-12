@@ -1,0 +1,9 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/dynamic/non-float-string.ra
+---
+Main(([], [], [
+    Assignment(false, Id(a), BinaryOperation(Times, String(one), Integer(2))),
+    Write([Id(a)]),
+]))

@@ -1,0 +1,4 @@
+func main(): void {
+  a = "one" * 2;
+  print(a);
+}
