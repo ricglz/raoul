@@ -36,7 +36,6 @@ bool      = {"bool"}
 float     = {"float"}
 int       = {"int"}
 string    = {"string"}
-DATAFRAME = {"Dataframe"}
 void      = {"void"}
 
 FUNC   = _{"func"}
@@ -53,14 +52,14 @@ INPUT  = _{"input"}
 TRUE  = _{"true"}
 FALSE = _{"false"}
 
-READ_CSV_KEY    = _{"read_csv"}
-average         = {"average"}
-std             = {"std"}
-median          = {"median"}
-variance        = {"variance"}
-CORRELATION_KEY = _{"correlation"}
-PLOT_KEY        = _{"plot"}
-HISTOGRAM_KEY   = _{"histogram"}
+READ_CSV_KEY  = _{"read_csv"}
+average       = {"average"}
+std           = {"std"}
+median        = {"median"}
+variance      = {"variance"}
+CORREL        = _{"correlation"}
+PLOT_KEY      = _{"plot"}
+HISTOGRAM_KEY = _{"histogram"}
 
 RETURN_KEY = _{"return"}
 
@@ -100,7 +99,7 @@ KEYWORD_TYPE = _{
   std             |
   median          |
   variance        |
-  CORRELATION_KEY |
+  CORREL |
   PLOT_KEY        |
   HISTOGRAM_KEY   |
   RETURN_KEY      |
@@ -177,7 +176,7 @@ read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ READ_CSV_EXTRA? ~
 unary_dataframe_key = { average | std | median | variance }
 unary_dataframe_op = { unary_dataframe_key ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ R_PAREN }
 TWO_COLUMNS_FUNC    = _{L_PAREN ~ id ~ (COMMA ~ possible_str){2} ~ R_PAREN}
-correlation         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
+correlation         = {CORREL ~ TWO_COLUMNS_FUNC}
 dataframe_value_ops = {unary_dataframe_op | correlation}
 plot                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
 histogram           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ COMMA ~ expr ~ R_PAREN}
