@@ -15,10 +15,7 @@ use polars_lazy::prelude::{col, pearson_corr, IntoLazy};
 
 use crate::{
     address::{Address, ConstantMemory, Memory, PointerMemory, TOTAL_SIZE},
-    dir_func::{
-        function::{Function, VariablesTable},
-        variable_value::VariableValue,
-    },
+    dir_func::{function::Function, variable_value::VariableValue},
     enums::Operator,
     quadruple::{quadruple::Quadruple, quadruple_manager::QuadrupleManager},
 };
@@ -27,9 +24,9 @@ use self::gui::App;
 
 #[derive(Clone, Debug)]
 pub struct VMContext {
+    address: usize,
     args: Vec<usize>,
     local_memory: Memory,
-    name: String,
     quad_pos: usize,
     size: usize,
     temp_memory: Memory,
@@ -38,15 +35,15 @@ pub struct VMContext {
 impl VMContext {
     pub fn new(function: Function) -> Self {
         let size = function.size();
+        let address = function.address;
         let local_memory = Memory::new(Box::new(function.local_addresses));
         let temp_memory = Memory::new(Box::new(function.temp_addresses));
         let quad_pos = function.first_quad;
-        let name = function.name;
         let args = function.args.into_iter().map(|v| v.address).collect();
         Self {
+            address,
             args,
             local_memory,
-            name,
             quad_pos,
             size,
             temp_memory,
@@ -64,7 +61,6 @@ pub struct VM<R: Read> {
     debug: bool,
     functions: HashMap<usize, Function>,
     global_memory: Memory,
-    global_variables: VariablesTable,
     pointer_memory: PointerMemory,
     pub messages: Vec<String>,
     quad_list: Vec<Quadruple>,
@@ -91,7 +87,6 @@ impl<R: Read> VM<R> {
         let global_fn = quad_manager.dir_func.global_fn.clone();
         let pointer_memory = quad_manager.pointer_memory.clone();
         let global_memory = Memory::new(Box::new(global_fn.addresses));
-        let global_variables = global_fn.variables;
         let quad_list = quad_manager.quad_list.clone();
         let main_function = functions.get("main").unwrap().clone();
         let stack_size = main_function.size();
@@ -107,7 +102,6 @@ impl<R: Read> VM<R> {
                 .map(|(_, function)| (function.first_quad.clone(), function))
                 .collect(),
             global_memory,
-            global_variables,
             messages: Vec::new(),
             pointer_memory,
             quad_list,
@@ -116,6 +110,7 @@ impl<R: Read> VM<R> {
         }
     }
 
+    #[inline]
     pub fn new(quad_manager: &QuadrupleManager, debug: bool) -> Self {
         VM::base_new(quad_manager, debug, None)
     }
@@ -351,9 +346,9 @@ impl<R: Read> VM<R> {
         self.write_value_param(value, address)
     }
 
+    #[inline]
     fn get_context_global_address(&self) -> usize {
-        let name = &self.current_context().name;
-        self.global_variables.get(name).unwrap().address
+        self.current_context().address
     }
 
     fn process_return(&mut self) -> VMResult<()> {

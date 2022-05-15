@@ -39,6 +39,7 @@ fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, QuadrupleManager>
         println!("Quads created sucessfully");
         println!("{}", quad_manager);
     }
+    quad_manager.clear_variables();
     Ok(quad_manager)
 }
 

@@ -41,6 +41,11 @@ impl QuadrupleManager {
     }
 
     #[inline]
+    pub fn clear_variables(&mut self) {
+        self.dir_func.clear_variables();
+    }
+
+    #[inline]
     fn get_function(&self, name: &str) -> &Function {
         self.dir_func
             .functions

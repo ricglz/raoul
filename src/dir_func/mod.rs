@@ -33,6 +33,13 @@ impl DirFunc {
         }
     }
 
+    pub fn clear_variables(&mut self) {
+        self.global_fn.variables.clear();
+        self.functions
+            .values_mut()
+            .for_each(|f| f.variables.clear());
+    }
+
     fn insert_function<'a>(&mut self, function: Function, node: AstNode<'a>) -> Result<'a, ()> {
         let name = function.name.clone();
         match self.functions.get(&name) {
@@ -49,7 +56,7 @@ impl DirFunc {
 
     fn insert_function_from_node<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let node_clone = node.clone();
-        let function = Function::try_create(node, &mut self.global_fn)?;
+        let mut function = Function::try_create(node, &mut self.global_fn)?;
         if function.return_type != Types::Void {
             let address = self
                 .global_fn
@@ -63,6 +70,7 @@ impl DirFunc {
                     if let Err(kind) = result {
                         return Err(vec![RaoulError::new(node_clone, kind)]);
                     }
+                    function.address = address;
                 }
                 None => {
                     let kind = RaoulErrorKind::MemoryExceded;

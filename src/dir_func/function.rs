@@ -47,18 +47,20 @@ pub trait Scope {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
+    pub address: usize,
     pub args: Vec<Variable>,
+    pub first_quad: usize,
     pub local_addresses: AddressManager,
     pub name: String,
     pub return_type: Types,
     pub temp_addresses: TempAddressManager,
     pub variables: VariablesTable,
-    pub first_quad: usize,
 }
 
 impl Function {
     fn new(name: String, return_type: Types) -> Self {
         Self {
+            address: usize::MAX,
             args: Vec::new(),
             local_addresses: AddressManager::new(TOTAL_SIZE),
             name,
