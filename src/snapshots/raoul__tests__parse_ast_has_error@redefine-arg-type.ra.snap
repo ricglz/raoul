@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/redefine-arg-type.ra
+---
+[
+     --> 2:3
+      |
+    2 |   a = false;␊
+      |   ^-------^
+      |
+      = "a" was originally defined as Float and you're attempting to redefined it as a Bool,
+]
