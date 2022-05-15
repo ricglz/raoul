@@ -121,8 +121,8 @@ impl<R: Read> VM<R> {
     }
 
     fn add_call_stack(&mut self, function: Function) -> VMResult<()> {
-        self.stack_size += function.size() + 1;
-        match self.stack_size > STACK_SIZE_CAP {
+        self.stack_size += function.size();
+        match self.stack_size > STACK_SIZE_CAP || self.contexts_stack.len() == STACK_SIZE_CAP {
             true => Err("Stack overflow!"),
             false => {
                 self.call_stack.push(VMContext::new(function));
