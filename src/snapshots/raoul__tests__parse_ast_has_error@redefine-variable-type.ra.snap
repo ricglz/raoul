@@ -9,5 +9,5 @@ input_file: src/examples/invalid/static/redefine-variable-type.ra
     3 |   a = false;␊
       |   ^-------^
       |
-      = "a" was originally defined as Int and you're attempting to redefined it as a Bool,
+      = "a" was originally defined as String and you're attempting to redefined it as a Bool,
 ]

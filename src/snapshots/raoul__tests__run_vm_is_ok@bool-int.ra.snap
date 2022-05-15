@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/bool-int.ra
+---
+[
+    "1",
+    "\n",
+    "2",
+    "\n",
+    "3",
+    "\n",
+]

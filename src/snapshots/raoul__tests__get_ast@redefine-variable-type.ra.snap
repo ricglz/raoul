@@ -4,6 +4,6 @@ expression: ast
 input_file: src/examples/invalid/static/redefine-variable-type.ra
 ---
 Main(([], [], [
-    Assignment(false, Id(a), Integer(1)),
+    Assignment(false, Id(a), String(true)),
     Assignment(false, Id(a), Bool(false)),
 ]))

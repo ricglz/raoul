@@ -240,7 +240,10 @@ impl QuadrupleManager {
         op_2: Operand,
         node: AstNode<'a>,
     ) -> Results<'a, Operand> {
-        let data_type = Types::binary_operator_type(operator, op_1.1, op_2.1).unwrap();
+        let data_type = match Types::binary_operator_type(operator, op_1.1, op_2.1) {
+            Ok(data_type) => Ok(data_type),
+            Err(kind) => Err(RaoulError::new_vec(node.clone(), kind)),
+        }?;
         let res = self.safe_add_temp(&data_type, node)?;
         self.add_quad(Quadruple {
             operator,
@@ -552,10 +555,7 @@ impl QuadrupleManager {
                     .into_iter()
                     .enumerate()
                     .map(|(i, expr)| -> Results<()> {
-                        let idx_1 = Box::new(AstNode::new(
-                            AstNodeKind::Integer(i.try_into().unwrap()),
-                            expr.span.clone(),
-                        ));
+                        let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), expr.span.clone()));
                         let (variable_address, _) =
                             self.get_array_val_operand(&name, node.clone(), idx_1, None)?;
                         self.add_assign_quad(variable_address, expr)
@@ -573,19 +573,14 @@ impl QuadrupleManager {
                     .into_iter()
                     .enumerate()
                     .map(|(i, exprs)| -> Results<()> {
-                        let idx_1 = Box::new(AstNode::new(
-                            AstNodeKind::Integer(i.try_into().unwrap()),
-                            node.span.clone(),
-                        ));
+                        let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), node.span.clone()));
                         let errors: Vec<_> = exprs
                             .expand_array()
                             .into_iter()
                             .enumerate()
                             .map(|(j, expr)| -> Results<()> {
-                                let idx_2 = Box::new(AstNode::new(
-                                    AstNodeKind::Integer(j.try_into().unwrap()),
-                                    expr.span.clone(),
-                                ));
+                                let idx_2 =
+                                    Box::new(AstNode::new(AstNodeKind::from(j), expr.span.clone()));
                                 let (variable_address, _) = self.get_array_val_operand(
                                     &name,
                                     node.clone(),

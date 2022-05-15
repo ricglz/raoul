@@ -33,12 +33,13 @@ impl Types {
     }
 
     pub fn can_cast(&self, to: Types) -> bool {
-        match to {
-            Types::Bool => self.is_boolish(),
-            Types::Float => self.is_number(),
-            Types::Int => self.is_number(),
-            _ => to == self.to_owned(),
+        if self.is_number() && to.is_number() {
+            return true;
         }
+        if self.is_boolish() && to.is_boolish() {
+            return true;
+        }
+        return self == &to;
     }
 
     pub fn binary_operator_type(
@@ -75,7 +76,7 @@ impl Types {
                     }),
                 }
             }
-            Operator::Eq | Operator::Ne => match lhs_type == rhs_type {
+            Operator::Eq | Operator::Ne => match lhs_type.can_cast(rhs_type) {
                 true => Ok(Types::Bool),
                 false => Err(RaoulErrorKind::InvalidCast {
                     from: lhs_type,

@@ -20,6 +20,13 @@ impl VariableValue {
         }
     }
 
+    pub fn is_boolish(&self) -> bool {
+        match self {
+            Self::Integer(_) | Self::Bool(_) => true,
+            _ => false,
+        }
+    }
+
     #[inline]
     fn cast_to_bool(&self) -> VariableValue {
         Self::Bool(bool::from(self))
@@ -253,8 +260,8 @@ impl PartialOrd for VariableValue {
                 (Ok(a), Ok(b)) => a.partial_cmp(&b),
                 _ => None,
             },
-            _ => match (self, other) {
-                (Self::Bool(a), Self::Bool(b)) => a.partial_cmp(b),
+            _ => match (self.is_boolish(), other.is_boolish()) {
+                (true, true) => bool::from(self).partial_cmp(&bool::from(other)),
                 _ => None,
             },
         }

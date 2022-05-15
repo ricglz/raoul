@@ -123,6 +123,12 @@ impl<'a> From<AstNodeKind<'a>> for usize {
     }
 }
 
+impl<'a> From<usize> for AstNodeKind<'a> {
+    fn from(i: usize) -> Self {
+        AstNodeKind::Integer(i.try_into().unwrap())
+    }
+}
+
 impl fmt::Debug for AstNodeKind<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {

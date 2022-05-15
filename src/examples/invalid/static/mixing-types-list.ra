@@ -1,4 +1,4 @@
 func main(): void {
-  a = [1, "3", false];
+  a = [false, "3", false];
   print(a[0], a[1], a[2]);
 }
