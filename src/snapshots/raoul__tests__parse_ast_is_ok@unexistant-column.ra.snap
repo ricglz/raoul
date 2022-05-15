@@ -3,11 +3,11 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/invalid/dynamic/unexistant-column.ra
 ---
-0 - Goto       -     -     1    
-1 - ReadCSV    3500  -     -    
-2 - Average    3501  -     2250 
-3 - Assignment 2250  -     1250 
-4 - Print      1250  -     -    
-5 - PrintNl    -     -     -    
-6 - End        -     -     -    
+0    - Goto       -     -     1
+1    - ReadCSV    3500  -     -
+2    - Average    3501  -     2250
+3    - Assignment 2250  -     1250
+4    - Print      1250  -     -
+5    - PrintNl    -     -     -
+6    - End        -     -     -
 

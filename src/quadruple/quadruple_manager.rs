@@ -865,7 +865,7 @@ impl fmt::Display for QuadrupleManager {
             .clone()
             .into_iter()
             .enumerate()
-            .map(|(i, quad)| format!("{} - {:?}\n", i, quad))
+            .map(|(i, quad)| format!("{:<4} - {:?}\n", i, quad))
             .collect();
         write!(f, "{value}")
     }

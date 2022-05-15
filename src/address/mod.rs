@@ -176,6 +176,7 @@ impl TempAddressManager {
         }
     }
 
+    #[inline]
     fn type_released_addresses(&mut self, data_type: &Types) -> &mut Vec<usize> {
         self.released.get_mut(data_type).unwrap()
     }

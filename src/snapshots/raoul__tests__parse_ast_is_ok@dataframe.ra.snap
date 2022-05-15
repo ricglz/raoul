@@ -3,24 +3,24 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/valid/dataframe.ra
 ---
-0 - Goto       -     -     1    
-1 - ReadCSV    3500  -     -    
-2 - Average    3501  -     2250 
-3 - Assignment 2250  -     1250 
-4 - Assignment 3502  -     1500 
-5 - Std        1500  -     2250 
-6 - Assignment 2250  -     1251 
-7 - Mode       1500  -     2250 
-8 - Assignment 2250  -     1252 
-9 - Variance   1500  -     2250 
-10 - Assignment 2250  -     1253 
-11 - Corr       1500  3501  2250 
-12 - Assignment 2250  -     1254 
-13 - Print      1250  -     -    
-14 - Print      1251  -     -    
-15 - Print      1252  -     -    
-16 - Print      1253  -     -    
-17 - Print      1254  -     -    
-18 - PrintNl    -     -     -    
-19 - End        -     -     -    
+0    - Goto       -     -     1
+1    - ReadCSV    3500  -     -
+2    - Average    3501  -     2250
+3    - Assignment 2250  -     1250
+4    - Assignment 3502  -     1500
+5    - Std        1500  -     2250
+6    - Assignment 2250  -     1251
+7    - Mode       1500  -     2250
+8    - Assignment 2250  -     1252
+9    - Variance   1500  -     2250
+10   - Assignment 2250  -     1253
+11   - Corr       1500  3501  2250
+12   - Assignment 2250  -     1254
+13   - Print      1250  -     -
+14   - Print      1251  -     -
+15   - Print      1252  -     -
+16   - Print      1253  -     -
+17   - Print      1254  -     -
+18   - PrintNl    -     -     -
+19   - End        -     -     -
 

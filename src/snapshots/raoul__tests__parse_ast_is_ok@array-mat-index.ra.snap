@@ -3,19 +3,19 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/invalid/dynamic/array-mat-index.ra
 ---
-0 - Goto       -     -     1    
-1 - Ver        3001  3001  -    
-2 - Times      3001  3002  2000 
-3 - Ver        3003  3002  -    
-4 - Sum        3000  2000  2001 
-5 - Sum        2001  3003  4000 
-6 - Assignment 3002  -     4000 
-7 - Ver        3001  3001  -    
-8 - Times      3001  3002  2001 
-9 - Ver        3003  3002  -    
-10 - Sum        3000  2001  2002 
-11 - Sum        2002  3003  4001 
-12 - Print      4001  -     -    
-13 - PrintNl    -     -     -    
-14 - End        -     -     -    
+0    - Goto       -     -     1
+1    - Ver        3001  3001  -
+2    - Times      3001  3002  2000
+3    - Ver        3003  3002  -
+4    - Sum        3000  2000  2001
+5    - Sum        2001  3003  4000
+6    - Assignment 3002  -     4000
+7    - Ver        3001  3001  -
+8    - Times      3001  3002  2001
+9    - Ver        3003  3002  -
+10   - Sum        3000  2001  2002
+11   - Sum        2002  3003  4001
+12   - Print      4001  -     -
+13   - PrintNl    -     -     -
+14   - End        -     -     -
 

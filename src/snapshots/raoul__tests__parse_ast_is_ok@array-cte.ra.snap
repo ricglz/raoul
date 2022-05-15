@@ -1,27 +1,27 @@
 ---
 source: src/tests.rs
 expression: quad_manager
-input_file: src/examples/valid/non-plot/array-cte.ra
+input_file: src/examples/valid/array-cte.ra
 ---
-0 - Goto       -     -     1    
-1 - Ver        3001  3002  -    
-2 - Sum        3000  3001  4000 
-3 - Assignment 3001  -     4000 
-4 - Ver        3003  3002  -    
-5 - Sum        3000  3003  4001 
-6 - Assignment 3003  -     4001 
-7 - Ver        3004  3002  -    
-8 - Sum        3000  3004  4002 
-9 - Assignment 3004  -     4002 
-10 - Ver        3001  3002  -    
-11 - Sum        3000  3001  4003 
-12 - Print      4003  -     -    
-13 - Ver        3003  3002  -    
-14 - Sum        3000  3003  4004 
-15 - Print      4004  -     -    
-16 - Ver        3004  3002  -    
-17 - Sum        3000  3004  4005 
-18 - Print      4005  -     -    
-19 - PrintNl    -     -     -    
-20 - End        -     -     -    
+0    - Goto       -     -     1
+1    - Ver        3001  3002  -
+2    - Sum        3000  3001  4000
+3    - Assignment 3001  -     4000
+4    - Ver        3003  3002  -
+5    - Sum        3000  3003  4001
+6    - Assignment 3003  -     4001
+7    - Ver        3004  3002  -
+8    - Sum        3000  3004  4002
+9    - Assignment 3004  -     4002
+10   - Ver        3001  3002  -
+11   - Sum        3000  3001  4003
+12   - Print      4003  -     -
+13   - Ver        3003  3002  -
+14   - Sum        3000  3003  4004
+15   - Print      4004  -     -
+16   - Ver        3004  3002  -
+17   - Sum        3000  3004  4005
+18   - Print      4005  -     -
+19   - PrintNl    -     -     -
+20   - End        -     -     -
 

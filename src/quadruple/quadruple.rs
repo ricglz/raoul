@@ -23,7 +23,7 @@ impl fmt::Debug for Quadruple {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} {:5} {:5} {:5}",
+            "{} {:5} {:5} {}",
             self.operator,
             Quadruple::format_address(self.op_1),
             Quadruple::format_address(self.op_2),

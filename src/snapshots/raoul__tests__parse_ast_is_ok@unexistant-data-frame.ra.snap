@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/invalid/dynamic/unexistant-data-frame.ra
 ---
-0 - Goto       -     -     1    
-1 - ReadCSV    3500  -     -    
-2 - End        -     -     -    
+0    - Goto       -     -     1
+1    - ReadCSV    3500  -     -
+2    - End        -     -     -
 
