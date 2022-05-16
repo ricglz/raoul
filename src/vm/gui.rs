@@ -46,7 +46,6 @@ impl App {
                 let y: f64 = y.unwrap();
                 Value::new(x, y)
             });
-        println!("{}", iter.len());
         Line::new(Values::from_values_iter(iter))
             .color(Color32::BLUE)
             .style(self.line_style)
