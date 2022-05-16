@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use super::{parse, parse_ast, AstNode, QuadrupleManager, VM};
 
 fn get_ast(program: &str) -> AstNode {
@@ -19,12 +17,6 @@ fn parse_ast_has_error(filename: &str) {
     insta::assert_debug_snapshot!(res.unwrap_err());
 }
 
-impl<R: Read> VM<R> {
-    pub fn new_with_reader(quad_manager: &QuadrupleManager, debug: bool, reader: R) -> Self {
-        VM::base_new(quad_manager, debug, Some(reader))
-    }
-}
-
 fn parse_ast_is_ok(filename: &str) -> QuadrupleManager {
     println!("Testing {:?}", filename);
     let program = std::fs::read_to_string(filename).expect(filename);
@@ -38,7 +30,7 @@ fn parse_ast_is_ok(filename: &str) -> QuadrupleManager {
 
 fn run_vm_is_error(filename: &str) {
     let quad_manager = parse_ast_is_ok(filename);
-    let mut vm = VM::new_with_reader(&quad_manager, false, b"test".as_ref());
+    let mut vm = VM::new(&quad_manager, false);
     let res = vm.run();
     assert!(res.is_err());
     insta::assert_display_snapshot!(res.unwrap_err());
@@ -47,7 +39,7 @@ fn run_vm_is_error(filename: &str) {
 
 fn run_vm_is_ok(filename: &str) {
     let quad_manager = parse_ast_is_ok(filename);
-    let mut vm = VM::new_with_reader(&quad_manager, false, b"test".as_ref());
+    let mut vm = VM::new(&quad_manager, false);
     let res = vm.run();
     assert!(res.is_ok());
     insta::assert_debug_snapshot!(vm.messages);

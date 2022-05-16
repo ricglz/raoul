@@ -1,10 +1,6 @@
 mod gui;
 
-use std::{
-    cmp::Ordering,
-    collections::HashMap,
-    io::{stdin, Read},
-};
+use std::{cmp::Ordering, collections::HashMap, io::stdin};
 
 use polars::{
     datatypes::{AnyValue, DataType},
@@ -54,7 +50,7 @@ impl VMContext {
 pub type VMResult<T> = std::result::Result<T, &'static str>;
 
 #[derive(Debug)]
-pub struct VM<R: Read> {
+pub struct VM {
     call_stack: Vec<VMContext>,
     constant_memory: ConstantMemory,
     contexts_stack: Vec<VMContext>,
@@ -64,7 +60,6 @@ pub struct VM<R: Read> {
     pointer_memory: PointerMemory,
     pub messages: Vec<String>,
     quad_list: Vec<Quadruple>,
-    reader: Option<R>,
     stack_size: usize,
     data_frame: Option<DataFrame>,
 }
@@ -80,8 +75,8 @@ fn cast_to_f64(v: AnyValue) -> f64 {
     }
 }
 
-impl<R: Read> VM<R> {
-    pub fn base_new(quad_manager: &QuadrupleManager, debug: bool, reader: Option<R>) -> Self {
+impl VM {
+    pub fn new(quad_manager: &QuadrupleManager, debug: bool) -> Self {
         let constant_memory = quad_manager.memory.clone();
         let functions = quad_manager.dir_func.functions.clone();
         let global_fn = quad_manager.dir_func.global_fn.clone();
@@ -106,13 +101,7 @@ impl<R: Read> VM<R> {
             pointer_memory,
             quad_list,
             stack_size,
-            reader,
         }
-    }
-
-    #[inline]
-    pub fn new(quad_manager: &QuadrupleManager, debug: bool) -> Self {
-        VM::base_new(quad_manager, debug, None)
     }
 
     fn add_call_stack(&mut self, function: Function) -> VMResult<()> {
@@ -225,14 +214,7 @@ impl<R: Read> VM<R> {
 
     fn create_value_from_stdin(&mut self) -> VariableValue {
         let mut line = String::new();
-        match &mut self.reader {
-            None => {
-                stdin().read_line(&mut line).unwrap();
-            }
-            Some(reader) => {
-                reader.read_to_string(&mut line).unwrap();
-            }
-        }
+        stdin().read_line(&mut line).unwrap();
         VariableValue::String(line)
     }
 
