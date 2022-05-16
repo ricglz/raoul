@@ -7,4 +7,7 @@ Main(([], [], [
     Decision(BinaryOperation(Eq, Integer(1), Bool(true)), [Write([Integer(1)])], None),
     Decision(BinaryOperation(Eq, Integer(1), Float(1)), [Write([Integer(2)])], None),
     Decision(BinaryOperation(Eq, Integer(1), String(1)), [Write([Integer(3)])], None),
+    Assignment(false, Id(a), Integer(1)),
+    Assignment(false, Id(a), Bool(false)),
+    Write([Id(a)]),
 ]))

@@ -167,6 +167,12 @@ impl TryFrom<VariableValue> for i64 {
         if let Integer(a) = &v {
             return Ok(*a);
         }
+        if let Bool(a) = &v {
+            return match a {
+                true => Ok(1),
+                false => Ok(0),
+            };
+        }
         let string = match v {
             VariableValue::Float(a) => a.floor().to_string(),
             VariableValue::String(a) => a,

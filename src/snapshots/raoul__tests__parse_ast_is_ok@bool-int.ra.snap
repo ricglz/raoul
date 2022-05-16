@@ -16,5 +16,9 @@ input_file: src/examples/valid/bool-int.ra
 10   - GotoF      2750  -     13
 11   - Print      3002  -     -
 12   - PrintNl    -     -     -
-13   - End        -     -     -
+13   - Assignment 3000  -     1000
+14   - Assignment 3751  -     1000
+15   - Print      1000  -     -
+16   - PrintNl    -     -     -
+17   - End        -     -     -
 
