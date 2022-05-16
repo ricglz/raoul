@@ -1,3 +1,4 @@
+// TODO: Test
 func main(): void {
   a = true OR false;
   b = 1 AND true;

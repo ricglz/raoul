@@ -1,4 +1,5 @@
 WHITESPACE = _{" " | NEWLINE}
+COMMENT = _{ (("//" ~ (!NEWLINE ~ ANY)*) | ("/*" ~ ( "/**/" | (!"*/" ~ ANY) )* ~ "*/")) }
 
 // Tokens
 DOT        = _{"."}
