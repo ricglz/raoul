@@ -5,11 +5,29 @@ use crate::enums::Types;
 #[derive(PartialEq, Eq, Clone)]
 pub enum RaoulErrorKind {
     Invalid,
-    UndeclaredVar { name: String },
-    RedeclaredFunction { name: String },
-    RedefinedType { name: String, from: Types, to: Types },
-    InvalidCast { from: Types, to: Types },
+    UndeclaredVar {
+        name: String,
+    },
+    UndeclaredFunction {
+        name: String,
+    },
+    RedeclaredFunction {
+        name: String,
+    },
+    RedefinedType {
+        name: String,
+        from: Types,
+        to: Types,
+    },
+    InvalidCast {
+        from: Types,
+        to: Types,
+    },
     MemoryExceded,
+    UnmatchArgsAmount {
+        expected: usize,
+        given: usize,
+    },
 }
 
 impl fmt::Debug for RaoulErrorKind {
@@ -18,6 +36,9 @@ impl fmt::Debug for RaoulErrorKind {
             RaoulErrorKind::Invalid => unreachable!(),
             RaoulErrorKind::UndeclaredVar { name } => {
                 write!(f, "Variable \"{}\" was not declared", name)
+            }
+            RaoulErrorKind::UndeclaredFunction { name } => {
+                write!(f, "Function \"{}\" was not declared", name)
             }
             RaoulErrorKind::RedeclaredFunction { name } => {
                 write!(f, "Function \"{}\" was already declared before", name)
@@ -36,6 +57,12 @@ impl fmt::Debug for RaoulErrorKind {
             }
             RaoulErrorKind::MemoryExceded => {
                 write!(f, "Memory was exceded")
+            }
+            RaoulErrorKind::UnmatchArgsAmount { expected, given } => {
+                write!(
+                    f,
+                    "Wrong args amount: Expected {expected}, but were given {given}"
+                )
             }
         }
     }

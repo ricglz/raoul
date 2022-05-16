@@ -3,6 +3,7 @@ use core::fmt;
 use crate::ast::ast_kind::AstNodeKind;
 use crate::ast::AstNode;
 use crate::dir_func::function::VariablesTable;
+use crate::dir_func::variable::Variable;
 use crate::error::error_kind::RaoulErrorKind;
 use crate::error::{RaoulError, Result};
 
@@ -100,6 +101,14 @@ impl Types {
         }
     }
 
+    fn get_variable<'a>(
+        name: &str,
+        variables: &'a VariablesTable,
+        global: &'a VariablesTable,
+    ) -> Option<&'a Variable> {
+        variables.get(name).or(global.get(name))
+    }
+
     pub fn from_node<'a>(
         v: AstNode<'a>,
         variables: &VariablesTable,
@@ -111,16 +120,23 @@ impl Types {
             AstNodeKind::Float(_) => Ok(Types::FLOAT),
             AstNodeKind::String(_) => Ok(Types::STRING),
             AstNodeKind::Bool(_) => Ok(Types::BOOL),
-            AstNodeKind::Id(name) => {
-                if let Some(variable) = variables.get(&name).or(global.get(&name)) {
-                    Ok(variable.data_type)
-                } else {
-                    Err(RaoulError::new(
+            AstNodeKind::Id(name) => match Types::get_variable(&name, variables, global) {
+                Some(variable) => Ok(variable.data_type),
+                None => Err(RaoulError::new(
+                    clone,
+                    RaoulErrorKind::UndeclaredVar { name },
+                )),
+            },
+            AstNodeKind::FuncCall { name, .. } => {
+                match Types::get_variable(&name, variables, global) {
+                    Some(variable) => Ok(variable.data_type),
+                    None => Err(RaoulError::new(
                         clone,
-                        RaoulErrorKind::UndeclaredVar { name },
-                    ))
+                        RaoulErrorKind::UndeclaredFunction { name },
+                    )),
                 }
             }
+
             AstNodeKind::Read => Ok(Types::STRING),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(*lhs, variables, global)?;
@@ -178,6 +194,13 @@ pub enum Operator {
     Read,
     Goto,
     GotoF,
+    End,
+    // Functions
+    Return,
+    EndProc,
+    Era,
+    GoSub,
+    Param,
 }
 
 impl Operator {

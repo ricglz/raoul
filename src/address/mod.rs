@@ -39,6 +39,7 @@ fn get_type_base(data_type: &Types) -> usize {
 
 pub trait GenericAddressManager {
     fn get_address(&mut self, data_type: &Types) -> Option<usize>;
+    fn size(&self) -> usize;
 }
 
 #[derive(PartialEq, Clone)]
@@ -73,6 +74,14 @@ impl GenericAddressManager for AddressManager {
         *type_counter = *type_counter + 1;
         let type_base = get_type_base(&data_type);
         Some(self.base + type_counter_clone + type_base)
+    }
+    fn size(&self) -> usize {
+        self.counter
+            .to_owned()
+            .into_iter()
+            .map(|v| v.1)
+            .reduce(|a, v| a + v)
+            .unwrap_or(0)
     }
 }
 
@@ -141,6 +150,9 @@ impl GenericAddressManager for TempAddressManager {
         self.type_released_addresses(data_type)
             .pop()
             .or(self.address_manager.get_address(data_type))
+    }
+    fn size(&self) -> usize {
+        self.address_manager.size()
     }
 }
 

@@ -118,7 +118,7 @@ ARR_CTE      = { L_SQUARE ~ exprs? ~ R_SQUARE }
 CTE          = _{ ARR_CTE | ATOM_CTE }
 ARR_INDEX    = { L_SQUARE ~ expr ~ R_SQUARE }
 ARR_VAL      = { id ~ ARR_INDEX{1,2} }
-NON_CTE      = _{ DATAFRAME_VALUE_OPS | FUNC_CALL | ARR_VAL | id }
+NON_CTE      = _{ DATAFRAME_VALUE_OPS | func_call | ARR_VAL | id }
 VAR_VAL      = _{ CTE | NON_CTE }
 
 expr          = { and_term ~ (OR ~ and_term)* }
@@ -149,7 +149,7 @@ func_args     = { func_arg ~ (COMMA ~ func_arg)* }
 FUNC_HEADER   = _{ FUNC ~ id ~ L_PAREN ~ func_args? ~ R_PAREN ~ COLON ~ types }
 function      = { FUNC_HEADER ~ block }
 MAIN_FUNCTION = _{ FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ void ~ block }
-FUNC_CALL     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }
+func_call     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }
 
 COND_EXPR  = _{ L_PAREN ~ expr ~ R_PAREN }
 if_block   = _{ IF ~ COND_EXPR ~ block }
@@ -177,10 +177,10 @@ HISTOGRAM           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ COM
 DATAFRAME_VALUE_OPS = _{AVERAGE | STD | MODE | VARIANCE | CORRELATION}
 DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
 
-RETURN = { RETURN_KEY ~ expr }
+return_statement = { RETURN_KEY ~ expr }
 
 BLOCK_STATEMENT  = _{ decision | while_loop | for_loop }
-INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | RETURN | FUNC_CALL }
+INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | return_statement | func_call }
 statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
 
 program = { SOI ~ function* ~ MAIN_FUNCTION ~ EOI }

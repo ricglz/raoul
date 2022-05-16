@@ -1,0 +1,7 @@
+func test(a: string): void {
+  print(a);
+}
+
+func main(): void {
+  test(false);
+}

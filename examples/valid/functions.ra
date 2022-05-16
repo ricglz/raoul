@@ -1,0 +1,13 @@
+func test(): void {
+  a = 1;
+}
+
+func test2(a: int): int {
+  return a;
+}
+
+func main(): void {
+  test();
+  a = test2(2);
+  print(a);
+}
