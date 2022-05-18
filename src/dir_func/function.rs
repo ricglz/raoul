@@ -19,7 +19,10 @@ pub trait Scope {
     fn insert_variable(&mut self, variable: Variable) -> InsertResult {
         let name = variable.name.clone();
         match self.get_variable(&name) {
-            None => Ok(self._insert_variable(variable.name.clone(), variable)),
+            None => {
+                self._insert_variable(variable.name.clone(), variable);
+                Ok(())
+            }
             Some(stored_var) => match variable.data_type.can_cast(stored_var.data_type) {
                 true => Ok(()),
                 false => Err(RaoulErrorKind::RedefinedType {
@@ -214,6 +217,12 @@ impl GlobalScope {
             true => false,
         }
     }
+}
+
+impl Default for GlobalScope {
+  fn default() -> Self {
+      Self::new()
+  }
 }
 
 impl Scope for GlobalScope {

@@ -100,23 +100,23 @@ impl GenericAddressManager for AddressManager {
         let type_counter = self
             .counter
             .get_mut(data_type)
-            .expect(format!("{:?}", data_type).as_str());
-        let prev = type_counter.clone();
+            .unwrap_or_else(|| panic!("{:?}", data_type));
+        let prev = *type_counter;
         let amount = get_amount(dimensions);
         let new_counter = prev + amount;
         if new_counter > THRESHOLD {
             return None;
         }
         *type_counter = new_counter;
-        let type_base = get_type_base(&data_type);
+        let type_base = get_type_base(data_type);
         Some(self.base + prev + type_base)
     }
     #[inline]
     fn size(&self) -> usize {
         self.counter
-            .to_owned()
-            .into_iter()
+            .iter()
             .map(|v| v.1)
+            .copied()
             .reduce(|a, v| a + v)
             .unwrap_or(0)
     }
@@ -187,6 +187,12 @@ impl TempAddressManager {
     }
 }
 
+impl Default for TempAddressManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GenericAddressManager for TempAddressManager {
     #[inline]
     fn get_address_counter(&self) -> AddressCounter {
@@ -251,9 +257,9 @@ impl ConstantMemory {
         let type_memory = self
             .memory
             .get_mut(data_type)
-            .expect(format!("Get address received {:?}", data_type).as_str());
+            .unwrap_or_else(|| panic!("Get address received {:?}", data_type));
         let type_base = get_type_base(data_type);
-        match type_memory.into_iter().position(|x| x.to_owned() == value) {
+        match type_memory.iter_mut().position(|x| *x == value) {
             None => {
                 if type_memory.len().to_owned().cmp(&THRESHOLD) == Ordering::Equal {
                     return None;
@@ -341,7 +347,8 @@ impl Memory {
     pub fn write(&mut self, address: usize, uncast: VariableValue) -> VMResult<()> {
         let (index, address_type) = self.get_index(address);
         let value = uncast.cast_to(address_type)?;
-        Ok(*self.space.get_mut(index).unwrap() = Some(value))
+        *self.space.get_mut(index).unwrap() = Some(value);
+        Ok(())
     }
 }
 
@@ -360,7 +367,7 @@ impl PointerMemory {
     }
 
     pub fn get_pointer(&mut self) -> usize {
-        let prev_counter = self.counter.clone();
+        let prev_counter = self.counter;
         self.counter += 1;
         prev_counter
     }

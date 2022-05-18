@@ -26,7 +26,7 @@ use std::process::exit;
 
 use args::parse_args;
 
-fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, QuadrupleManager> {
+fn parse_ast(ast: AstNode, debug: bool) -> Results<QuadrupleManager> {
     let mut dir_func = DirFunc::new();
     dir_func.build_dir_func(ast.clone())?;
     if debug {
@@ -53,7 +53,7 @@ fn main() {
     let file = std::fs::read_to_string(filename).expect(filename);
     let parsing_response = parse(&file, debug);
     if let Err(error) = parsing_response {
-        println!("Parsing error {}", error.to_string());
+        println!("Parsing error {}", error);
         exit(1);
     }
     let ast = parsing_response.unwrap();

@@ -620,7 +620,7 @@ impl LanguageParser {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [exprs(exprs)] => {
-                AstNode { kind: AstNodeKind::Write { exprs: exprs }, span }
+                AstNode { kind: AstNodeKind::Write { exprs }, span }
             },
         ))
     }
@@ -710,7 +710,7 @@ impl LanguageParser {
             [global_assignments(nodes), function(functions).., _, block(body), _] => {
                 let kind = AstNodeKind::Main {
                     assignments: nodes,
-                    body: body,
+                    body,
                     functions: functions.collect(),
                 };
                 AstNode { kind, span }
@@ -719,8 +719,8 @@ impl LanguageParser {
     }
 }
 
-pub fn parse<'a>(source: &'a str, debug: bool) -> Result<AstNode<'a>> {
-    let inputs = LanguageParser::parse_with_userdata(Rule::program, &source, debug)?;
+pub fn parse(source: &str, debug: bool) -> Result<AstNode> {
+    let inputs = LanguageParser::parse_with_userdata(Rule::program, source, debug)?;
     // There should be a single root node in the parsed tree
     let input = inputs.single()?;
     LanguageParser::program(input)

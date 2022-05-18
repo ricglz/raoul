@@ -18,18 +18,14 @@ pub enum Types {
 }
 
 impl Types {
+    #[inline]
     pub fn is_boolish(&self) -> bool {
-        match self {
-            Types::Int | Types::Bool => true,
-            _ => false,
-        }
+        matches!(self, Types::Int | Types::Bool)
     }
 
+    #[inline]
     fn is_number(&self) -> bool {
-        match self {
-            Types::Int | Types::Float | Types::String => true,
-            _ => false,
-        }
+        matches!(self, Types::Int | Types::Float | Types::String)
     }
 
     pub fn can_cast(&self, to: Types) -> bool {
@@ -39,7 +35,7 @@ impl Types {
         if self.is_boolish() && to.is_boolish() {
             return true;
         }
-        return self == &to;
+        self == &to
     }
 
     pub fn binary_operator_type(
@@ -104,12 +100,13 @@ impl Types {
         }
     }
 
+    #[inline]
     fn get_variable<'a>(
         name: &str,
         variables: &'a VariablesTable,
         global: &'a VariablesTable,
     ) -> Option<&'a Variable> {
-        variables.get(name).or(global.get(name))
+        variables.get(name).or_else(|| global.get(name))
     }
 
     pub fn from_node<'a>(
@@ -146,7 +143,7 @@ impl Types {
             AstNodeKind::ArrayDeclaration { data_type, .. } => Ok(*data_type),
             AstNodeKind::Array(exprs) => {
                 let (types, errors): (Vec<_>, Vec<_>) = exprs
-                    .into_iter()
+                    .iter()
                     .map(|node| Types::from_node(node, variables, global))
                     .partition(|res| res.is_ok());
                 match errors.is_empty() {
@@ -262,10 +259,7 @@ pub enum Operator {
 
 impl Operator {
     pub fn is_goto(&self) -> bool {
-        match self {
-            Operator::Goto | Operator::GotoF => true,
-            _ => false,
-        }
+        matches!(self, Operator::Goto | Operator::GotoF)
     }
 }
 

@@ -26,19 +26,19 @@ impl fmt::Debug for RaoulError<'_> {
 }
 
 impl RaoulError<'_> {
-    pub fn new<'a>(node: AstNode<'a>, kind: RaoulErrorKind) -> RaoulError<'a> {
+    pub fn new(node: AstNode, kind: RaoulErrorKind) -> RaoulError {
         RaoulError {
             kind,
             span: node.span.clone(),
         }
     }
 
-    pub fn new_vec<'a>(node: AstNode<'a>, kind: RaoulErrorKind) -> Vec<RaoulError<'a>> {
+    pub fn new_vec(node: AstNode, kind: RaoulErrorKind) -> Vec<RaoulError> {
         vec![RaoulError::new(node, kind)]
     }
 
     pub fn is_invalid(&self) -> bool {
-        return self.kind.to_owned() == RaoulErrorKind::Invalid;
+        self.kind == RaoulErrorKind::Invalid
     }
 }
 

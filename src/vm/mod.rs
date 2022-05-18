@@ -94,7 +94,7 @@ impl VM {
             debug,
             functions: functions
                 .into_iter()
-                .map(|(_, function)| (function.first_quad.clone(), function))
+                .map(|(_, function)| (function.first_quad, function))
                 .collect(),
             global_memory,
             messages: Vec::new(),
@@ -157,7 +157,7 @@ impl VM {
 
     fn get_current_quad(&self) -> Quadruple {
         let quad_pos = self.current_context().quad_pos;
-        self.quad_list.get(quad_pos).unwrap().clone()
+        *self.quad_list.get(quad_pos).unwrap()
     }
 
     fn get_value(&self, address: usize) -> VMResult<VariableValue> {
@@ -176,7 +176,8 @@ impl VM {
     fn write_value(&mut self, value: VariableValue, address: usize) -> VMResult<()> {
         let determinant = address / TOTAL_SIZE;
         if determinant >= 4 {
-            return Ok(self.pointer_memory.write(address, value));
+            self.pointer_memory.write(address, value);
+            return Ok(());
         }
         let memory = match determinant {
             0 => &mut self.global_memory,
@@ -199,7 +200,7 @@ impl VM {
 
     fn print_message(&mut self, message: &str) {
         self.messages.push(message.to_string());
-        let separator = match message.contains("\n") {
+        let separator = match message.contains('\n') {
             true => "",
             false => " ",
         };
@@ -209,7 +210,8 @@ impl VM {
     fn process_print(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
         let value = self.get_value(quad.op_1.unwrap())?;
-        Ok(self.print_message(&format!("{value:?}")))
+        self.print_message(&format!("{value:?}"));
+        Ok(())
     }
 
     fn create_value_from_stdin(&mut self) -> VariableValue {
@@ -324,7 +326,7 @@ impl VM {
         let quad = self.get_current_quad();
         let value = self.get_value(quad.op_1.unwrap())?;
         let index = quad.res.unwrap();
-        let address = self.current_call().args.get(index).unwrap().clone();
+        let address = *self.current_call().args.get(index).unwrap();
         self.write_value_param(value, address)
     }
 
@@ -338,7 +340,8 @@ impl VM {
         let value = self.get_value(quad.op_1.unwrap())?;
         let address = self.get_context_global_address();
         self.write_value(value, address)?;
-        Ok(self.process_end_proc())
+        self.process_end_proc();
+        Ok(())
     }
 
     fn process_ver(&mut self) -> VMResult<()> {
@@ -369,7 +372,8 @@ impl VM {
         if res.is_err() {
             return Err("File is not a valid CSV");
         }
-        Ok(self.data_frame = Some(res.unwrap()))
+        self.data_frame = Some(res.unwrap());
+        Ok(())
     }
 
     fn unary_df_operation<F>(&mut self, f: F) -> VMResult<()>
@@ -472,10 +476,16 @@ impl VM {
             let quad = self.quad_list.get(quad_pos).unwrap();
             match quad.operator {
                 Operator::End => break,
-                Operator::Goto => Ok(quad_pos = quad.res.unwrap() - 1),
+                Operator::Goto => {
+                    quad_pos = quad.res.unwrap() - 1;
+                    Ok(())
+                }
                 Operator::Assignment => self.process_assign(),
                 Operator::Print => self.process_print(),
-                Operator::PrintNl => Ok(self.print_message("\n")),
+                Operator::PrintNl => {
+                    self.print_message("\n");
+                    Ok(())
+                }
                 Operator::Read => self.process_read(),
                 Operator::Or => self.binary_operation(|a, b| Ok(a | b)),
                 Operator::And => self.binary_operation(|a, b| Ok(a & b)),
@@ -490,7 +500,10 @@ impl VM {
                 | Operator::Eq
                 | Operator::Ne => self.comparison(),
                 Operator::Not => self.unary_operation(|a| !a),
-                Operator::GotoF => Ok(quad_pos = self.conditional_goto(false)?),
+                Operator::GotoF => {
+                    quad_pos = self.conditional_goto(false)?;
+                    Ok(())
+                }
                 Operator::Inc => self.process_inc(),
                 Operator::Era => self.process_era(),
                 Operator::GoSub => {

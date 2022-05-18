@@ -19,10 +19,7 @@ pub struct Variable {
     pub name: String,
 }
 
-fn get_value_dimensions<'a>(
-    value: &Box<AstNode<'a>>,
-    node: AstNode<'a>,
-) -> Results<'a, Dimensions> {
+fn get_value_dimensions<'a>(value: &AstNode<'a>, node: AstNode<'a>) -> Results<'a, Dimensions> {
     match value.get_dimensions() {
         Ok(dimensions) => Ok(dimensions),
         Err((expected, given)) => {

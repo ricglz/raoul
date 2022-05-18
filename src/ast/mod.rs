@@ -43,8 +43,8 @@ impl<'a> AstNode<'a> {
             AstNodeKind::Decision { statements, .. }
             | AstNodeKind::ElseBlock { statements }
             | AstNodeKind::While { statements, .. } => statements
-                .to_owned()
-                .into_iter()
+                .iter()
+                .cloned()
                 .flat_map(AstNode::expand_node)
                 .collect(),
             AstNodeKind::For {
@@ -52,8 +52,8 @@ impl<'a> AstNode<'a> {
                 assignment,
                 ..
             } => vec![*assignment.clone()]
-                .to_owned()
-                .into_iter()
+                .iter()
+                .cloned()
                 .chain(statements.to_owned())
                 .flat_map(AstNode::expand_node)
                 .collect(),

@@ -6,7 +6,7 @@ use pest::Parser;
 struct MyParser;
 
 fn parse(source: &str) -> Result<(), Error<Rule>> {
-    if let Err(err) = MyParser::parse(Rule::program, &source) {
+    if let Err(err) = MyParser::parse(Rule::program, source) {
         Err(err)
     } else {
         Ok(())

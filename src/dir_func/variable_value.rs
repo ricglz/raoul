@@ -14,17 +14,11 @@ pub enum VariableValue {
 
 impl VariableValue {
     pub fn is_number(&self) -> bool {
-        match self {
-            Self::Integer(_) | Self::Float(_) | Self::String(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Integer(_) | Self::Float(_) | Self::String(_))
     }
 
     pub fn is_boolish(&self) -> bool {
-        match self {
-            Self::Integer(_) | Self::Bool(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Integer(_) | Self::Bool(_))
     }
 
     #[inline]
@@ -78,7 +72,7 @@ impl From<AstNodeKind<'_>> for VariableValue {
         match v {
             AstNodeKind::Integer(value) => VariableValue::Integer(value),
             AstNodeKind::Float(value) => VariableValue::Float(value),
-            AstNodeKind::String(value) => VariableValue::String(value.clone()),
+            AstNodeKind::String(value) => VariableValue::String(value),
             AstNodeKind::Bool(value) => VariableValue::Bool(value),
             _ => unreachable!(),
         }

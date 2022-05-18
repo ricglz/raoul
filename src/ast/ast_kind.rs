@@ -105,8 +105,8 @@ impl<'a> From<AstNodeKind<'a>> for String {
     fn from(val: AstNodeKind) -> Self {
         match val {
             AstNodeKind::Integer(n) => n.to_string(),
-            AstNodeKind::Id(s) => s.to_string(),
-            AstNodeKind::String(s) => s.to_string(),
+            AstNodeKind::Id(s) => s,
+            AstNodeKind::String(s) => s,
             AstNodeKind::Assignment { assignee, .. } => assignee.into(),
             AstNodeKind::ArrayVal { name, .. } => name,
             node => unreachable!("Node {:?}, cannot be a string", node),
@@ -229,10 +229,7 @@ impl fmt::Debug for AstNodeKind<'_> {
 
 impl<'a> AstNodeKind<'a> {
     pub fn is_array(&self) -> bool {
-        match self {
-            Self::Array(_) | Self::ArrayDeclaration { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::Array(_) | Self::ArrayDeclaration { .. })
     }
 
     pub fn get_dimensions(&self) -> Result<Dimensions, Dimensions> {
@@ -245,7 +242,7 @@ impl<'a> AstNodeKind<'a> {
                 let dim1 = Some(exprs.len());
                 let dim2 = exprs.get(0).unwrap().get_dimensions()?.0;
                 let errors: Vec<_> = exprs
-                    .into_iter()
+                    .iter()
                     .map(|expr| -> Result<(), Dimensions> {
                         let expr_dim_1 = expr.get_dimensions()?.0;
                         match expr_dim_1 == dim2 {
@@ -257,7 +254,7 @@ impl<'a> AstNodeKind<'a> {
                     .collect();
                 match errors.is_empty() {
                     true => Ok((dim1, dim2)),
-                    false => Err(errors.get(0).unwrap().clone()),
+                    false => Err(*errors.get(0).unwrap()),
                 }
             }
             _ => unreachable!("{self:?}"),
