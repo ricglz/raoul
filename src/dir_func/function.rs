@@ -125,10 +125,10 @@ impl Function {
 
     fn insert_variable_from_nodes<'a>(
         &mut self,
-        nodes: Vec<AstNode<'a>>,
+        nodes: &[AstNode<'a>],
         global_fn: &mut GlobalScope,
     ) -> Results<'a, ()> {
-        let errors = self.insert(&nodes, global_fn, false);
+        let errors = self.insert(nodes, global_fn, false);
         if errors.is_empty() {
             Ok(())
         } else {
@@ -138,10 +138,10 @@ impl Function {
 
     fn insert_args_from_nodes<'a>(
         &mut self,
-        nodes: Vec<AstNode<'a>>,
+        nodes: &[AstNode<'a>],
         global_fn: &mut GlobalScope,
     ) -> Results<'a, ()> {
-        let errors = self.insert(&nodes, global_fn, true);
+        let errors = self.insert(nodes, global_fn, true);
         if errors.is_empty() {
             Ok(())
         } else {
@@ -154,15 +154,15 @@ impl Function {
             AstNodeKind::Function {
                 name,
                 return_type,
-                body,
-                arguments,
+                ref body,
+                ref arguments,
             } => {
                 let mut function = Function::new(name, return_type);
                 function.insert_args_from_nodes(arguments, global_fn)?;
                 function.insert_variable_from_nodes(body, global_fn)?;
                 Ok(function)
             }
-            AstNodeKind::Main { body, .. } => {
+            AstNodeKind::Main { ref body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::Void);
                 function.insert_variable_from_nodes(body, global_fn)?;
                 Ok(function)

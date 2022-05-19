@@ -1,3 +1,4 @@
+#[allow(clippy::module_name_repetitions)]
 pub mod ast_kind;
 
 use crate::dir_func::variable::Dimensions;
@@ -7,6 +8,7 @@ use pest::Span;
 use std::fmt;
 
 #[derive(PartialEq, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct AstNode<'a> {
     pub kind: AstNodeKind<'a>,
     pub span: Span<'a>,

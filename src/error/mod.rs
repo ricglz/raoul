@@ -1,3 +1,4 @@
+#[allow(clippy::module_name_repetitions)]
 pub mod error_kind;
 
 use core::fmt;
@@ -11,6 +12,7 @@ use crate::parser::Rule;
 use self::error_kind::RaoulErrorKind;
 
 #[derive(PartialEq, Eq, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct RaoulError<'a> {
     kind: RaoulErrorKind,
     span: Span<'a>,
@@ -26,6 +28,8 @@ impl fmt::Debug for RaoulError<'_> {
 }
 
 impl RaoulError<'_> {
+    // TODO: Maybe fix this later
+    #[allow(clippy::needless_pass_by_value)]
     pub fn new(node: AstNode, kind: RaoulErrorKind) -> RaoulError {
         RaoulError {
             kind,
@@ -39,6 +43,26 @@ impl RaoulError<'_> {
 
     pub fn is_invalid(&self) -> bool {
         self.kind == RaoulErrorKind::Invalid
+    }
+
+    fn from_results_iter<'a, T, I: IntoIterator<Item = Results<'a, T>>>(
+        iter: I,
+    ) -> Vec<RaoulError<'a>> {
+        iter.into_iter()
+            .filter_map(Results::err)
+            .flatten()
+            .collect()
+    }
+
+    pub fn create_results<'a, T, I: IntoIterator<Item = Results<'a, T>>>(
+        iter: I,
+    ) -> Results<'a, ()> {
+        let errors = RaoulError::from_results_iter(iter);
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 

@@ -3,6 +3,7 @@ use core::fmt;
 use crate::enums::Types;
 
 #[derive(PartialEq, Eq, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub enum RaoulErrorKind {
     Invalid,
     MemoryExceded,

@@ -38,6 +38,14 @@ impl Types {
         self == to
     }
 
+    pub fn assert_cast(self, to: Types, node: AstNode) -> Results<()> {
+        if self.can_cast(to) {
+            return Ok(());
+        }
+        let error = RaoulError::new_vec(node, RaoulErrorKind::InvalidCast { from: self, to });
+        Err(error)
+    }
+
     pub fn binary_operator_type(
         operator: Operator,
         lhs_type: Types,
