@@ -176,22 +176,16 @@ impl QuadrupleManager {
         let function = self.get_function(name);
         let function_size = function.size();
         let first_quad = function.first_quad;
-        self.add_quad(Quadruple {
-            operator: Operator::Era,
-            op_1: Some(function_size),
-            op_2: Some(first_quad),
-            res: None,
-        });
+        self.add_quad(Quadruple::new_args(
+            Operator::Era,
+            function_size,
+            first_quad,
+        ));
     }
 
     fn add_go_sub_quad(&mut self, name: &str) {
         let first_quad = self.get_function(name).first_quad;
-        self.add_quad(Quadruple {
-            operator: Operator::GoSub,
-            op_1: Some(first_quad),
-            op_2: None,
-            res: None,
-        });
+        self.add_quad(Quadruple::new_arg(Operator::GoSub, first_quad));
     }
 
     fn parse_func_call<'a>(
@@ -207,12 +201,7 @@ impl QuadrupleManager {
             .into_iter()
             .enumerate()
             .for_each(|(i, (address, _))| {
-                self.add_quad(Quadruple {
-                    operator: Operator::Param,
-                    op_1: Some(address),
-                    op_2: None,
-                    res: Some(i),
-                });
+                self.add_quad(Quadruple::new_un(Operator::Param, address, i));
             });
         self.add_go_sub_quad(name);
         Ok(())
@@ -236,12 +225,7 @@ impl QuadrupleManager {
     ) -> Results<'a, Operand> {
         let data_type = op_1.1.assert_bin_op(operator, op_2.1, node.clone())?;
         let res = self.safe_add_temp(data_type, node)?;
-        self.add_quad(Quadruple {
-            operator,
-            op_1: Some(op_1.0),
-            op_2: Some(op_2.0),
-            res: Some(res),
-        });
+        self.add_quad(Quadruple::new_com(operator, op_1.0, op_2.0, res));
         Ok((res, data_type))
     }
 
@@ -274,21 +258,16 @@ impl QuadrupleManager {
         let v_address_op = self.safe_add_cte(v.address.into(), node.clone())?;
         let idx_1_op = self.assert_expr_type(idx_1, Types::Int)?;
         let dim_1_op = self.safe_add_cte(dim_1.unwrap().into(), node.clone())?;
-        self.add_quad(Quadruple {
-            operator: Operator::Ver,
-            op_1: Some(idx_1_op.0),
-            op_2: Some(dim_1_op.0),
-            res: None,
-        });
+        self.add_quad(Quadruple::new_args(Operator::Ver, idx_1_op.0, dim_1_op.0));
         let address: usize = match idx_2 {
             None => {
                 let pointer = self.pointer_memory.get_pointer();
-                self.add_quad(Quadruple {
-                    operator: Operator::Sum,
-                    op_1: Some(v_address_op.0),
-                    op_2: Some(idx_1_op.0),
-                    res: Some(pointer),
-                });
+                self.add_quad(Quadruple::new_com(
+                    Operator::Sum,
+                    v_address_op.0,
+                    idx_1_op.0,
+                    pointer,
+                ));
                 pointer
             }
             Some(idx_2) => {
@@ -296,21 +275,16 @@ impl QuadrupleManager {
                 let mult_op =
                     self.add_binary_op_quad(Operator::Times, idx_1_op, dim_2_op, node.clone())?;
                 let idx_2_op = self.assert_expr_type(*idx_2, Types::Int)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Ver,
-                    op_1: Some(idx_2_op.0),
-                    op_2: Some(dim_2_op.0),
-                    res: None,
-                });
+                self.add_quad(Quadruple::new_args(Operator::Ver, idx_2_op.0, dim_2_op.0));
                 let (sum_res, _) =
                     self.add_binary_op_quad(Operator::Sum, v_address_op, mult_op, node)?;
                 let pointer = self.pointer_memory.get_pointer();
-                self.add_quad(Quadruple {
-                    operator: Operator::Sum,
-                    op_1: Some(sum_res),
-                    op_2: Some(idx_2_op.0),
-                    res: Some(pointer),
-                });
+                self.add_quad(Quadruple::new_com(
+                    Operator::Sum,
+                    sum_res,
+                    idx_2_op.0,
+                    pointer,
+                ));
                 pointer
             }
         };
@@ -319,14 +293,7 @@ impl QuadrupleManager {
 
     fn assert_dataframe<'a>(&mut self, name: &str, node: AstNode<'a>) -> Results<'a, ()> {
         let data_type = self.get_variable(name, node.clone())?.data_type;
-        if data_type == Types::Dataframe {
-            return Ok(());
-        }
-        let kind = RaoulErrorKind::InvalidCast {
-            from: data_type,
-            to: Types::Dataframe,
-        };
-        Err(RaoulError::new_vec(node, kind))
+        data_type.assert_cast(Types::Dataframe, node)
     }
 
     fn dataframe_op<'a>(
@@ -340,12 +307,7 @@ impl QuadrupleManager {
         self.assert_dataframe(name, node.clone())?;
         let data_type = Types::Float;
         let res = self.safe_add_temp(data_type, node)?;
-        self.add_quad(Quadruple {
-            operator,
-            op_1: Some(op_1),
-            op_2,
-            res: Some(res),
-        });
+        self.add_quad(Quadruple::new(operator, Some(op_1), op_2, Some(res)));
         Ok((res, data_type))
     }
 
@@ -374,12 +336,7 @@ impl QuadrupleManager {
                     _ => unreachable!(),
                 };
                 let res = self.safe_add_temp(res_type, node_clone)?;
-                self.add_quad(Quadruple {
-                    operator,
-                    op_1: Some(op),
-                    op_2: None,
-                    res: Some(res),
-                });
+                self.add_quad(Quadruple::new_un(operator, op, res));
                 Ok((res, res_type))
             }
             AstNodeKind::Id(name) => {
@@ -395,12 +352,7 @@ impl QuadrupleManager {
             AstNodeKind::Read => {
                 let data_type = Types::String;
                 let res = self.safe_add_temp(data_type, node_clone)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Read,
-                    op_1: None,
-                    op_2: None,
-                    res: Some(res),
-                });
+                self.add_quad(Quadruple::new_res(Operator::Read, res));
                 Ok((res, data_type))
             }
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
@@ -413,12 +365,11 @@ impl QuadrupleManager {
                 let (fn_address, return_type) =
                     self.get_variable_name_address(&name, node_clone.clone())?;
                 let temp_address = self.safe_add_temp(return_type, node_clone.clone())?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Assignment,
-                    op_1: Some(fn_address),
-                    op_2: None,
-                    res: Some(temp_address),
-                });
+                self.add_quad(Quadruple::new_un(
+                    Operator::Assignment,
+                    fn_address,
+                    temp_address,
+                ));
                 Ok((temp_address, return_type))
             }
             AstNodeKind::ArrayVal {
@@ -477,12 +428,7 @@ impl QuadrupleManager {
     fn add_goto(&mut self, goto_type: Operator, condition: Option<usize>) {
         debug_assert!(goto_type.is_goto());
         self.jump_list.push(self.quad_list.len());
-        self.add_quad(Quadruple {
-            operator: goto_type,
-            op_1: condition,
-            op_2: None,
-            res: None,
-        });
+        self.add_quad(Quadruple::new(goto_type, condition, None, None));
     }
 
     fn fill_goto_index(&mut self, index: usize) {
@@ -497,18 +443,9 @@ impl QuadrupleManager {
         self.fill_goto_index(index);
     }
 
-    fn add_assign_quad<'a>(
-        &mut self,
-        variable_address: usize,
-        value: AstNode<'a>,
-    ) -> Results<'a, ()> {
-        let (value_addr, _) = self.parse_expr(value)?;
-        self.add_quad(Quadruple {
-            operator: Operator::Assignment,
-            op_1: Some(value_addr),
-            op_2: None,
-            res: Some(variable_address),
-        });
+    fn add_assign_quad<'a>(&mut self, res: usize, value: AstNode<'a>) -> Results<'a, ()> {
+        let (op_1, _) = self.parse_expr(value)?;
+        self.add_quad(Quadruple::new_un(Operator::Assignment, op_1, res));
         Ok(())
     }
 
@@ -552,8 +489,62 @@ impl QuadrupleManager {
         }
     }
 
-    // TODO: Maybe fix later
-    #[allow(clippy::too_many_lines)]
+    fn parse_assignment<'a>(
+        &mut self,
+        assignee: AstNode<'a>,
+        global: bool,
+        value: AstNode<'a>,
+        node: AstNode<'a>,
+    ) -> Results<'a, ()> {
+        match value.kind {
+            AstNodeKind::ArrayDeclaration { .. } => Ok(()),
+            AstNodeKind::Array(exprs) => self.parse_array(assignee, exprs, &node),
+            AstNodeKind::ReadCSV(file_node) => {
+                let (file_address, _) = self.assert_expr_type(*file_node, Types::String)?;
+                self.add_quad(Quadruple::new_arg(Operator::ReadCSV, file_address));
+                Ok(())
+            }
+            _ => {
+                let variable_address = if let AstNodeKind::ArrayVal {
+                    ref name,
+                    idx_1,
+                    idx_2,
+                } = assignee.kind
+                {
+                    let op = self.get_array_val_operand(name, node, *idx_1, idx_2)?;
+                    op.0
+                } else {
+                    let name: String = assignee.into();
+                    self.get_variable_address(global, &name)
+                };
+                self.add_assign_quad(variable_address, value)
+            }
+        }
+    }
+
+    fn parse_for<'a>(
+        &mut self,
+        assignment: AstNode<'a>,
+        expr: AstNode<'a>,
+        statements: Vec<AstNode<'a>>,
+        node: AstNode<'a>,
+    ) -> Results<'a, ()> {
+        let name = String::from(assignment.clone());
+        self.parse_statement(assignment)?;
+        self.jump_list.push(self.quad_list.len());
+        let (res_address, _) = self.assert_expr_type(expr, Types::Bool)?;
+        self.add_goto(Operator::GotoF, Some(res_address));
+        self.parse_return_body(statements)?;
+        let (var_address, var_type) = self.get_variable_name_address(&name, node.clone())?;
+        var_type.assert_cast(Types::Int, node)?;
+        self.add_quad(Quadruple::new_res(Operator::Inc, var_address));
+        let index = self.jump_list.pop().unwrap();
+        let goto_res = self.jump_list.pop().unwrap();
+        self.add_quad(Quadruple::new_res(Operator::Goto, goto_res));
+        self.fill_goto_index(index);
+        Ok(())
+    }
+
     fn parse_statement<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let node_clone = node.clone();
         match node.kind {
@@ -561,52 +552,14 @@ impl QuadrupleManager {
                 assignee,
                 global,
                 value,
-            } => match value.kind {
-                AstNodeKind::ArrayDeclaration { .. } => Ok(()),
-                AstNodeKind::Array(exprs) => self.parse_array(*assignee, exprs, &node_clone),
-                AstNodeKind::ReadCSV(file_node) => {
-                    let (file_address, _) = self.assert_expr_type(*file_node, Types::String)?;
-                    self.add_quad(Quadruple {
-                        operator: Operator::ReadCSV,
-                        op_1: Some(file_address),
-                        op_2: None,
-                        res: None,
-                    });
-                    Ok(())
-                }
-                _ => {
-                    let variable_address = if let AstNodeKind::ArrayVal {
-                        ref name,
-                        idx_1,
-                        idx_2,
-                    } = assignee.kind
-                    {
-                        let op = self.get_array_val_operand(name, node_clone, *idx_1, idx_2)?;
-                        op.0
-                    } else {
-                        let name: String = assignee.into();
-                        self.get_variable_address(global, &name)
-                    };
-                    self.add_assign_quad(variable_address, *value)
-                }
-            },
+            } => self.parse_assignment(*assignee, global, *value, node_clone),
             AstNodeKind::Write { exprs } => {
                 RaoulError::create_results(exprs.into_iter().map(|expr| -> Results<()> {
                     let (address, _) = self.parse_expr(expr)?;
-                    self.add_quad(Quadruple {
-                        operator: Operator::Print,
-                        op_1: Some(address),
-                        op_2: None,
-                        res: None,
-                    });
+                    self.add_quad(Quadruple::new_arg(Operator::Print, address));
                     Ok(())
                 }))?;
-                self.add_quad(Quadruple {
-                    operator: Operator::PrintNl,
-                    op_1: None,
-                    op_2: None,
-                    res: None,
-                });
+                self.add_quad(Quadruple::new_empty(Operator::PrintNl));
                 Ok(())
             }
             AstNodeKind::Decision {
@@ -631,7 +584,7 @@ impl QuadrupleManager {
                 }
                 Ok(())
             }
-            AstNodeKind::ElseBlock { statements } => Ok(self.parse_body(statements)?),
+            AstNodeKind::ElseBlock { statements } => self.parse_body(statements),
             AstNodeKind::While { expr, statements } => {
                 self.jump_list.push(self.quad_list.len());
                 let (res_address, _) = self.assert_expr_type(*expr, Types::Bool)?;
@@ -639,12 +592,7 @@ impl QuadrupleManager {
                 self.parse_return_body(statements)?;
                 let index = self.jump_list.pop().unwrap();
                 let goto_res = self.jump_list.pop().unwrap();
-                self.add_quad(Quadruple {
-                    operator: Operator::Goto,
-                    op_1: None,
-                    op_2: None,
-                    res: Some(goto_res),
-                });
+                self.add_quad(Quadruple::new_res(Operator::Goto, goto_res));
                 self.fill_goto_index(index);
                 Ok(())
             }
@@ -652,43 +600,12 @@ impl QuadrupleManager {
                 assignment,
                 expr,
                 statements,
-            } => {
-                let name = String::from(*assignment.clone());
-                self.parse_statement(*assignment)?;
-                self.jump_list.push(self.quad_list.len());
-                let (res_address, _) = self.assert_expr_type(*expr, Types::Bool)?;
-                self.add_goto(Operator::GotoF, Some(res_address));
-                self.parse_return_body(statements)?;
-                let (var_address, var_type) =
-                    self.get_variable_name_address(&name, node_clone.clone())?;
-                var_type.assert_cast(Types::Int, node_clone)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Inc,
-                    op_1: None,
-                    op_2: None,
-                    res: Some(var_address),
-                });
-                let index = self.jump_list.pop().unwrap();
-                let goto_res = self.jump_list.pop().unwrap();
-                self.add_quad(Quadruple {
-                    operator: Operator::Goto,
-                    op_1: None,
-                    op_2: None,
-                    res: Some(goto_res),
-                });
-                self.fill_goto_index(index);
-                Ok(())
-            }
+            } => self.parse_for(*assignment, *expr, statements, node_clone),
             AstNodeKind::Return(expr) => {
                 let return_type = self.function().return_type;
                 let (expr_address, _) = self.assert_expr_type(*expr, return_type)?;
                 self.missing_return = false;
-                self.add_quad(Quadruple {
-                    operator: Operator::Return,
-                    op_1: Some(expr_address),
-                    op_2: None,
-                    res: None,
-                });
+                self.add_quad(Quadruple::new_arg(Operator::Return, expr_address));
                 Ok(())
             }
             AstNodeKind::FuncCall { ref name, exprs } => {
@@ -705,26 +622,16 @@ impl QuadrupleManager {
                 column_2,
             } => {
                 self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::String)?;
-                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::String)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Plot,
-                    op_1: Some(column_1_address),
-                    op_2: Some(column_2_address),
-                    res: None,
-                });
+                let (col_1, _) = self.assert_expr_type(*column_1, Types::String)?;
+                let (col_2, _) = self.assert_expr_type(*column_2, Types::String)?;
+                self.add_quad(Quadruple::new_args(Operator::Plot, col_1, col_2));
                 Ok(())
             }
             AstNodeKind::Histogram { bins, column, name } => {
                 self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_address, _) = self.assert_expr_type(*column, Types::String)?;
-                let (bins_address, _) = self.assert_expr_type(*bins, Types::Int)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Histogram,
-                    op_1: Some(column_address),
-                    op_2: Some(bins_address),
-                    res: None,
-                });
+                let (col, _) = self.assert_expr_type(*column, Types::String)?;
+                let (bins, _) = self.assert_expr_type(*bins, Types::Int)?;
+                self.add_quad(Quadruple::new_args(Operator::Histogram, col, bins));
                 Ok(())
             }
             kind => unreachable!("{kind:?}"),
@@ -754,12 +661,7 @@ impl QuadrupleManager {
                         .map(|node| self.parse_statement(node)),
                 )?;
                 self.parse_body(body)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::End,
-                    op_1: None,
-                    op_2: None,
-                    res: None,
-                });
+                self.add_quad(Quadruple::new_empty(Operator::End));
                 Ok(())
             }
             AstNodeKind::Function {
@@ -779,12 +681,7 @@ impl QuadrupleManager {
                     let kind = RaoulErrorKind::MissingReturn(self.function_name.clone());
                     return Err(vec![RaoulError::new(clone, kind)]);
                 }
-                self.add_quad(Quadruple {
-                    operator: Operator::EndProc,
-                    op_1: None,
-                    op_2: None,
-                    res: None,
-                });
+                self.add_quad(Quadruple::new_empty(Operator::EndProc));
                 Ok(())
             }
             _ => unreachable!(),

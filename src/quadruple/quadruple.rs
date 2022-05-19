@@ -17,6 +17,44 @@ impl Quadruple {
             Some(address) => address.to_string(),
         }
     }
+
+    pub fn new(
+        operator: Operator,
+        op_1: Option<usize>,
+        op_2: Option<usize>,
+        res: Option<usize>,
+    ) -> Self {
+        Quadruple {
+            operator,
+            op_1,
+            op_2,
+            res,
+        }
+    }
+
+    pub fn new_empty(operator: Operator) -> Self {
+        Self::new(operator, None, None, None)
+    }
+
+    pub fn new_arg(operator: Operator, op_1: usize) -> Self {
+        Self::new(operator, Some(op_1), None, None)
+    }
+
+    pub fn new_res(operator: Operator, res: usize) -> Self {
+        Self::new(operator, None, None, Some(res))
+    }
+
+    pub fn new_un(operator: Operator, op_1: usize, res: usize) -> Self {
+        Self::new(operator, Some(op_1), None, Some(res))
+    }
+
+    pub fn new_args(operator: Operator, op_1: usize, op_2: usize) -> Self {
+        Self::new(operator, Some(op_1), Some(op_2), None)
+    }
+
+    pub fn new_com(operator: Operator, op_1: usize, op_2: usize, res: usize) -> Self {
+        Self::new(operator, Some(op_1), Some(op_2), Some(res))
+    }
 }
 
 impl fmt::Debug for Quadruple {
