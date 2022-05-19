@@ -61,7 +61,7 @@ impl DirFunc {
             let address = self
                 .global_fn
                 .addresses
-                .get_address(&function.return_type, (None, None));
+                .get_address(function.return_type, (None, None));
             match address {
                 Some(address) => {
                     let result = self
@@ -101,7 +101,7 @@ impl DirFunc {
                             Err(kind) => Err(RaoulError::new_vec(node, kind)),
                         }
                     })
-                    .filter_map(|v| v.err())
+                    .filter_map(Results::err)
                     .flatten()
                     .collect();
                 if !errors.is_empty() {
@@ -111,7 +111,7 @@ impl DirFunc {
                     .into_iter()
                     .chain(Some(clone))
                     .map(|node| self.insert_function_from_node(node))
-                    .filter_map(|v| v.err())
+                    .filter_map(Results::err)
                     .flatten()
                     .collect();
                 if errors.is_empty() {

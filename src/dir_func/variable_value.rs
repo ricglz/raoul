@@ -48,10 +48,13 @@ impl VariableValue {
     pub fn increase(&self) -> VMResult<Self> {
         match self {
             Self::Integer(v) => Ok(Self::Integer(v + 1)),
-            v => match v.is_number() {
-                true => self.cast_to_float()? + Self::Float(1.0),
-                false => unreachable!(),
-            },
+            v => {
+                if v.is_number() {
+                    self.cast_to_float()? + Self::Float(1.0)
+                } else {
+                    unreachable!()
+                }
+            }
         }
     }
 }
@@ -83,8 +86,7 @@ impl TryFrom<VariableValue> for f64 {
     type Error = &'static str;
 
     fn try_from(v: VariableValue) -> VMResult<Self> {
-        use VariableValue::*;
-        if let Float(a) = &v {
+        if let VariableValue::Float(a) = &v {
             return Ok(*a);
         }
         let string = match v {
@@ -103,7 +105,7 @@ impl TryFrom<&VariableValue> for f64 {
     type Error = &'static str;
 
     fn try_from(v: &VariableValue) -> VMResult<Self> {
-        Self::try_from(v.to_owned())
+        Self::try_from(v.clone())
     }
 }
 
@@ -125,7 +127,7 @@ impl From<VariableValue> for bool {
 
 impl From<&VariableValue> for bool {
     fn from(v: &VariableValue) -> Self {
-        Self::from(v.to_owned())
+        Self::from(v.clone())
     }
 }
 
@@ -157,11 +159,10 @@ impl TryFrom<VariableValue> for i64 {
     type Error = &'static str;
 
     fn try_from(v: VariableValue) -> VMResult<Self> {
-        use VariableValue::*;
-        if let Integer(a) = &v {
+        if let VariableValue::Integer(a) = &v {
             return Ok(*a);
         }
-        if let Bool(a) = &v {
+        if let VariableValue::Bool(a) = &v {
             return match a {
                 true => Ok(1),
                 false => Ok(0),
@@ -183,7 +184,7 @@ impl TryFrom<&VariableValue> for i64 {
     type Error = &'static str;
 
     fn try_from(v: &VariableValue) -> VMResult<Self> {
-        Self::try_from(v.to_owned())
+        Self::try_from(v.clone())
     }
 }
 
@@ -193,7 +194,7 @@ impl fmt::Debug for VariableValue {
             VariableValue::Bool(value) => value.to_string(),
             VariableValue::Integer(value) => value.to_string(),
             VariableValue::Float(value) => value.to_string(),
-            VariableValue::String(value) => value.to_owned(),
+            VariableValue::String(value) => value.clone(),
         };
         write!(f, "{}", value)
     }

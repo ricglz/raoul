@@ -37,24 +37,21 @@ impl<'a> From<AstNode<'a>> for usize {
 }
 
 impl<'a> AstNode<'a> {
-    pub fn expand_node(v: AstNode<'a>) -> Vec<AstNode<'a>> {
+    pub fn expand_node(v: &AstNode<'a>) -> Vec<AstNode<'a>> {
         let node = v.clone();
         match &v.kind {
             AstNodeKind::Decision { statements, .. }
             | AstNodeKind::ElseBlock { statements }
-            | AstNodeKind::While { statements, .. } => statements
-                .iter()
-                .cloned()
-                .flat_map(AstNode::expand_node)
-                .collect(),
+            | AstNodeKind::While { statements, .. } => {
+                statements.iter().flat_map(AstNode::expand_node).collect()
+            }
             AstNodeKind::For {
                 statements,
                 assignment,
                 ..
             } => vec![*assignment.clone()]
                 .iter()
-                .cloned()
-                .chain(statements.to_owned())
+                .chain(statements)
                 .flat_map(AstNode::expand_node)
                 .collect(),
             _ => vec![node],
@@ -63,7 +60,7 @@ impl<'a> AstNode<'a> {
 
     pub fn expand_array(&self) -> Vec<AstNode<'a>> {
         match &self.kind {
-            AstNodeKind::Array(exprs) => exprs.to_vec(),
+            AstNodeKind::Array(exprs) => exprs.clone(),
             _ => unreachable!(),
         }
     }

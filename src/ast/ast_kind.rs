@@ -105,8 +105,7 @@ impl<'a> From<AstNodeKind<'a>> for String {
     fn from(val: AstNodeKind) -> Self {
         match val {
             AstNodeKind::Integer(n) => n.to_string(),
-            AstNodeKind::Id(s) => s,
-            AstNodeKind::String(s) => s,
+            AstNodeKind::Id(s) | AstNodeKind::String(s) => s,
             AstNodeKind::Assignment { assignee, .. } => assignee.into(),
             AstNodeKind::ArrayVal { name, .. } => name,
             node => unreachable!("Node {:?}, cannot be a string", node),
@@ -237,7 +236,7 @@ impl<'a> AstNodeKind<'a> {
             return Ok((None, None));
         }
         match self {
-            Self::ArrayDeclaration { dim1, dim2, .. } => Ok((Some(*dim1), dim2.to_owned())),
+            Self::ArrayDeclaration { dim1, dim2, .. } => Ok((Some(*dim1), *dim2)),
             Self::Array(exprs) => {
                 let dim1 = Some(exprs.len());
                 let dim2 = exprs.get(0).unwrap().get_dimensions()?.0;
@@ -245,16 +244,18 @@ impl<'a> AstNodeKind<'a> {
                     .iter()
                     .map(|expr| -> Result<(), Dimensions> {
                         let expr_dim_1 = expr.get_dimensions()?.0;
-                        match expr_dim_1 == dim2 {
-                            true => Ok(()),
-                            false => Err((expr_dim_1, dim2)),
+                        if expr_dim_1 == dim2 {
+                            Ok(())
+                        } else {
+                            Err((expr_dim_1, dim2))
                         }
                     })
-                    .filter_map(|v| v.err())
+                    .filter_map(Result::err)
                     .collect();
-                match errors.is_empty() {
-                    true => Ok((dim1, dim2)),
-                    false => Err(*errors.get(0).unwrap()),
+                if errors.is_empty() {
+                    Ok((dim1, dim2))
+                } else {
+                    Err(*errors.get(0).unwrap())
                 }
             }
             _ => unreachable!("{self:?}"),

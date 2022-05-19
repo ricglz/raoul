@@ -23,22 +23,24 @@ pub trait Scope {
                 self._insert_variable(variable.name.clone(), variable);
                 Ok(())
             }
-            Some(stored_var) => match variable.data_type.can_cast(stored_var.data_type) {
-                true => Ok(()),
-                false => Err(RaoulErrorKind::RedefinedType {
-                    name,
-                    from: stored_var.data_type,
-                    to: variable.data_type,
-                }),
-            },
+            Some(stored_var) => {
+                if variable.data_type.can_cast(stored_var.data_type) {
+                    Ok(())
+                } else {
+                    Err(RaoulErrorKind::RedefinedType {
+                        name,
+                        from: stored_var.data_type,
+                        to: variable.data_type,
+                    })
+                }
+            }
         }
     }
-    fn _get_variable_address(&mut self, data_type: &Types, dimensions: Dimensions)
-        -> Option<usize>;
+    fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize>;
     fn get_variable_address(
         &mut self,
         name: &str,
-        data_type: &Types,
+        data_type: Types,
         dimensions: Dimensions,
     ) -> Option<usize> {
         match self.get_variable(name) {
@@ -84,9 +86,10 @@ impl Function {
         match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => {
                 let variable_clone = variable.clone();
-                let result = match global {
-                    true => global_fn.insert_variable(variable),
-                    false => self.insert_variable(variable),
+                let result = if global {
+                    global_fn.insert_variable(variable)
+                } else {
+                    self.insert_variable(variable)
                 };
                 match result {
                     Ok(_) => {
@@ -104,15 +107,15 @@ impl Function {
 
     fn insert<'a>(
         &mut self,
-        nodes: Vec<AstNode<'a>>,
+        nodes: &[AstNode<'a>],
         global_fn: &mut GlobalScope,
         argument: bool,
     ) -> Vec<RaoulError<'a>> {
         nodes
-            .into_iter()
+            .iter()
             .flat_map(AstNode::expand_node)
             .filter_map(|node| {
-                self.insert_variable_from_node(node.to_owned(), global_fn, argument)
+                self.insert_variable_from_node(node.clone(), global_fn, argument)
                     .err()
             })
             .flatten()
@@ -125,10 +128,11 @@ impl Function {
         nodes: Vec<AstNode<'a>>,
         global_fn: &mut GlobalScope,
     ) -> Results<'a, ()> {
-        let errors = self.insert(nodes, global_fn, false);
-        match errors.is_empty() {
-            true => Ok(()),
-            false => Err(errors),
+        let errors = self.insert(&nodes, global_fn, false);
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
         }
     }
 
@@ -137,7 +141,7 @@ impl Function {
         nodes: Vec<AstNode<'a>>,
         global_fn: &mut GlobalScope,
     ) -> Results<'a, ()> {
-        let errors = self.insert(nodes, global_fn, true);
+        let errors = self.insert(&nodes, global_fn, true);
         if errors.is_empty() {
             Ok(())
         } else {
@@ -183,11 +187,7 @@ impl Scope for Function {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    fn _get_variable_address(
-        &mut self,
-        data_type: &Types,
-        dimensions: Dimensions,
-    ) -> Option<usize> {
+    fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
         self.local_addresses.get_address(data_type, dimensions)
     }
 }
@@ -209,20 +209,19 @@ impl GlobalScope {
     }
 
     pub fn add_dataframe(&mut self) -> bool {
-        match self.has_dataframe {
-            false => {
-                self.has_dataframe = true;
-                true
-            }
-            true => false,
+        if self.has_dataframe {
+            false
+        } else {
+            self.has_dataframe = true;
+            true
         }
     }
 }
 
 impl Default for GlobalScope {
-  fn default() -> Self {
-      Self::new()
-  }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Scope for GlobalScope {
@@ -232,11 +231,7 @@ impl Scope for GlobalScope {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    fn _get_variable_address(
-        &mut self,
-        data_type: &Types,
-        dimensions: Dimensions,
-    ) -> Option<usize> {
+    fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
         self.addresses.get_address(data_type, dimensions)
     }
 }

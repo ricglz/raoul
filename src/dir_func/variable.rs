@@ -30,16 +30,17 @@ fn get_value_dimensions<'a>(value: &AstNode<'a>, node: AstNode<'a>) -> Results<'
 }
 
 fn assert_dataframe<'a>(
-    data_type: &Types,
+    data_type: Types,
     global_fn: &mut GlobalScope,
     node: AstNode<'a>,
 ) -> Results<'a, ()> {
-    if data_type != &Types::Dataframe {
+    if data_type != Types::Dataframe {
         return Ok(());
     }
-    match global_fn.add_dataframe() {
-        true => Ok(()),
-        false => Err(RaoulError::new_vec(node, RaoulErrorKind::OnlyOneDataframe)),
+    if global_fn.add_dataframe() {
+        Ok(())
+    } else {
+        Err(RaoulError::new_vec(node, RaoulErrorKind::OnlyOneDataframe))
     }
 }
 
@@ -51,15 +52,15 @@ impl Variable {
             } => {
                 let data_type =
                     Types::from_node(&*value, &global_fn.variables, &global_fn.variables)?;
-                assert_dataframe(&data_type, global_fn, v.clone())?;
+                assert_dataframe(data_type, global_fn, v.clone())?;
                 let dimensions = get_value_dimensions(value, v.clone())?;
                 let name: String = assignee.into();
-                match global_fn.get_variable_address(&name, &data_type, dimensions) {
+                match global_fn.get_variable_address(&name, data_type, dimensions) {
                     Some(address) => Ok(Variable {
+                        address,
                         data_type,
                         dimensions,
                         name,
-                        address,
                     }),
                     None => Err(RaoulError::new_vec(v, RaoulErrorKind::MemoryExceded)),
                 }
@@ -85,20 +86,21 @@ impl Variable {
             } => {
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                assert_dataframe(&data_type, global_fn, node.clone())?;
+                assert_dataframe(data_type, global_fn, node.clone())?;
                 let dimensions = get_value_dimensions(&value, node.clone())?;
                 let name: String = assignee.into();
-                let address = match global {
-                    true => global_fn.get_variable_address(&name, &data_type, dimensions),
-                    false => current_fn.get_variable_address(&name, &data_type, dimensions),
+                let address = if global {
+                    global_fn.get_variable_address(&name, data_type, dimensions)
+                } else {
+                    current_fn.get_variable_address(&name, data_type, dimensions)
                 };
                 match address {
                     Some(address) => Ok((
                         Variable {
+                            address,
                             data_type,
                             dimensions,
                             name,
-                            address,
                         },
                         global,
                     )),
@@ -111,7 +113,7 @@ impl Variable {
             } => {
                 let address = current_fn
                     .local_addresses
-                    .get_address(&data_type, (None, None));
+                    .get_address(data_type, (None, None));
                 match address {
                     Some(address) => Ok((
                         Variable {

@@ -19,23 +19,23 @@ pub enum Types {
 
 impl Types {
     #[inline]
-    pub fn is_boolish(&self) -> bool {
+    pub fn is_boolish(self) -> bool {
         matches!(self, Types::Int | Types::Bool)
     }
 
     #[inline]
-    fn is_number(&self) -> bool {
+    fn is_number(self) -> bool {
         matches!(self, Types::Int | Types::Float | Types::String)
     }
 
-    pub fn can_cast(&self, to: Types) -> bool {
+    pub fn can_cast(self, to: Types) -> bool {
         if self.is_number() && to.is_number() {
             return true;
         }
         if self.is_boolish() && to.is_boolish() {
             return true;
         }
-        self == &to
+        self == to
     }
 
     pub fn binary_operator_type(
@@ -45,54 +45,57 @@ impl Types {
     ) -> std::result::Result<Types, RaoulErrorKind> {
         match operator {
             Operator::Not | Operator::Or | Operator::And => {
-                let res_type = Types::Bool;
+                let type_res = Types::Bool;
                 match (lhs_type.is_boolish(), rhs_type.is_boolish()) {
-                    (true, true) => Ok(res_type),
+                    (true, true) => Ok(type_res),
                     (true, false) => Err(RaoulErrorKind::InvalidCast {
                         from: rhs_type,
-                        to: res_type,
+                        to: type_res,
                     }),
                     _ => Err(RaoulErrorKind::InvalidCast {
                         from: lhs_type,
-                        to: res_type,
+                        to: type_res,
                     }),
                 }
             }
             Operator::Gte | Operator::Lte | Operator::Gt | Operator::Lt => {
-                let res_type = Types::Bool;
+                let type_res = Types::Bool;
                 match (lhs_type.is_number(), rhs_type.is_number()) {
-                    (true, true) => Ok(res_type),
+                    (true, true) => Ok(type_res),
                     (true, false) => Err(RaoulErrorKind::InvalidCast {
                         from: rhs_type,
-                        to: res_type,
+                        to: type_res,
                     }),
                     _ => Err(RaoulErrorKind::InvalidCast {
                         from: lhs_type,
-                        to: res_type,
+                        to: type_res,
                     }),
                 }
             }
-            Operator::Eq | Operator::Ne => match lhs_type.can_cast(rhs_type) {
-                true => Ok(Types::Bool),
-                false => Err(RaoulErrorKind::InvalidCast {
-                    from: lhs_type,
-                    to: rhs_type,
-                }),
-            },
+            Operator::Eq | Operator::Ne => {
+                if lhs_type.can_cast(rhs_type) {
+                    Ok(Types::Bool)
+                } else {
+                    Err(RaoulErrorKind::InvalidCast {
+                        from: lhs_type,
+                        to: rhs_type,
+                    })
+                }
+            }
             Operator::Sum | Operator::Minus | Operator::Times | Operator::Div => {
                 if lhs_type == rhs_type && lhs_type == Types::Int {
                     return Ok(Types::Int);
                 }
-                let res_type = Types::Float;
+                let type_res = Types::Float;
                 match (lhs_type.is_number(), rhs_type.is_number()) {
-                    (true, true) => Ok(res_type),
+                    (true, true) => Ok(type_res),
                     (true, false) => Err(RaoulErrorKind::InvalidCast {
                         from: rhs_type,
-                        to: res_type,
+                        to: type_res,
                     }),
                     _ => Err(RaoulErrorKind::InvalidCast {
                         from: lhs_type,
-                        to: res_type,
+                        to: type_res,
                     }),
                 }
             }
@@ -120,7 +123,7 @@ impl Types {
             AstNodeKind::Float(_)
             | AstNodeKind::UnaryDataframeOp { .. }
             | AstNodeKind::Correlation { .. } => Ok(Types::Float),
-            AstNodeKind::String(_) => Ok(Types::String),
+            AstNodeKind::String(_) | AstNodeKind::Read => Ok(Types::String),
             AstNodeKind::Bool(_) => Ok(Types::Bool),
             AstNodeKind::Id(name) | AstNodeKind::ArrayVal { name, .. } => {
                 match Types::get_variable(name, variables, global) {
@@ -145,38 +148,37 @@ impl Types {
                 let (types, errors): (Vec<_>, Vec<_>) = exprs
                     .iter()
                     .map(|node| Types::from_node(node, variables, global))
-                    .partition(|res| res.is_ok());
-                match errors.is_empty() {
-                    true => {
-                        let first_type = types.get(0).unwrap().clone().unwrap();
-                        let errors: Vec<_> = types
-                            .into_iter()
-                            .enumerate()
-                            .filter_map(|(i, v)| {
-                                let data_type = v.unwrap();
-                                let node = exprs.get(i).unwrap().clone();
-                                let res = match data_type.can_cast(first_type) {
-                                    true => Ok(()),
-                                    false => Err(RaoulError::new(
-                                        node,
-                                        RaoulErrorKind::InvalidCast {
-                                            from: data_type,
-                                            to: first_type,
-                                        },
-                                    )),
-                                };
-                                res.err()
-                            })
-                            .collect();
-                        match errors.is_empty() {
-                            true => Ok(first_type),
-                            false => Err(errors),
-                        }
-                    }
-                    false => Err(errors.into_iter().flat_map(|v| v.unwrap_err()).collect()),
+                    .partition(Results::is_ok);
+                if !errors.is_empty() {
+                    return Err(errors.into_iter().flat_map(Results::unwrap_err).collect());
+                }
+                let first_type = types.get(0).unwrap().clone().unwrap();
+                let errors: Vec<_> = types
+                    .into_iter()
+                    .enumerate()
+                    .filter_map(|(i, v)| {
+                        let data_type = v.unwrap();
+                        let node = exprs.get(i).unwrap().clone();
+                        let res = if data_type.can_cast(first_type) {
+                            Ok(())
+                        } else {
+                            Err(RaoulError::new(
+                                node,
+                                RaoulErrorKind::InvalidCast {
+                                    from: data_type,
+                                    to: first_type,
+                                },
+                            ))
+                        };
+                        res.err()
+                    })
+                    .collect();
+                if errors.is_empty() {
+                    Ok(first_type)
+                } else {
+                    Err(errors)
                 }
             }
-            AstNodeKind::Read => Ok(Types::String),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;
                 let rhs_type = Types::from_node(&*rhs, variables, global)?;
@@ -188,15 +190,16 @@ impl Types {
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
                     let operand_type = Types::from_node(&*operand, variables, global)?;
-                    match operand_type.is_boolish() {
-                        true => Ok(Types::Bool),
-                        false => Err(RaoulError::new_vec(
+                    if operand_type.is_boolish() {
+                        Ok(Types::Bool)
+                    } else {
+                        Err(RaoulError::new_vec(
                             clone,
                             RaoulErrorKind::InvalidCast {
                                 from: operand_type,
                                 to: Types::Bool,
                             },
-                        )),
+                        ))
                     }
                 }
                 _ => unreachable!("{:?}", operator),
@@ -258,7 +261,7 @@ pub enum Operator {
 }
 
 impl Operator {
-    pub fn is_goto(&self) -> bool {
+    pub fn is_goto(self) -> bool {
         matches!(self, Operator::Goto | Operator::GotoF)
     }
 }

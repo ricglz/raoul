@@ -17,32 +17,32 @@ type Node<'i> = pest_consume::Node<'i, Rule, bool>;
 #[pest_consume::parser]
 impl LanguageParser {
     // Extra
-    fn EOI(_input: Node) -> Result<()> {
+    fn EOI(input: Node) -> Result<()> {
         Ok(())
     }
 
-    fn global(_input: Node) -> Result<()> {
+    fn global(input: Node) -> Result<()> {
         Ok(())
     }
 
     // Types
-    fn void(_input: Node) -> Result<Types> {
+    fn void(input: Node) -> Result<Types> {
         Ok(Types::Void)
     }
 
-    fn int(_input: Node) -> Result<Types> {
+    fn int(input: Node) -> Result<Types> {
         Ok(Types::Int)
     }
 
-    fn float(_input: Node) -> Result<Types> {
+    fn float(input: Node) -> Result<Types> {
         Ok(Types::Float)
     }
 
-    fn string(_input: Node) -> Result<Types> {
+    fn string(input: Node) -> Result<Types> {
         Ok(Types::String)
     }
 
-    fn bool(_input: Node) -> Result<Types> {
+    fn bool(input: Node) -> Result<Types> {
         Ok(Types::Bool)
     }
 
@@ -63,23 +63,23 @@ impl LanguageParser {
     }
 
     // Operations
-    fn not(_input: Node) -> Result<Operator> {
+    fn not(input: Node) -> Result<Operator> {
         Ok(Operator::Not)
     }
 
-    fn gte(_input: Node) -> Result<Operator> {
+    fn gte(input: Node) -> Result<Operator> {
         Ok(Operator::Gte)
     }
 
-    fn lte(_input: Node) -> Result<Operator> {
+    fn lte(input: Node) -> Result<Operator> {
         Ok(Operator::Lte)
     }
 
-    fn gt(_input: Node) -> Result<Operator> {
+    fn gt(input: Node) -> Result<Operator> {
         Ok(Operator::Gt)
     }
 
-    fn lt(_input: Node) -> Result<Operator> {
+    fn lt(input: Node) -> Result<Operator> {
         Ok(Operator::Lt)
     }
 
@@ -92,11 +92,11 @@ impl LanguageParser {
         ))
     }
 
-    fn eq(_input: Node) -> Result<Operator> {
+    fn eq(input: Node) -> Result<Operator> {
         Ok(Operator::Eq)
     }
 
-    fn ne(_input: Node) -> Result<Operator> {
+    fn ne(input: Node) -> Result<Operator> {
         Ok(Operator::Ne)
     }
 
@@ -107,11 +107,11 @@ impl LanguageParser {
         ))
     }
 
-    fn sum(_input: Node) -> Result<Operator> {
+    fn sum(input: Node) -> Result<Operator> {
         Ok(Operator::Sum)
     }
 
-    fn minus(_input: Node) -> Result<Operator> {
+    fn minus(input: Node) -> Result<Operator> {
         Ok(Operator::Minus)
     }
 
@@ -122,11 +122,11 @@ impl LanguageParser {
         ))
     }
 
-    fn times(_input: Node) -> Result<Operator> {
+    fn times(input: Node) -> Result<Operator> {
         Ok(Operator::Times)
     }
 
-    fn div(_input: Node) -> Result<Operator> {
+    fn div(input: Node) -> Result<Operator> {
         Ok(Operator::Div)
     }
 
@@ -428,19 +428,19 @@ impl LanguageParser {
         ))
     }
 
-    fn average(_input: Node) -> Result<Operator> {
+    fn average(input: Node) -> Result<Operator> {
         Ok(Operator::Average)
     }
 
-    fn std(_input: Node) -> Result<Operator> {
+    fn std(input: Node) -> Result<Operator> {
         Ok(Operator::Std)
     }
 
-    fn median(_input: Node) -> Result<Operator> {
+    fn median(input: Node) -> Result<Operator> {
         Ok(Operator::Mode)
     }
 
-    fn variance(_input: Node) -> Result<Operator> {
+    fn variance(input: Node) -> Result<Operator> {
         Ok(Operator::Variance)
     }
 

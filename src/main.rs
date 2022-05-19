@@ -24,7 +24,7 @@ extern crate pest_derive;
 
 use std::process::exit;
 
-use args::parse_args;
+use args::parse_arguments;
 
 fn parse_ast(ast: AstNode, debug: bool) -> Results<QuadrupleManager> {
     let mut dir_func = DirFunc::new();
@@ -44,7 +44,7 @@ fn parse_ast(ast: AstNode, debug: bool) -> Results<QuadrupleManager> {
 }
 
 fn main() {
-    let matches = parse_args();
+    let matches = parse_arguments();
     let filename = matches.value_of("file").expect("required");
     let debug = matches.is_present("debug");
     if debug {

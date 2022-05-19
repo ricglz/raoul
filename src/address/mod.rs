@@ -43,7 +43,7 @@ impl Address for Option<usize> {
 
 type AddressCounter = HashMap<Types, usize>;
 
-fn get_type_base(data_type: &Types) -> usize {
+fn get_type_base(data_type: Types) -> usize {
     match data_type {
         Types::Int => 0,
         Types::Float => THRESHOLD,
@@ -64,7 +64,7 @@ fn get_amount(dimensions: Dimensions) -> usize {
 
 pub trait GenericAddressManager {
     fn get_address_counter(&self) -> AddressCounter;
-    fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize>;
+    fn get_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize>;
     fn size(&self) -> usize;
     fn get_base(&self) -> usize;
 }
@@ -93,13 +93,13 @@ impl GenericAddressManager for AddressManager {
     fn get_address_counter(&self) -> AddressCounter {
         self.counter.clone()
     }
-    fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize> {
-        if data_type == &Types::Dataframe {
+    fn get_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
+        if data_type == Types::Dataframe {
             return Some(10_000);
         }
         let type_counter = self
             .counter
-            .get_mut(data_type)
+            .get_mut(&data_type)
             .unwrap_or_else(|| panic!("{:?}", data_type));
         let prev = *type_counter;
         let amount = get_amount(dimensions);
@@ -199,8 +199,8 @@ impl GenericAddressManager for TempAddressManager {
         self.address_manager.get_address_counter()
     }
     #[inline]
-    fn get_address(&mut self, data_type: &Types, dimensions: Dimensions) -> Option<usize> {
-        self.type_released_addresses(data_type)
+    fn get_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
+        self.type_released_addresses(&data_type)
             .pop()
             .or_else(|| self.address_manager.get_address(data_type, dimensions))
     }
@@ -253,10 +253,10 @@ impl ConstantMemory {
         }
     }
 
-    fn get_address(&mut self, data_type: &Types, value: VariableValue) -> Option<usize> {
+    fn get_address(&mut self, data_type: Types, value: VariableValue) -> Option<usize> {
         let type_memory = self
             .memory
-            .get_mut(data_type)
+            .get_mut(&data_type)
             .unwrap_or_else(|| panic!("Get address received {:?}", data_type));
         let type_base = get_type_base(data_type);
         match type_memory.iter_mut().position(|x| *x == value) {
@@ -274,7 +274,7 @@ impl ConstantMemory {
 
     pub fn add(&mut self, value: VariableValue) -> Option<(usize, Types)> {
         let data_type = Types::from(&value);
-        let address = self.get_address(&data_type, value)?;
+        let address = self.get_address(data_type, value)?;
         Some((address, data_type))
     }
 
@@ -286,7 +286,7 @@ impl ConstantMemory {
             .unwrap()
             .get(contextless_address - type_determinant * THRESHOLD)
             .unwrap()
-            .to_owned()
+            .clone()
     }
 }
 
@@ -341,10 +341,10 @@ impl Memory {
 
     pub fn get(&self, address: usize) -> Option<VariableValue> {
         let index = self.get_index(address).0;
-        self.space.get(index).unwrap().to_owned()
+        self.space.get(index).unwrap().clone()
     }
 
-    pub fn write(&mut self, address: usize, uncast: VariableValue) -> VMResult<()> {
+    pub fn write(&mut self, address: usize, uncast: &VariableValue) -> VMResult<()> {
         let (index, address_type) = self.get_index(address);
         let value = uncast.cast_to(address_type)?;
         *self.space.get_mut(index).unwrap() = Some(value);

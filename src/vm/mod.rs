@@ -185,7 +185,7 @@ impl VM {
             2 => self.temp_addresses_mut(),
             _ => unreachable!(),
         };
-        memory.write(address, value)
+        memory.write(address, &value)
     }
 
     fn process_assign(&mut self) -> VMResult<()> {
@@ -319,7 +319,7 @@ impl VM {
             1 => &mut self.current_call_mut().local_memory,
             val => unreachable!("{val}"),
         };
-        memory.write(address, value)
+        memory.write(address, &value)
     }
 
     fn process_param(&mut self) -> VMResult<()> {

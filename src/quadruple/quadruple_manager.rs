@@ -85,7 +85,7 @@ impl QuadrupleManager {
     }
 
     #[inline]
-    fn add_temp(&mut self, data_type: &Types) -> Option<usize> {
+    fn add_temp(&mut self, data_type: Types) -> Option<usize> {
         self.function_mut()
             .temp_addresses
             .get_address(data_type, (None, None))
@@ -98,7 +98,7 @@ impl QuadrupleManager {
         }
     }
 
-    fn safe_add_temp<'a>(&mut self, data_type: &Types, node: AstNode<'a>) -> Results<'a, usize> {
+    fn safe_add_temp<'a>(&mut self, data_type: Types, node: AstNode<'a>) -> Results<'a, usize> {
         let option = self.add_temp(data_type);
         self.safe_address(option, node)
     }
@@ -250,7 +250,7 @@ impl QuadrupleManager {
             Ok(data_type) => Ok(data_type),
             Err(kind) => Err(RaoulError::new_vec(node.clone(), kind)),
         }?;
-        let res = self.safe_add_temp(&data_type, node)?;
+        let res = self.safe_add_temp(data_type, node)?;
         self.add_quad(Quadruple {
             operator,
             op_1: Some(op_1.0),
@@ -370,7 +370,7 @@ impl QuadrupleManager {
                     },
                     _ => unreachable!(),
                 };
-                let res = self.safe_add_temp(&res_type, node_clone)?;
+                let res = self.safe_add_temp(res_type, node_clone)?;
                 let quad = Quadruple {
                     operator,
                     op_1: Some(op),
@@ -392,7 +392,7 @@ impl QuadrupleManager {
             }
             AstNodeKind::Read => {
                 let data_type = Types::String;
-                let res = self.safe_add_temp(&data_type, node_clone)?;
+                let res = self.safe_add_temp(data_type, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Read,
                     op_1: None,
@@ -410,7 +410,7 @@ impl QuadrupleManager {
                 self.parse_func_call(&name, node_clone.clone(), exprs)?;
                 let (fn_address, return_type) =
                     self.get_variable_name_address(&name, node_clone.clone())?;
-                let temp_address = self.safe_add_temp(&return_type, node_clone.clone())?;
+                let temp_address = self.safe_add_temp(return_type, node_clone.clone())?;
                 self.add_quad(Quadruple {
                     operator: Operator::Assignment,
                     op_1: Some(fn_address),
@@ -432,7 +432,7 @@ impl QuadrupleManager {
                 self.assert_dataframe(&name, node_clone.clone())?;
                 let (column_address, _) = self.assert_expr_type(*column, Types::String)?;
                 let data_type = Types::Float;
-                let res = self.safe_add_temp(&data_type, node_clone)?;
+                let res = self.safe_add_temp(data_type, node_clone)?;
                 self.add_quad(Quadruple {
                     operator,
                     op_1: Some(column_address),
@@ -450,7 +450,7 @@ impl QuadrupleManager {
                 let (column_1_address, _) = self.assert_expr_type(*column_1, Types::String)?;
                 let (column_2_address, _) = self.assert_expr_type(*column_2, Types::String)?;
                 let data_type = Types::Float;
-                let res = self.safe_add_temp(&data_type, node_clone)?;
+                let res = self.safe_add_temp(data_type, node_clone)?;
                 self.add_quad(Quadruple {
                     operator: Operator::Corr,
                     op_1: Some(column_1_address),
