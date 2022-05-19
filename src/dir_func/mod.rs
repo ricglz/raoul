@@ -92,33 +92,19 @@ impl DirFunc {
                 assignments,
                 ..
             } => {
-                let errors: Vec<_> = assignments
-                    .into_iter()
-                    .map(|node| -> Results<()> {
-                        let variable = Variable::from_global(node.clone(), &mut self.global_fn)?;
-                        match self.global_fn.insert_variable(variable) {
-                            Ok(_) => Ok(()),
-                            Err(kind) => Err(RaoulError::new_vec(node, kind)),
-                        }
-                    })
-                    .filter_map(Results::err)
-                    .flatten()
-                    .collect();
-                if !errors.is_empty() {
-                    return Err(errors);
-                }
-                let errors: Vec<_> = functions
-                    .into_iter()
-                    .chain(Some(clone))
-                    .map(|node| self.insert_function_from_node(node))
-                    .filter_map(Results::err)
-                    .flatten()
-                    .collect();
-                if errors.is_empty() {
-                    Ok(())
-                } else {
-                    Err(errors)
-                }
+                RaoulError::create_results(assignments.into_iter().map(|node| -> Results<()> {
+                    let variable = Variable::from_global(node.clone(), &mut self.global_fn)?;
+                    match self.global_fn.insert_variable(variable) {
+                        Ok(_) => Ok(()),
+                        Err(kind) => Err(RaoulError::new_vec(node, kind)),
+                    }
+                }))?;
+                RaoulError::create_results(
+                    functions
+                        .into_iter()
+                        .chain(Some(clone))
+                        .map(|node| self.insert_function_from_node(node)),
+                )
             }
             _ => unreachable!(),
         }

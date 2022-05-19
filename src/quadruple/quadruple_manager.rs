@@ -464,7 +464,7 @@ impl QuadrupleManager {
 
     #[inline]
     fn parse_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, ()> {
-        RaoulError::create_results(body.into_iter().map(|node| self.parse_function(node)))
+        RaoulError::create_results(body.into_iter().map(|node| self.parse_statement(node)))
     }
 
     fn parse_return_body<'a>(&mut self, body: Vec<AstNode<'a>>) -> Results<'a, bool> {
@@ -555,7 +555,9 @@ impl QuadrupleManager {
         }
     }
 
-    fn parse_function<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
+    // TODO: Maybe fix later
+    #[allow(clippy::too_many_lines)]
+    fn parse_statement<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
         let node_clone = node.clone();
         match node.kind {
             AstNodeKind::Assignment {
@@ -576,19 +578,17 @@ impl QuadrupleManager {
                     Ok(())
                 }
                 _ => {
-                    let variable_address: usize = match assignee.kind {
-                        AstNodeKind::ArrayVal {
-                            ref name,
-                            idx_1,
-                            idx_2,
-                        } => {
-                            let op = self.get_array_val_operand(name, node_clone, *idx_1, idx_2)?;
-                            op.0
-                        }
-                        _ => {
-                            let name: String = assignee.into();
-                            self.get_variable_address(global, &name)
-                        }
+                    let variable_address = if let AstNodeKind::ArrayVal {
+                        ref name,
+                        idx_1,
+                        idx_2,
+                    } = assignee.kind
+                    {
+                        let op = self.get_array_val_operand(name, node_clone, *idx_1, idx_2)?;
+                        op.0
+                    } else {
+                        let name: String = assignee.into();
+                        self.get_variable_address(global, &name)
                     };
                     self.add_assign_quad(variable_address, *value)
                 }
@@ -624,9 +624,9 @@ impl QuadrupleManager {
                     let index = self.jump_list.pop().unwrap();
                     self.add_goto(Operator::Goto, None);
                     self.fill_goto_index(index);
-                    self.parse_function(*node)?;
+                    self.parse_statement(*node)?;
                     self.fill_goto();
-                    if if_misses_return & !self.missing_return {
+                    if if_misses_return && !self.missing_return {
                         self.missing_return = true;
                     }
                 } else {
@@ -657,7 +657,7 @@ impl QuadrupleManager {
                 statements,
             } => {
                 let name = String::from(*assignment.clone());
-                self.parse_function(*assignment)?;
+                self.parse_statement(*assignment)?;
                 self.jump_list.push(self.quad_list.len());
                 let (res_address, _) = self.assert_expr_type(*expr, Types::Bool)?;
                 self.add_goto(Operator::GotoF, Some(res_address));
@@ -695,12 +695,11 @@ impl QuadrupleManager {
                 Ok(())
             }
             AstNodeKind::FuncCall { ref name, exprs } => {
-                match self.dir_func.functions.get(name).is_some() {
-                    true => self.parse_func_call(name, node_clone, exprs),
-                    false => {
-                        let kind = RaoulErrorKind::UndeclaredFunction2(name.to_string());
-                        Err(RaoulError::new_vec(node_clone, kind))
-                    }
+                if self.dir_func.functions.get(name).is_some() {
+                    self.parse_func_call(name, node_clone, exprs)
+                } else {
+                    let kind = RaoulErrorKind::UndeclaredFunction2(name.to_string());
+                    Err(RaoulError::new_vec(node_clone, kind))
                 }
             }
             AstNodeKind::Plot {
@@ -755,7 +754,7 @@ impl QuadrupleManager {
                 RaoulError::create_results(
                     assignments
                         .into_iter()
-                        .map(|node| self.parse_function(node)),
+                        .map(|node| self.parse_statement(node)),
                 )?;
                 self.parse_body(body)?;
                 self.add_quad(Quadruple {

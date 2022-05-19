@@ -161,31 +161,21 @@ impl Types {
                     return Err(errors.into_iter().flat_map(Results::unwrap_err).collect());
                 }
                 let first_type = types.get(0).unwrap().clone().unwrap();
-                let errors: Vec<_> = types
-                    .into_iter()
-                    .enumerate()
-                    .filter_map(|(i, v)| {
-                        let data_type = v.unwrap();
-                        let node = exprs.get(i).unwrap().clone();
-                        let res = if data_type.can_cast(first_type) {
-                            Ok(())
-                        } else {
-                            Err(RaoulError::new(
-                                node,
-                                RaoulErrorKind::InvalidCast {
-                                    from: data_type,
-                                    to: first_type,
-                                },
-                            ))
-                        };
-                        res.err()
-                    })
-                    .collect();
-                if errors.is_empty() {
-                    Ok(first_type)
-                } else {
-                    Err(errors)
-                }
+                RaoulError::create_results(types.into_iter().enumerate().map(|(i, v)| {
+                    let data_type = v.unwrap();
+                    let node = exprs.get(i).unwrap().clone();
+                    if data_type.can_cast(first_type) {
+                        return Ok(());
+                    }
+                    Err(RaoulError::new_vec(
+                        node,
+                        RaoulErrorKind::InvalidCast {
+                            from: data_type,
+                            to: first_type,
+                        },
+                    ))
+                }))?;
+                Ok(first_type)
             }
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;

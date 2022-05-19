@@ -66,10 +66,10 @@ pub struct VM {
 
 const STACK_SIZE_CAP: usize = 1024;
 
-fn cast_to_f64(v: AnyValue) -> f64 {
+fn cast_to_f64(v: &AnyValue) -> f64 {
     match v {
-        AnyValue::Float64(v) => v,
-        AnyValue::Float32(v) => v.try_into().unwrap(),
+        AnyValue::Float64(v) => *v,
+        AnyValue::Float32(v) => (*v).try_into().unwrap(),
         AnyValue::Int64(v) => v.to_string().parse::<f64>().unwrap(),
         _ => unreachable!(),
     }
@@ -412,7 +412,7 @@ impl VM {
             .alias("correlation")])
             .collect()
             .unwrap();
-        let value = cast_to_f64(temp.column("correlation").unwrap().get(0)).into();
+        let value = cast_to_f64(&temp.column("correlation").unwrap().get(0)).into();
         self.write_value(value, quad.res.unwrap())
     }
 
@@ -522,9 +522,11 @@ impl VM {
                 Operator::Ver => self.process_ver(),
                 Operator::ReadCSV => self.read_csv(),
                 Operator::Average => self.unary_df_operation(|c| c.mean().unwrap_or(0.0)),
-                Operator::Std => self.unary_df_operation(|c| cast_to_f64(c.std_as_series().get(0))),
+                Operator::Std => {
+                    self.unary_df_operation(|c| cast_to_f64(&c.std_as_series().get(0)))
+                }
                 Operator::Variance => {
-                    self.unary_df_operation(|c| cast_to_f64(c.var_as_series().get(0)))
+                    self.unary_df_operation(|c| cast_to_f64(&c.var_as_series().get(0)))
                 }
                 Operator::Mode => self.unary_df_operation(|c| c.median().unwrap_or(0.0)),
                 Operator::Corr => self.correlation(),

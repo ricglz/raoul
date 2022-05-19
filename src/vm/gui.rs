@@ -57,12 +57,13 @@ impl App {
         let column = &self.data["column"];
         let min = column.min::<f64>().unwrap();
         let max = column.max::<f64>().unwrap();
-        let step = (max - min) / bins.to_string().parse::<f64>().unwrap();
+        let f64_bins = bins.to_string().parse::<f64>().unwrap();
+        let step = (max - min) / f64_bins;
         let chunked_arr = column.f64().unwrap();
         chunked_arr.into_iter().for_each(|v| {
             let value = v.unwrap();
             let index: usize = match (value - min) / step {
-                x if x >= (bins as f64) => bins - 1,
+                x if x >= f64_bins => bins - 1,
                 x => x.floor().to_string().parse().unwrap(),
             };
             let (count, start) = data.get_mut(index).unwrap();
