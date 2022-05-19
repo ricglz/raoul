@@ -40,11 +40,11 @@ impl DirFunc {
             .for_each(|f| f.variables.clear());
     }
 
-    fn insert_function<'a>(&mut self, function: Function, node: AstNode<'a>) -> Result<'a, ()> {
+    fn insert_function<'a>(&mut self, function: Function, node: &AstNode<'a>) -> Result<'a, ()> {
         let name = function.name.clone();
         match self.functions.get(&name) {
             Some(_) => Err(RaoulError::new(
-                &node,
+                node,
                 RaoulErrorKind::RedeclaredFunction(name),
             )),
             None => {
@@ -78,7 +78,7 @@ impl DirFunc {
                 }
             }
         }
-        match self.insert_function(function, node_clone) {
+        match self.insert_function(function, &node_clone) {
             Ok(_) => Ok(()),
             Err(error) => Err(vec![error]),
         }
@@ -93,10 +93,10 @@ impl DirFunc {
                 ..
             } => {
                 RaoulError::create_results(assignments.into_iter().map(|node| -> Results<()> {
-                    let variable = Variable::from_global(node.clone(), &mut self.global_fn)?;
+                    let variable = Variable::from_global(&node, &mut self.global_fn)?;
                     match self.global_fn.insert_variable(variable) {
                         Ok(_) => Ok(()),
-                        Err(kind) => Err(RaoulError::new_vec(node, kind)),
+                        Err(kind) => Err(RaoulError::new_vec(&node, kind)),
                     }
                 }))?;
                 RaoulError::create_results(

@@ -35,8 +35,8 @@ impl RaoulError<'_> {
         }
     }
 
-    pub fn new_vec(node: AstNode, kind: RaoulErrorKind) -> Vec<RaoulError> {
-        vec![RaoulError::new(&node, kind)]
+    pub fn new_vec<'a>(node: &AstNode<'a>, kind: RaoulErrorKind) -> Vec<RaoulError<'a>> {
+        vec![RaoulError::new(node, kind)]
     }
 
     pub fn is_invalid(&self) -> bool {

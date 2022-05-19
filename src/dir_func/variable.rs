@@ -19,7 +19,7 @@ pub struct Variable {
     pub name: String,
 }
 
-fn get_value_dimensions<'a>(value: &AstNode<'a>, node: AstNode<'a>) -> Results<'a, Dimensions> {
+fn get_value_dimensions<'a>(value: &AstNode<'a>, node: &AstNode<'a>) -> Results<'a, Dimensions> {
     match value.get_dimensions() {
         Ok(dimensions) => Ok(dimensions),
         Err((expected, given)) => {
@@ -32,7 +32,7 @@ fn get_value_dimensions<'a>(value: &AstNode<'a>, node: AstNode<'a>) -> Results<'
 fn assert_dataframe<'a>(
     data_type: Types,
     global_fn: &mut GlobalScope,
-    node: AstNode<'a>,
+    node: &AstNode<'a>,
 ) -> Results<'a, ()> {
     if data_type != Types::Dataframe {
         return Ok(());
@@ -45,15 +45,15 @@ fn assert_dataframe<'a>(
 }
 
 impl Variable {
-    pub fn from_global<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Variable> {
+    pub fn from_global<'a>(v: &AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Variable> {
         match &v.kind {
             AstNodeKind::Assignment {
                 assignee, value, ..
             } => {
                 let data_type =
                     Types::from_node(&*value, &global_fn.variables, &global_fn.variables)?;
-                assert_dataframe(data_type, global_fn, v.clone())?;
-                let dimensions = get_value_dimensions(value, v.clone())?;
+                assert_dataframe(data_type, global_fn, v)?;
+                let dimensions = get_value_dimensions(value, v)?;
                 let name: String = assignee.into();
                 match global_fn.get_variable_address(&name, data_type, dimensions) {
                     Some(address) => Ok(Variable {
@@ -66,7 +66,7 @@ impl Variable {
                 }
             }
             kind => Err(RaoulError::new_vec(
-                v.clone(),
+                v,
                 RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
             )),
         }
@@ -86,8 +86,8 @@ impl Variable {
             } => {
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                assert_dataframe(data_type, global_fn, node.clone())?;
-                let dimensions = get_value_dimensions(&value, node.clone())?;
+                assert_dataframe(data_type, global_fn, &node)?;
+                let dimensions = get_value_dimensions(&value, &node)?;
                 let name: String = assignee.into();
                 let address = if global {
                     global_fn.get_variable_address(&name, data_type, dimensions)
@@ -104,7 +104,7 @@ impl Variable {
                         },
                         global,
                     )),
-                    None => Err(RaoulError::new_vec(node, RaoulErrorKind::MemoryExceded)),
+                    None => Err(RaoulError::new_vec(&node, RaoulErrorKind::MemoryExceded)),
                 }
             }
             AstNodeKind::Argument {
@@ -126,11 +126,11 @@ impl Variable {
                     )),
                     None => {
                         let kind = RaoulErrorKind::MemoryExceded;
-                        Err(RaoulError::new_vec(node, kind))
+                        Err(RaoulError::new_vec(&node, kind))
                     }
                 }
             }
-            _ => Err(RaoulError::new_vec(v, RaoulErrorKind::Invalid)),
+            _ => Err(RaoulError::new_vec(&v, RaoulErrorKind::Invalid)),
         }
     }
 

@@ -38,7 +38,7 @@ impl Types {
         self == to
     }
 
-    pub fn assert_cast(self, to: Types, node: AstNode) -> Results<()> {
+    pub fn assert_cast<'a>(self, to: Types, node: &AstNode<'a>) -> Results<'a, ()> {
         if self.can_cast(to) {
             return Ok(());
         }
@@ -89,12 +89,12 @@ impl Types {
         }
     }
 
-    pub fn assert_bin_op(
+    pub fn assert_bin_op<'a>(
         self,
         operator: Operator,
         rhs_type: Types,
-        node: AstNode,
-    ) -> Results<Types> {
+        node: &AstNode<'a>,
+    ) -> Results<'a, Types> {
         match self.binary_operator_type(operator, rhs_type) {
             Ok(data_type) => Ok(data_type),
             Err((from, to)) => Err(RaoulError::new_vec(
@@ -130,7 +130,7 @@ impl Types {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
-                        clone,
+                        &clone,
                         RaoulErrorKind::UndeclaredVar(name.to_string()),
                     )),
                 }
@@ -139,7 +139,7 @@ impl Types {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
-                        clone,
+                        &clone,
                         RaoulErrorKind::UndeclaredFunction(name.to_string()),
                     )),
                 }
@@ -157,27 +157,27 @@ impl Types {
                 RaoulError::create_results(types.into_iter().enumerate().map(|(i, v)| {
                     let data_type = v.unwrap();
                     let node = exprs.get(i).unwrap().clone();
-                    data_type.assert_cast(first_type, node)
+                    data_type.assert_cast(first_type, &node)
                 }))?;
                 Ok(first_type)
             }
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;
                 let rhs_type = Types::from_node(&*rhs, variables, global)?;
-                lhs_type.assert_bin_op(*operator, rhs_type, clone)
+                lhs_type.assert_bin_op(*operator, rhs_type, &clone)
             }
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
                     let operand_type = Types::from_node(&*operand, variables, global)?;
                     let res_type = Types::Bool;
-                    operand_type.assert_cast(res_type, clone)?;
+                    operand_type.assert_cast(res_type, &clone)?;
                     Ok(res_type)
                 }
                 _ => unreachable!("{:?}", operator),
             },
             AstNodeKind::ReadCSV(_) => Ok(Self::Dataframe),
             kind => Err(RaoulError::new_vec(
-                clone,
+                &clone,
                 RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
             )),
         }

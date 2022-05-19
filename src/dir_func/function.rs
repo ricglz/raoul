@@ -98,7 +98,7 @@ impl Function {
                         }
                         Ok(())
                     }
-                    Err(kind) => Err(RaoulError::new_vec(clone, kind)),
+                    Err(kind) => Err(RaoulError::new_vec(&clone, kind)),
                 }
             }
             Err(errors) => Err(errors),
