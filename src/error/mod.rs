@@ -28,9 +28,7 @@ impl fmt::Debug for RaoulError<'_> {
 }
 
 impl RaoulError<'_> {
-    // TODO: Maybe fix this later
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn new(node: AstNode, kind: RaoulErrorKind) -> RaoulError {
+    pub fn new<'a>(node: &AstNode<'a>, kind: RaoulErrorKind) -> RaoulError<'a> {
         RaoulError {
             kind,
             span: node.span.clone(),
@@ -38,7 +36,7 @@ impl RaoulError<'_> {
     }
 
     pub fn new_vec(node: AstNode, kind: RaoulErrorKind) -> Vec<RaoulError> {
-        vec![RaoulError::new(node, kind)]
+        vec![RaoulError::new(&node, kind)]
     }
 
     pub fn is_invalid(&self) -> bool {

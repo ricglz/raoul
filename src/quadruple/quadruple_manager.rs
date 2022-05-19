@@ -30,7 +30,7 @@ type Operand = (usize, Types);
 fn safe_address<T>(option: Option<T>, node: AstNode) -> Results<T> {
     match option {
         Some(value) => Ok(value),
-        None => Err(vec![RaoulError::new(node, RaoulErrorKind::MemoryExceded)]),
+        None => Err(vec![RaoulError::new(&node, RaoulErrorKind::MemoryExceded)]),
     }
 }
 
@@ -153,7 +153,7 @@ impl QuadrupleManager {
                 expected: args.len(),
                 given: exprs.len(),
             };
-            return Err(vec![RaoulError::new(node, kind)]);
+            return Err(vec![RaoulError::new(&node, kind)]);
         }
         let (addresses, errors): (Vec<_>, Vec<_>) = exprs
             .into_iter()
@@ -330,7 +330,7 @@ impl QuadrupleManager {
                                 from: op_type,
                                 to: Types::Bool,
                             };
-                            return Err(vec![RaoulError::new(node_clone, kind)]);
+                            return Err(vec![RaoulError::new(&node_clone, kind)]);
                         }
                     },
                     _ => unreachable!(),
@@ -679,7 +679,7 @@ impl QuadrupleManager {
                 self.parse_body(body)?;
                 if self.missing_return {
                     let kind = RaoulErrorKind::MissingReturn(self.function_name.clone());
-                    return Err(vec![RaoulError::new(clone, kind)]);
+                    return Err(vec![RaoulError::new(&clone, kind)]);
                 }
                 self.add_quad(Quadruple::new_empty(Operator::EndProc));
                 Ok(())

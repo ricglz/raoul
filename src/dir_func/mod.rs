@@ -44,7 +44,7 @@ impl DirFunc {
         let name = function.name.clone();
         match self.functions.get(&name) {
             Some(_) => Err(RaoulError::new(
-                node,
+                &node,
                 RaoulErrorKind::RedeclaredFunction(name),
             )),
             None => {
@@ -68,13 +68,13 @@ impl DirFunc {
                         .global_fn
                         .insert_variable(Variable::from_function(function.clone(), address));
                     if let Err(kind) = result {
-                        return Err(vec![RaoulError::new(node_clone, kind)]);
+                        return Err(vec![RaoulError::new(&node_clone, kind)]);
                     }
                     function.address = address;
                 }
                 None => {
                     let kind = RaoulErrorKind::MemoryExceded;
-                    return Err(vec![RaoulError::new(node_clone, kind)]);
+                    return Err(vec![RaoulError::new(&node_clone, kind)]);
                 }
             }
         }
