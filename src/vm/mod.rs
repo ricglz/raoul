@@ -32,8 +32,8 @@ impl VMContext {
     pub fn new(function: Function) -> Self {
         let size = function.size();
         let address = function.address;
-        let local_memory = Memory::new(Box::new(function.local_addresses));
-        let temp_memory = Memory::new(Box::new(function.temp_addresses));
+        let local_memory = Memory::new(&function.local_addresses);
+        let temp_memory = Memory::new(&function.temp_addresses);
         let quad_pos = function.first_quad;
         let args = function.args.into_iter().map(|v| v.address).collect();
         Self {
@@ -88,7 +88,7 @@ impl VM {
         let functions = quad_manager.dir_func.functions.clone();
         let global_fn = quad_manager.dir_func.global_fn.clone();
         let pointer_memory = quad_manager.pointer_memory.clone();
-        let global_memory = Memory::new(Box::new(global_fn.addresses));
+        let global_memory = Memory::new(&global_fn.addresses);
         let quad_list = quad_manager.quad_list.clone();
         let main_function = functions.get("main").unwrap().clone();
         let stack_size = main_function.size();

@@ -308,9 +308,7 @@ pub struct Memory {
 }
 
 impl Memory {
-    // TODO: Maybe fix it
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn new(manager: Box<dyn GenericAddressManager>) -> Self {
+    pub fn new<T: GenericAddressManager>(manager: &T) -> Self {
         let counter = manager.get_address_counter();
         let base = manager.get_base();
         let int_pointer: usize = 0;
