@@ -47,67 +47,60 @@ impl Types {
     }
 
     pub fn binary_operator_type(
+        self,
         operator: Operator,
-        lhs_type: Types,
         rhs_type: Types,
-    ) -> std::result::Result<Types, RaoulErrorKind> {
+    ) -> Result<Types, (Types, Types)> {
         match operator {
             Operator::Not | Operator::Or | Operator::And => {
                 let type_res = Types::Bool;
-                match (lhs_type.is_boolish(), rhs_type.is_boolish()) {
+                match (self.is_boolish(), rhs_type.is_boolish()) {
                     (true, true) => Ok(type_res),
-                    (true, false) => Err(RaoulErrorKind::InvalidCast {
-                        from: rhs_type,
-                        to: type_res,
-                    }),
-                    _ => Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: type_res,
-                    }),
+                    (true, false) => Err((rhs_type, type_res)),
+                    _ => Err((self, type_res)),
                 }
             }
             Operator::Gte | Operator::Lte | Operator::Gt | Operator::Lt => {
                 let type_res = Types::Bool;
-                match (lhs_type.is_number(), rhs_type.is_number()) {
+                match (self.is_number(), rhs_type.is_number()) {
                     (true, true) => Ok(type_res),
-                    (true, false) => Err(RaoulErrorKind::InvalidCast {
-                        from: rhs_type,
-                        to: type_res,
-                    }),
-                    _ => Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: type_res,
-                    }),
+                    (true, false) => Err((rhs_type, type_res)),
+                    _ => Err((self, type_res)),
                 }
             }
             Operator::Eq | Operator::Ne => {
-                if lhs_type.can_cast(rhs_type) {
-                    Ok(Types::Bool)
-                } else {
-                    Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: rhs_type,
-                    })
+                if self.can_cast(rhs_type) {
+                    return Ok(Types::Bool);
                 }
+                Err((self, rhs_type))
             }
             Operator::Sum | Operator::Minus | Operator::Times | Operator::Div => {
-                if lhs_type == rhs_type && lhs_type == Types::Int {
+                if self == rhs_type && self == Types::Int {
                     return Ok(Types::Int);
                 }
                 let type_res = Types::Float;
-                match (lhs_type.is_number(), rhs_type.is_number()) {
+                match (self.is_number(), rhs_type.is_number()) {
                     (true, true) => Ok(type_res),
-                    (true, false) => Err(RaoulErrorKind::InvalidCast {
-                        from: rhs_type,
-                        to: type_res,
-                    }),
-                    _ => Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: type_res,
-                    }),
+                    (true, false) => Err((rhs_type, type_res)),
+                    _ => Err((self, type_res)),
                 }
             }
             _ => unreachable!("{:?}", operator),
+        }
+    }
+
+    pub fn assert_bin_op(
+        self,
+        operator: Operator,
+        rhs_type: Types,
+        node: AstNode,
+    ) -> Results<Types> {
+        match self.binary_operator_type(operator, rhs_type) {
+            Ok(data_type) => Ok(data_type),
+            Err((from, to)) => Err(RaoulError::new_vec(
+                node,
+                RaoulErrorKind::InvalidCast { from, to },
+            )),
         }
     }
 
@@ -164,41 +157,21 @@ impl Types {
                 RaoulError::create_results(types.into_iter().enumerate().map(|(i, v)| {
                     let data_type = v.unwrap();
                     let node = exprs.get(i).unwrap().clone();
-                    if data_type.can_cast(first_type) {
-                        return Ok(());
-                    }
-                    Err(RaoulError::new_vec(
-                        node,
-                        RaoulErrorKind::InvalidCast {
-                            from: data_type,
-                            to: first_type,
-                        },
-                    ))
+                    data_type.assert_cast(first_type, node)
                 }))?;
                 Ok(first_type)
             }
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;
                 let rhs_type = Types::from_node(&*rhs, variables, global)?;
-                match Types::binary_operator_type(*operator, lhs_type, rhs_type) {
-                    Err(kind) => Err(RaoulError::new_vec(clone, kind)),
-                    Ok(op_type) => Ok(op_type),
-                }
+                lhs_type.assert_bin_op(*operator, rhs_type, clone)
             }
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
                     let operand_type = Types::from_node(&*operand, variables, global)?;
-                    if operand_type.is_boolish() {
-                        Ok(Types::Bool)
-                    } else {
-                        Err(RaoulError::new_vec(
-                            clone,
-                            RaoulErrorKind::InvalidCast {
-                                from: operand_type,
-                                to: Types::Bool,
-                            },
-                        ))
-                    }
+                    let res_type = Types::Bool;
+                    operand_type.assert_cast(res_type, clone)?;
+                    Ok(res_type)
                 }
                 _ => unreachable!("{:?}", operator),
             },

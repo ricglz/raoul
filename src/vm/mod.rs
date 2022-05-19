@@ -1,6 +1,6 @@
 mod gui;
 
-use std::{cmp::Ordering, collections::HashMap, io::stdin};
+use std::{cmp::Ordering, collections::HashMap};
 
 use polars::{
     datatypes::{AnyValue, DataType},
@@ -75,6 +75,13 @@ fn cast_to_f64(v: &AnyValue) -> f64 {
     }
 }
 
+fn safe_address(value: Option<VariableValue>) -> VMResult<VariableValue> {
+    match value {
+        Some(v) => Ok(v),
+        None => Err("Found initialized value"),
+    }
+}
+
 impl VM {
     pub fn new(quad_manager: &QuadrupleManager, debug: bool) -> Self {
         let constant_memory = quad_manager.memory.clone();
@@ -106,13 +113,11 @@ impl VM {
 
     fn add_call_stack(&mut self, function: Function) -> VMResult<()> {
         self.stack_size += function.size();
-        match self.stack_size > STACK_SIZE_CAP || self.contexts_stack.len() == STACK_SIZE_CAP {
-            true => Err("Stack overflow!"),
-            false => {
-                self.call_stack.push(VMContext::new(function));
-                Ok(())
-            }
+        if self.stack_size > STACK_SIZE_CAP || self.contexts_stack.len() == STACK_SIZE_CAP {
+            return Err("Stack overflow!");
         }
+        self.call_stack.push(VMContext::new(function));
+        Ok(())
     }
 
     #[inline]
@@ -162,9 +167,9 @@ impl VM {
 
     fn get_value(&self, address: usize) -> VMResult<VariableValue> {
         match address / TOTAL_SIZE {
-            0 => self.safe_address(self.global_memory.get(address)),
-            1 => self.safe_address(self.local_addresses().get(address)),
-            2 => self.safe_address(self.temp_addresses().get(address)),
+            0 => safe_address(self.global_memory.get(address)),
+            1 => safe_address(self.local_addresses().get(address)),
+            2 => safe_address(self.temp_addresses().get(address)),
             3 => Ok(self.constant_memory.get(address)),
             _ => {
                 let address = self.pointer_memory.get(address);
@@ -200,11 +205,8 @@ impl VM {
 
     fn print_message(&mut self, message: &str) {
         self.messages.push(message.to_string());
-        let separator = match message.contains('\n') {
-            true => "",
-            false => " ",
-        };
-        print!("{message}{separator}")
+        let separator = if message.contains('\n') { "" } else { " " };
+        print!("{message}{separator}");
     }
 
     fn process_print(&mut self) -> VMResult<()> {
@@ -214,15 +216,9 @@ impl VM {
         Ok(())
     }
 
-    fn create_value_from_stdin(&mut self) -> VariableValue {
-        let mut line = String::new();
-        stdin().read_line(&mut line).unwrap();
-        VariableValue::String(line)
-    }
-
     fn process_read(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        let value = self.create_value_from_stdin();
+        let value = VariableValue::from_stdin();
         self.write_value(value, quad.res.unwrap())
     }
 
@@ -272,10 +268,10 @@ impl VM {
         let quad = self.get_current_quad();
         let cond = self.get_value(quad.op_1.unwrap())?;
         let quad_pos = self.current_context().quad_pos;
-        Ok(match bool::from(cond) == approved {
-            true => quad.res.unwrap() - 1,
-            false => quad_pos,
-        })
+        if bool::from(cond) == approved {
+            return Ok(quad.res.unwrap() - 1);
+        }
+        Ok(quad_pos)
     }
 
     fn process_inc(&mut self) -> VMResult<()> {
@@ -314,12 +310,12 @@ impl VM {
         self.call_stack.last_mut().unwrap()
     }
 
-    fn write_value_param(&mut self, value: VariableValue, address: usize) -> VMResult<()> {
+    fn write_value_param(&mut self, value: &VariableValue, address: usize) -> VMResult<()> {
         let memory = match address / TOTAL_SIZE {
             1 => &mut self.current_call_mut().local_memory,
             val => unreachable!("{val}"),
         };
-        memory.write(address, &value)
+        memory.write(address, value)
     }
 
     fn process_param(&mut self) -> VMResult<()> {
@@ -327,7 +323,7 @@ impl VM {
         let value = self.get_value(quad.op_1.unwrap())?;
         let index = quad.res.unwrap();
         let address = *self.current_call().args.get(index).unwrap();
-        self.write_value_param(value, address)
+        self.write_value_param(&value, address)
     }
 
     #[inline]
@@ -348,17 +344,10 @@ impl VM {
         let quad = self.get_current_quad();
         let index = self.get_value(quad.op_1.unwrap())?;
         let limit = self.get_value(quad.op_2.unwrap())?;
-        match limit <= index || VariableValue::Integer(0) > index {
-            true => Err("Index out of range for array"),
-            false => Ok(()),
+        if limit <= index || VariableValue::Integer(0) > index {
+            return Err("Index out of range for array");
         }
-    }
-
-    fn safe_address(&self, address: Option<VariableValue>) -> VMResult<VariableValue> {
-        match address {
-            Some(address) => Ok(address),
-            None => Err("Found initialized value"),
-        }
+        Ok(())
     }
 
     fn read_csv(&mut self) -> VMResult<()> {

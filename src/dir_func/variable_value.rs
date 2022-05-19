@@ -1,4 +1,5 @@
 use std::fmt;
+use std::io::stdin;
 use std::ops::{Add, BitAnd, BitOr, Div, Mul, Not, Sub};
 
 use crate::vm::VMResult;
@@ -13,6 +14,12 @@ pub enum VariableValue {
 }
 
 impl VariableValue {
+    pub fn from_stdin() -> Self {
+        let mut line = String::new();
+        stdin().read_line(&mut line).unwrap();
+        Self::String(line)
+    }
+
     pub fn is_number(&self) -> bool {
         matches!(self, Self::Integer(_) | Self::Float(_) | Self::String(_))
     }

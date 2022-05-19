@@ -234,10 +234,7 @@ impl QuadrupleManager {
         op_2: Operand,
         node: AstNode<'a>,
     ) -> Results<'a, Operand> {
-        let data_type = match Types::binary_operator_type(operator, op_1.1, op_2.1) {
-            Ok(data_type) => Ok(data_type),
-            Err(kind) => Err(RaoulError::new_vec(node.clone(), kind)),
-        }?;
+        let data_type = op_1.1.assert_bin_op(operator, op_2.1, node.clone())?;
         let res = self.safe_add_temp(data_type, node)?;
         self.add_quad(Quadruple {
             operator,
@@ -332,8 +329,26 @@ impl QuadrupleManager {
         Err(RaoulError::new_vec(node, kind))
     }
 
-    // TODO: Maybe fix later
-    #[allow(clippy::too_many_lines)]
+    fn dataframe_op<'a>(
+        &mut self,
+        name: &str,
+        node: AstNode<'a>,
+        operator: Operator,
+        op_1: usize,
+        op_2: Option<usize>,
+    ) -> Results<'a, Operand> {
+        self.assert_dataframe(name, node.clone())?;
+        let data_type = Types::Float;
+        let res = self.safe_add_temp(data_type, node)?;
+        self.add_quad(Quadruple {
+            operator,
+            op_1: Some(op_1),
+            op_2,
+            res: Some(res),
+        });
+        Ok((res, data_type))
+    }
+
     fn parse_expr<'a>(&mut self, node: AstNode<'a>) -> Results<'a, Operand> {
         let node_clone = node.clone();
         match node.kind {
@@ -359,13 +374,12 @@ impl QuadrupleManager {
                     _ => unreachable!(),
                 };
                 let res = self.safe_add_temp(res_type, node_clone)?;
-                let quad = Quadruple {
+                self.add_quad(Quadruple {
                     operator,
                     op_1: Some(op),
                     op_2: None,
                     res: Some(res),
-                };
-                self.add_quad(quad);
+                });
                 Ok((res, res_type))
             }
             AstNodeKind::Id(name) => {
@@ -414,38 +428,21 @@ impl QuadrupleManager {
             } => self.get_array_val_operand(name, node_clone, *idx_1, idx_2),
             AstNodeKind::UnaryDataframeOp {
                 operator,
-                name,
+                ref name,
                 column,
             } => {
-                self.assert_dataframe(&name, node_clone.clone())?;
                 let (column_address, _) = self.assert_expr_type(*column, Types::String)?;
-                let data_type = Types::Float;
-                let res = self.safe_add_temp(data_type, node_clone)?;
-                self.add_quad(Quadruple {
-                    operator,
-                    op_1: Some(column_address),
-                    op_2: None,
-                    res: Some(res),
-                });
-                Ok((res, data_type))
+                self.dataframe_op(name, node_clone, operator, column_address, None)
             }
             AstNodeKind::Correlation {
-                name,
+                ref name,
                 column_1,
                 column_2,
             } => {
-                self.assert_dataframe(&name, node_clone.clone())?;
-                let (column_1_address, _) = self.assert_expr_type(*column_1, Types::String)?;
-                let (column_2_address, _) = self.assert_expr_type(*column_2, Types::String)?;
-                let data_type = Types::Float;
-                let res = self.safe_add_temp(data_type, node_clone)?;
-                self.add_quad(Quadruple {
-                    operator: Operator::Corr,
-                    op_1: Some(column_1_address),
-                    op_2: Some(column_2_address),
-                    res: Some(res),
-                });
-                Ok((res, data_type))
+                let (col_1, _) = self.assert_expr_type(*column_1, Types::String)?;
+                let (col_2, _) = self.assert_expr_type(*column_2, Types::String)?;
+                let operator = Operator::Corr;
+                self.dataframe_op(name, node_clone, operator, col_1, Some(col_2))
             }
             kind => unreachable!("{kind:?}"),
         }

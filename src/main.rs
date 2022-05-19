@@ -26,7 +26,7 @@ use std::process::exit;
 
 use args::parse_arguments;
 
-fn parse_ast(ast: AstNode, debug: bool) -> Results<QuadrupleManager> {
+fn parse_ast<'a>(ast: &'a AstNode, debug: bool) -> Results<'a, QuadrupleManager> {
     let mut dir_func = DirFunc::new();
     dir_func.build_dir_func(ast.clone())?;
     if debug {
@@ -61,7 +61,7 @@ fn main() {
         println!("Parsing ended sucessfully");
         println!("AST:\n{:?}", ast);
     }
-    let res = parse_ast(ast, debug);
+    let res = parse_ast(&ast, debug);
     if let Err(errors) = res {
         for error in errors {
             println!("{:?}", error);
