@@ -120,7 +120,7 @@ impl Types {
     ) -> Results<'a, Types> {
         let clone = v.clone();
         match &v.kind {
-            AstNodeKind::Integer(_) => Ok(Types::Int),
+            AstNodeKind::Integer(_) | AstNodeKind::PureDataframeOp { .. } => Ok(Types::Int),
             AstNodeKind::Float(_)
             | AstNodeKind::UnaryDataframeOp { .. }
             | AstNodeKind::Correlation { .. } => Ok(Types::Float),
