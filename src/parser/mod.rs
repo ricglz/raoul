@@ -444,12 +444,27 @@ impl LanguageParser {
         Ok(Operator::Variance)
     }
 
+    fn min(input: Node) -> Result<Operator> {
+        Ok(Operator::Min)
+    }
+
+    fn max(input: Node) -> Result<Operator> {
+        Ok(Operator::Max)
+    }
+
+    fn range(input: Node) -> Result<Operator> {
+        Ok(Operator::Range)
+    }
+
     fn unary_dataframe_key(input: Node) -> Result<Operator> {
         Ok(match_nodes!(input.into_children();
             [average(op)] => op,
             [std(op)] => op,
             [median(op)] => op,
             [variance(op)] => op,
+            [min(op)] => op,
+            [max(op)] => op,
+            [range(op)] => op,
         ))
     }
 
