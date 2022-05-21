@@ -437,7 +437,7 @@ impl LanguageParser {
     }
 
     fn median(input: Node) -> Result<Operator> {
-        Ok(Operator::Mode)
+        Ok(Operator::Median)
     }
 
     fn variance(input: Node) -> Result<Operator> {

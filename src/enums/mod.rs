@@ -223,7 +223,7 @@ pub enum Operator {
     // Dataframe
     Average,
     Std,
-    Mode,
+    Median,
     Variance,
     Min,
     Max,
