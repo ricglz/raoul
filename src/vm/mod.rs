@@ -375,16 +375,33 @@ impl VM {
         Ok(())
     }
 
+    fn get_dataframe(&self) -> VMResult<&DataFrame> {
+        if self.data_frame.is_none() {
+            return Err("No data frame was created. You need to create one using `read_csv`");
+        }
+        let data_frame = self.data_frame.as_ref().unwrap();
+        Ok(data_frame)
+    }
+
+    fn pure_df_operation(&mut self) -> VMResult<()> {
+        let quad = self.get_current_quad();
+        let data_frame = self.get_dataframe()?;
+        let value = match quad.operator {
+            Operator::Rows => data_frame.shape().0,
+            Operator::Columns => data_frame.shape().1,
+            _ => unreachable!(),
+        }
+        .into();
+        self.write_value(value, quad.res.unwrap())
+    }
+
     fn unary_df_operation<F>(&mut self, f: F) -> VMResult<()>
     where
         F: FnOnce(&Series) -> f64,
     {
         let quad = self.get_current_quad();
         let column_name = String::from(self.get_value(quad.op_1.unwrap())?);
-        if self.data_frame.is_none() {
-            return Err("No data frame was created. You need to create one using `read_csv`");
-        }
-        let data_frame = self.data_frame.as_ref().unwrap();
+        let data_frame = self.get_dataframe()?;
         let column = data_frame.column(&column_name);
         if column.is_err() {
             return Err("Dataframe key not found in file");
@@ -395,10 +412,7 @@ impl VM {
 
     fn correlation(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        if self.data_frame.is_none() {
-            return Err("No data frame was created. You need to create one using `read_csv`");
-        }
-        let data_frame = self.data_frame.as_ref().unwrap();
+        let data_frame = self.get_dataframe()?;
         let col_1_name = String::from(self.get_value(quad.op_1.unwrap())?);
         let col_2_name = String::from(self.get_value(quad.op_2.unwrap())?);
         let temp = data_frame
@@ -417,10 +431,7 @@ impl VM {
 
     fn plot(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        if self.data_frame.is_none() {
-            return Err("No data frame was created. You need to create one using `read_csv`");
-        }
-        let data_frame = self.data_frame.as_ref().unwrap();
+        let data_frame = self.get_dataframe()?;
         let col_1_name = String::from(self.get_value(quad.op_1.unwrap())?);
         let col_2_name = String::from(self.get_value(quad.op_2.unwrap())?);
         let temp = data_frame
@@ -442,10 +453,7 @@ impl VM {
 
     fn histogram(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
-        if self.data_frame.is_none() {
-            return Err("No data frame was created. You need to create one using `read_csv`");
-        }
-        let data_frame = self.data_frame.as_ref().unwrap();
+        let data_frame = self.get_dataframe()?;
         let col_name = String::from(self.get_value(quad.op_1.unwrap())?);
         let bins_value = self.get_value(quad.op_2.unwrap())?;
         let bins = match bins_value {
@@ -520,6 +528,7 @@ impl VM {
                 }
                 Operator::Ver => self.process_ver(),
                 Operator::ReadCSV => self.read_csv(),
+                Operator::Rows | Operator::Columns => self.pure_df_operation(),
                 Operator::Average => self.unary_df_operation(|c| c.mean().unwrap_or(0.0)),
                 Operator::Std => {
                     self.unary_df_operation(|c| cast_to_f64(&c.std_as_series().get(0)))
