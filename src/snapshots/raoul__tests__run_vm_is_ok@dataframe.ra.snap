@@ -4,6 +4,9 @@ expression: vm.messages
 input_file: src/examples/valid/dataframe.ra
 ---
 [
+    "13053",
+    "15",
+    "\n",
     "218645.22944916878",
     "\n",
     "0.15916777771148127",

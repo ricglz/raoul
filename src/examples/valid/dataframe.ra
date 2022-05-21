@@ -1,5 +1,9 @@
 func main(): void {
   dataframe = read_csv("song_data_clean.csv");
+  rows = get_rows(dataframe);
+  columns = get_columns(dataframe);
+  print(rows, columns);
+
   col = "danceability";
 
   print(average(dataframe, "song_duration_ms"));

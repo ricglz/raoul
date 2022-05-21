@@ -5,6 +5,9 @@ input_file: src/examples/valid/dataframe.ra
 ---
 Main(([], [], [
     Assignment(false, Id(dataframe), ReadCSV(String(song_data_clean.csv))),
+    Assignment(false, Id(rows), PureDataframeOp(Rows, dataframe)),
+    Assignment(false, Id(columns), PureDataframeOp(Columns, dataframe)),
+    Write([Id(rows), Id(columns)]),
     Assignment(false, Id(col), String(danceability)),
     Write([UnaryDataframeOp(Average, dataframe, String(song_duration_ms))]),
     Write([UnaryDataframeOp(Std, dataframe, Id(col))]),
