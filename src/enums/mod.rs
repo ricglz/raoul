@@ -120,7 +120,7 @@ impl Types {
     ) -> Results<'a, Types> {
         let clone = v.clone();
         match &v.kind {
-            AstNodeKind::Integer(_) => Ok(Types::Int),
+            AstNodeKind::Integer(_) | AstNodeKind::PureDataframeOp { .. } => Ok(Types::Int),
             AstNodeKind::Float(_)
             | AstNodeKind::UnaryDataframeOp { .. }
             | AstNodeKind::Correlation { .. } => Ok(Types::Float),
@@ -176,10 +176,7 @@ impl Types {
                 _ => unreachable!("{:?}", operator),
             },
             AstNodeKind::ReadCSV(_) => Ok(Self::Dataframe),
-            kind => Err(RaoulError::new_vec(
-                &clone,
-                RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
-            )),
+            kind => unreachable!("{kind:?}"),
         }
     }
 }
@@ -221,10 +218,15 @@ pub enum Operator {
     // Arrays
     Ver,
     // Dataframe
+    Rows,
+    Columns,
     Average,
     Std,
-    Mode,
+    Median,
     Variance,
+    Min,
+    Max,
+    Range,
     Corr,
     ReadCSV,
     Plot,

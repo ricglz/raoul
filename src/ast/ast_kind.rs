@@ -79,6 +79,10 @@ pub enum AstNodeKind<'a> {
     },
     Return(Box<AstNode<'a>>),
     ReadCSV(Box<AstNode<'a>>),
+    PureDataframeOp {
+        name: String,
+        operator: Operator,
+    },
     UnaryDataframeOp {
         column: Box<AstNode<'a>>,
         name: String,
@@ -200,6 +204,9 @@ impl fmt::Debug for AstNodeKind<'_> {
             Self::FuncCall { name, exprs } => write!(f, "FunctionCall({name}, {exprs:?})"),
             Self::Return(expr) => write!(f, "Return({expr:?})"),
             Self::ReadCSV(file) => write!(f, "ReadCSV({file:?})"),
+            Self::PureDataframeOp { name, operator } => {
+                write!(f, "PureDataframeOp({operator:?}, {name})")
+            }
             Self::UnaryDataframeOp {
                 operator,
                 name,

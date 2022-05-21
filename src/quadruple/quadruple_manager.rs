@@ -368,6 +368,13 @@ impl QuadrupleManager {
                 idx_1,
                 idx_2,
             } => self.get_array_val_operand(name, node, &*idx_1, idx_2.clone()),
+            AstNodeKind::PureDataframeOp { operator, ref name } => {
+                self.assert_dataframe(name, node)?;
+                let data_type = Types::Int;
+                let res = self.safe_add_temp(data_type, node)?;
+                self.add_quad(Quadruple::new_res(*operator, res));
+                Ok((res, data_type))
+            }
             AstNodeKind::UnaryDataframeOp {
                 operator,
                 ref name,

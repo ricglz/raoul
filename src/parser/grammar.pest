@@ -53,12 +53,21 @@ INPUT  = _{"input"}
 TRUE  = _{"true"}
 FALSE = _{"false"}
 
-READ_CSV_KEY  = _{"read_csv"}
-average       = {"average"}
-std           = {"std"}
-median        = {"median"}
-variance      = {"variance"}
-CORREL        = _{"correlation"}
+READ_CSV_KEY = _{"read_csv"}
+
+get_rows    = {"get_rows"}
+get_columns = {"get_columns"}
+
+average  = {"average"}
+std      = {"std"}
+median   = {"median"}
+variance = {"variance"}
+min      = {"min"}
+max      = {"max"}
+range    = {"range"}
+
+CORREL = _{"correlation"}
+
 PLOT_KEY      = _{"plot"}
 HISTOGRAM_KEY = _{"histogram"}
 
@@ -75,35 +84,40 @@ comp_op = { eq | ne }
 rel_op  = { gte | lte | gt | lt }
 
 KEYWORD_TYPE = _{
-  AND             |
-  OR              |
-  not             |
-  bool            |
-  float           |
-  int             |
-  string          |
-  void            |
-  FUNC            |
-  MAIN            |
-  IF              |
-  ELSE            |
-  PRINT           |
-  WHILE           |
-  FOR             |
-  TO              |
-  global          |
-  INPUT           |
-  TRUE            |
-  FALSE           |
-  READ_CSV_KEY    |
-  average         |
-  std             |
-  median          |
-  variance        |
-  CORREL |
-  PLOT_KEY        |
-  HISTOGRAM_KEY   |
-  RETURN_KEY      |
+  AND           |
+  OR            |
+  not           |
+  bool          |
+  float         |
+  int           |
+  string        |
+  void          |
+  FUNC          |
+  MAIN          |
+  IF            |
+  ELSE          |
+  PRINT         |
+  WHILE         |
+  FOR           |
+  TO            |
+  global        |
+  INPUT         |
+  TRUE          |
+  FALSE         |
+  READ_CSV_KEY  |
+  get_rows      |
+  get_columns   |
+  average       |
+  std           |
+  median        |
+  variance      |
+  min           |
+  max           |
+  range         |
+  CORREL        |
+  PLOT_KEY      |
+  HISTOGRAM_KEY |
+  RETURN_KEY    |
   DECLARE_KEY
 }
 KEYWORD = _{ KEYWORD_TYPE ~ !ID_SUFFIX }
@@ -172,13 +186,14 @@ while_loop = {WHILE ~ COND_EXPR ~ block_or_statement}
 for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block_or_statement}
 
 possible_str        = {STRING_CTE | NON_CTE}
-READ_CSV_EXTRA      = _{(COMMA ~ id){2}}
-read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ READ_CSV_EXTRA? ~ R_PAREN}
-unary_dataframe_key = { average | std | median | variance }
-unary_dataframe_op = { unary_dataframe_key ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ R_PAREN }
+read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ R_PAREN}
+pure_dataframe_key  = { get_rows | get_columns }
+pure_dataframe_op   = { pure_dataframe_key ~ L_PAREN ~ id ~ R_PAREN }
+unary_dataframe_key = { average | std | median | variance | min | max | range }
+unary_dataframe_op  = { unary_dataframe_key ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ R_PAREN }
 TWO_COLUMNS_FUNC    = _{L_PAREN ~ id ~ (COMMA ~ possible_str){2} ~ R_PAREN}
 correlation         = {CORREL ~ TWO_COLUMNS_FUNC}
-dataframe_value_ops = {unary_dataframe_op | correlation}
+dataframe_value_ops = {pure_dataframe_op | unary_dataframe_op | correlation}
 plot                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
 histogram           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ COMMA ~ expr ~ R_PAREN}
 DATAFRAME_VOID_OPS  = _{plot | histogram}

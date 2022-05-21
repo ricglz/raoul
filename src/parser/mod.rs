@@ -428,6 +428,34 @@ impl LanguageParser {
         ))
     }
 
+    fn get_rows(input: Node) -> Result<Operator> {
+        Ok(Operator::Rows)
+    }
+
+    fn get_columns(input: Node) -> Result<Operator> {
+        Ok(Operator::Columns)
+    }
+
+    fn pure_dataframe_key(input: Node) -> Result<Operator> {
+        Ok(match_nodes!(input.into_children();
+            [get_rows(op)] => op,
+            [get_columns(op)] => op,
+        ))
+    }
+
+    fn pure_dataframe_op(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [pure_dataframe_key(operator), id(id)] => {
+                let name = String::from(id);
+                let kind = AstNodeKind::PureDataframeOp {
+                    name, operator
+                };
+                AstNode::new(kind, span)
+            },
+        ))
+    }
+
     fn average(input: Node) -> Result<Operator> {
         Ok(Operator::Average)
     }
@@ -437,11 +465,23 @@ impl LanguageParser {
     }
 
     fn median(input: Node) -> Result<Operator> {
-        Ok(Operator::Mode)
+        Ok(Operator::Median)
     }
 
     fn variance(input: Node) -> Result<Operator> {
         Ok(Operator::Variance)
+    }
+
+    fn min(input: Node) -> Result<Operator> {
+        Ok(Operator::Min)
+    }
+
+    fn max(input: Node) -> Result<Operator> {
+        Ok(Operator::Max)
+    }
+
+    fn range(input: Node) -> Result<Operator> {
+        Ok(Operator::Range)
     }
 
     fn unary_dataframe_key(input: Node) -> Result<Operator> {
@@ -450,6 +490,9 @@ impl LanguageParser {
             [std(op)] => op,
             [median(op)] => op,
             [variance(op)] => op,
+            [min(op)] => op,
+            [max(op)] => op,
+            [range(op)] => op,
         ))
     }
 
@@ -484,6 +527,7 @@ impl LanguageParser {
 
     fn dataframe_value_ops(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
+            [pure_dataframe_op(node)] => node,
             [unary_dataframe_op(node)] => node,
             [correlation(node)] => node,
         ))

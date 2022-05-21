@@ -1,15 +1,20 @@
 ---
 source: src/tests.rs
 expression: ast
-input_file: src/examples/valid/non-plot/dataframe.ra
+input_file: src/examples/valid/dataframe.ra
 ---
 Main(([], [], [
     Assignment(false, Id(dataframe), ReadCSV(String(song_data_clean.csv))),
-    Assignment(false, Id(avg), UnaryDataframeOp(Average, dataframe, String(song_duration_ms))),
+    Assignment(false, Id(rows), PureDataframeOp(Rows, dataframe)),
+    Assignment(false, Id(columns), PureDataframeOp(Columns, dataframe)),
+    Write([Id(rows), Id(columns)]),
     Assignment(false, Id(col), String(danceability)),
-    Assignment(false, Id(danceability_std), UnaryDataframeOp(Std, dataframe, Id(col))),
-    Assignment(false, Id(danceability_mode), UnaryDataframeOp(Mode, dataframe, Id(col))),
-    Assignment(false, Id(danceability_var), UnaryDataframeOp(Variance, dataframe, Id(col))),
-    Assignment(false, Id(corr), Correlation(dataframe, Id(col), String(song_duration_ms))),
-    Write([Id(avg), Id(danceability_std), Id(danceability_mode), Id(danceability_var), Id(corr)]),
+    Write([UnaryDataframeOp(Average, dataframe, String(song_duration_ms))]),
+    Write([UnaryDataframeOp(Std, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Median, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Variance, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Min, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Max, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Range, dataframe, Id(col))]),
+    Write([Correlation(dataframe, Id(col), String(song_duration_ms))]),
 ]))
