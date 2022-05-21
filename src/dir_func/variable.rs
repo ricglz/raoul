@@ -65,10 +65,7 @@ impl Variable {
                     None => Err(RaoulError::new_vec(v, RaoulErrorKind::MemoryExceded)),
                 }
             }
-            kind => Err(RaoulError::new_vec(
-                v,
-                RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
-            )),
+            kind => unreachable!("{kind:?}"),
         }
     }
 

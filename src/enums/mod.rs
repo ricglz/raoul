@@ -176,10 +176,7 @@ impl Types {
                 _ => unreachable!("{:?}", operator),
             },
             AstNodeKind::ReadCSV(_) => Ok(Self::Dataframe),
-            kind => Err(RaoulError::new_vec(
-                &clone,
-                RaoulErrorKind::EnteredUnreachable(format!("{kind:?}")),
-            )),
+            kind => unreachable!("{kind:?}"),
         }
     }
 }
