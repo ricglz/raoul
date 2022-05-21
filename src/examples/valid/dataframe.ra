@@ -6,6 +6,9 @@ func main(): void {
   print(std(dataframe, col));
   print(median(dataframe, col));
   print(variance(dataframe, col));
+  print(min(dataframe, col));
+  print(max(dataframe, col));
+  print(range(dataframe, col));
 
   print(correlation(dataframe, col, "song_duration_ms"));
 }

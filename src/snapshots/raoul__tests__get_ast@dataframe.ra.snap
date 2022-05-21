@@ -8,7 +8,10 @@ Main(([], [], [
     Assignment(false, Id(col), String(danceability)),
     Write([UnaryDataframeOp(Average, dataframe, String(song_duration_ms))]),
     Write([UnaryDataframeOp(Std, dataframe, Id(col))]),
-    Write([UnaryDataframeOp(Mode, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Median, dataframe, Id(col))]),
     Write([UnaryDataframeOp(Variance, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Min, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Max, dataframe, Id(col))]),
+    Write([UnaryDataframeOp(Range, dataframe, Id(col))]),
     Write([Correlation(dataframe, Id(col), String(song_duration_ms))]),
 ]))

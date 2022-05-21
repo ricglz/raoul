@@ -82,6 +82,16 @@ fn safe_address(value: Option<VariableValue>) -> VMResult<VariableValue> {
     }
 }
 
+#[inline]
+fn min(c: &Series) -> f64 {
+    c.min().unwrap_or(0.0)
+}
+
+#[inline]
+fn max(c: &Series) -> f64 {
+    c.max().unwrap_or(0.0)
+}
+
 impl VM {
     pub fn new(quad_manager: &QuadrupleManager, debug: bool) -> Self {
         let constant_memory = quad_manager.memory.clone();
@@ -517,7 +527,10 @@ impl VM {
                 Operator::Variance => {
                     self.unary_df_operation(|c| cast_to_f64(&c.var_as_series().get(0)))
                 }
-                Operator::Mode => self.unary_df_operation(|c| c.median().unwrap_or(0.0)),
+                Operator::Median => self.unary_df_operation(|c| c.median().unwrap_or(0.0)),
+                Operator::Min => self.unary_df_operation(min),
+                Operator::Max => self.unary_df_operation(max),
+                Operator::Range => self.unary_df_operation(|c| max(c) - min(c)),
                 Operator::Corr => self.correlation(),
                 Operator::Plot => self.plot(),
                 Operator::Histogram => self.histogram(),
