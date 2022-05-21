@@ -221,6 +221,8 @@ pub enum Operator {
     // Arrays
     Ver,
     // Dataframe
+    Rows,
+    Columns,
     Average,
     Std,
     Median,
