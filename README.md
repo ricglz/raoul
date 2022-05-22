@@ -155,9 +155,16 @@ There can only be one dataframe per program
 read_csv("data.csv");
 ```
 
-<!-- TODO: If you end up adding the rows and cols modify here pls -->
+## Dataframe shape operations
 
-## Dataframe operations:
+To get the amount rows and columns of a dataframe you can do the following
+
+```go
+rows = get_rows(dataframe);
+columns = get_columns(dataframe);
+```
+
+## Dataframe operations
 
 Returns the operation value for a given key.
 
@@ -167,6 +174,9 @@ Possible operations:
 - Variance: `variance()`
 - Std: `std()`
 - Median: `median()`
+- Min: `min()`
+- Max: `max()`
+- Range: `range()`
 
 Arguments:
 
@@ -177,9 +187,7 @@ Arguments:
 avg(data, "key");
 ```
 
-<!-- TODO: If you end up adding more functions add here pls -->
-
-## Dataframe correlation:
+## Dataframe correlation
 
 Returns correlation value for two columns
 
@@ -187,7 +195,7 @@ Returns correlation value for two columns
 correl(data, "key1", "key2");
 ```
 
-## Plot with dataframe:
+## Plot with dataframe
 
 Scatter plot for two columns in the dataframe, pops up in new window
 
@@ -202,7 +210,7 @@ plot(data, "key1", "key2");
 
 ![ScatterPlot](https://imgur.com/0HN1BAH.jpg "Scatter Plot Result")
 
-## Histogram with dataframe:
+## Histogram with dataframe
 
 Histogram for a variable in the dataframe, the third argument is the number of bins for the histogram.
 
@@ -215,11 +223,11 @@ hist(data, "key1", 10);
 > **Note**. Using this command will end the execution of the program, so is
 > recommended to be the last one
 
-### Result:
+### Result
 
 ![Histogram](https://imgur.com/x87d28q.jpg "Histogram Result")
 
-## Main declaration:
+## Main declaration
 
 ```go
 func main(): void {
