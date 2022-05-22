@@ -238,6 +238,10 @@ impl<'a> AstNodeKind<'a> {
         matches!(self, Self::Array(_) | Self::ArrayDeclaration { .. })
     }
 
+    pub fn is_declaration(&self) -> bool {
+        matches!(self, Self::Assignment { .. } | Self::Argument { .. })
+    }
+
     pub fn get_dimensions(&self) -> Result<Dimensions, Dimensions> {
         if !self.is_array() {
             return Ok((None, None));

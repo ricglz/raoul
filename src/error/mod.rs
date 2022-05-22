@@ -39,10 +39,6 @@ impl RaoulError<'_> {
         vec![RaoulError::new(node, kind)]
     }
 
-    pub fn is_invalid(&self) -> bool {
-        self.kind == RaoulErrorKind::Invalid
-    }
-
     fn from_results_iter<'a, T, I: IntoIterator<Item = Results<'a, T>>>(
         iter: I,
     ) -> Vec<RaoulError<'a>> {

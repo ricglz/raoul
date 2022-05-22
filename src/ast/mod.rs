@@ -75,6 +75,10 @@ impl<'a> AstNode<'a> {
         self.kind.is_array()
     }
 
+    pub fn is_declaration(&self) -> bool {
+        self.kind.is_declaration()
+    }
+
     pub fn get_dimensions(&self) -> Result<Dimensions, Dimensions> {
         self.kind.get_dimensions()
     }

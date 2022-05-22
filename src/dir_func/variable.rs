@@ -127,7 +127,7 @@ impl Variable {
                     }
                 }
             }
-            _ => Err(RaoulError::new_vec(&v, RaoulErrorKind::Invalid)),
+            _ => unreachable!(),
         }
     }
 

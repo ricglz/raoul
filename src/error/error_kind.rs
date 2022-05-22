@@ -5,7 +5,6 @@ use crate::enums::Types;
 #[derive(PartialEq, Eq, Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub enum RaoulErrorKind {
-    Invalid,
     MemoryExceded,
     UndeclaredVar(String),
     UndeclaredFunction(String),
@@ -38,7 +37,6 @@ pub enum RaoulErrorKind {
 impl fmt::Debug for RaoulErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Invalid => unreachable!(),
             Self::UsePrimitive => write!(f, "We can't handle using the complete array"),
             Self::UndeclaredVar(name) => write!(f, "Variable \"{name}\" was not declared"),
             Self::UndeclaredFunction(name) => {

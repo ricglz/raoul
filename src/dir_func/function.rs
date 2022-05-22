@@ -105,48 +105,19 @@ impl Function {
         }
     }
 
-    fn insert<'a>(
+    fn insert_from_nodes<'a>(
         &mut self,
         nodes: &[AstNode<'a>],
         global_fn: &mut GlobalScope,
-        argument: bool,
-    ) -> Vec<RaoulError<'a>> {
-        nodes
-            .iter()
-            .flat_map(AstNode::expand_node)
-            .filter_map(|node| {
-                self.insert_variable_from_node(node.clone(), global_fn, argument)
-                    .err()
-            })
-            .flatten()
-            .filter(|e| !e.is_invalid())
-            .collect()
-    }
-
-    fn insert_variable_from_nodes<'a>(
-        &mut self,
-        nodes: &[AstNode<'a>],
-        global_fn: &mut GlobalScope,
+        is_arg: bool,
     ) -> Results<'a, ()> {
-        let errors = self.insert(nodes, global_fn, false);
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-
-    fn insert_args_from_nodes<'a>(
-        &mut self,
-        nodes: &[AstNode<'a>],
-        global_fn: &mut GlobalScope,
-    ) -> Results<'a, ()> {
-        let errors = self.insert(nodes, global_fn, true);
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
+        RaoulError::create_results(
+            nodes
+                .iter()
+                .flat_map(AstNode::expand_node)
+                .filter(AstNode::is_declaration)
+                .map(|node| self.insert_variable_from_node(node.clone(), global_fn, is_arg)),
+        )
     }
 
     pub fn try_create<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
@@ -158,13 +129,13 @@ impl Function {
                 ref arguments,
             } => {
                 let mut function = Function::new(name, return_type);
-                function.insert_args_from_nodes(arguments, global_fn)?;
-                function.insert_variable_from_nodes(body, global_fn)?;
+                function.insert_from_nodes(arguments, global_fn, true)?;
+                function.insert_from_nodes(body, global_fn, false)?;
                 Ok(function)
             }
             AstNodeKind::Main { ref body, .. } => {
                 let mut function = Function::new("main".to_string(), Types::Void);
-                function.insert_variable_from_nodes(body, global_fn)?;
+                function.insert_from_nodes(body, global_fn, false)?;
                 Ok(function)
             }
             _ => unreachable!(),
