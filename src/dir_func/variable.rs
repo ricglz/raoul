@@ -70,12 +70,11 @@ impl Variable {
     }
 
     pub fn from_node<'a>(
-        v: AstNode<'a>,
+        v: &AstNode<'a>,
         current_fn: &mut Function,
         global_fn: &mut GlobalScope,
     ) -> Results<'a, (Variable, bool)> {
-        let node = v.clone();
-        match v.kind {
+        match v.kind.clone() {
             AstNodeKind::Assignment {
                 assignee,
                 value,
@@ -83,8 +82,8 @@ impl Variable {
             } => {
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                assert_dataframe(data_type, global_fn, &node)?;
-                let dimensions = get_value_dimensions(&value, &node)?;
+                assert_dataframe(data_type, global_fn, v)?;
+                let dimensions = get_value_dimensions(&value, v)?;
                 let name: String = assignee.into();
                 let address = if global {
                     global_fn.get_variable_address(&name, data_type, dimensions)
@@ -101,7 +100,7 @@ impl Variable {
                         },
                         global,
                     )),
-                    None => Err(RaoulError::new_vec(&node, RaoulErrorKind::MemoryExceded)),
+                    None => Err(RaoulError::new_vec(v, RaoulErrorKind::MemoryExceded)),
                 }
             }
             AstNodeKind::Argument {
@@ -123,7 +122,7 @@ impl Variable {
                     )),
                     None => {
                         let kind = RaoulErrorKind::MemoryExceded;
-                        Err(RaoulError::new_vec(&node, kind))
+                        Err(RaoulError::new_vec(v, kind))
                     }
                 }
             }

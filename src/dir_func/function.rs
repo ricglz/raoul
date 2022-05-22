@@ -18,23 +18,18 @@ pub trait Scope {
     fn _insert_variable(&mut self, name: String, variable: Variable);
     fn insert_variable(&mut self, variable: Variable) -> InsertResult {
         let name = variable.name.clone();
-        match self.get_variable(&name) {
-            None => {
-                self._insert_variable(variable.name.clone(), variable);
-                Ok(())
+        if let Some(stored_var) = self.get_variable(&name) {
+            if !variable.data_type.can_cast(stored_var.data_type) {
+                return Err(RaoulErrorKind::RedefinedType {
+                    name,
+                    from: stored_var.data_type,
+                    to: variable.data_type,
+                });
             }
-            Some(stored_var) => {
-                if variable.data_type.can_cast(stored_var.data_type) {
-                    Ok(())
-                } else {
-                    Err(RaoulErrorKind::RedefinedType {
-                        name,
-                        from: stored_var.data_type,
-                        to: variable.data_type,
-                    })
-                }
-            }
+        } else {
+            self._insert_variable(name, variable);
         }
+        Ok(())
     }
     fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize>;
     fn get_variable_address(
@@ -78,11 +73,10 @@ impl Function {
 
     fn insert_variable_from_node<'a>(
         &mut self,
-        node: AstNode<'a>,
+        node: &AstNode<'a>,
         global_fn: &mut GlobalScope,
         argument: bool,
     ) -> Results<'a, ()> {
-        let clone = node.clone();
         match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => {
                 let variable_clone = variable.clone();
@@ -98,7 +92,7 @@ impl Function {
                         }
                         Ok(())
                     }
-                    Err(kind) => Err(RaoulError::new_vec(&clone, kind)),
+                    Err(kind) => Err(RaoulError::new_vec(node, kind)),
                 }
             }
             Err(errors) => Err(errors),
@@ -116,7 +110,7 @@ impl Function {
                 .iter()
                 .flat_map(AstNode::expand_node)
                 .filter(AstNode::is_declaration)
-                .map(|node| self.insert_variable_from_node(node.clone(), global_fn, is_arg)),
+                .map(|node| self.insert_variable_from_node(&node, global_fn, is_arg)),
         )
     }
 
