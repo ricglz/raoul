@@ -484,14 +484,14 @@ impl QuadrupleManager {
 
     fn parse_assignment<'a>(
         &mut self,
-        assignee: AstNode<'a>,
+        assignee: &AstNode<'a>,
         global: bool,
-        value: AstNode<'a>,
+        value: &AstNode<'a>,
         node: &AstNode<'a>,
     ) -> Results<'a, ()> {
-        match value.kind {
+        match &value.kind {
             AstNodeKind::ArrayDeclaration { .. } => Ok(()),
-            AstNodeKind::Array(exprs) => self.parse_array(&assignee, &exprs, node),
+            AstNodeKind::Array(exprs) => self.parse_array(assignee, exprs, node),
             AstNodeKind::ReadCSV(file_node) => {
                 let (file_address, _) = self.assert_expr_type(&*file_node, Types::String)?;
                 self.add_quad(Quadruple::new_arg(Operator::ReadCSV, file_address));
@@ -502,15 +502,15 @@ impl QuadrupleManager {
                     ref name,
                     idx_1,
                     idx_2,
-                } = assignee.kind
+                } = &assignee.kind
                 {
-                    let op = self.arr_val_op_node(name, node, &*idx_1, idx_2)?;
+                    let op = self.arr_val_op_node(name, node, &*idx_1, idx_2.clone())?;
                     op.0
                 } else {
                     let name: String = assignee.into();
                     self.get_variable_address(global, &name)
                 };
-                self.add_assign_quad(variable_address, &value)
+                self.add_assign_quad(variable_address, value)
             }
         }
     }
@@ -544,7 +544,7 @@ impl QuadrupleManager {
                 assignee,
                 global,
                 value,
-            } => self.parse_assignment(*assignee.clone(), *global, *value.clone(), node),
+            } => self.parse_assignment(&*assignee, *global, &*value, node),
             AstNodeKind::Write { exprs } => {
                 RaoulError::create_results(exprs.iter().map(|expr| -> Results<()> {
                     let (address, _) = self.parse_expr(expr)?;
