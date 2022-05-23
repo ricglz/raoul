@@ -4,8 +4,8 @@ expression: quad_manager
 input_file: src/examples/invalid/dynamic/unitialized-element.ra
 ---
 0    - Goto       -     -     1
-1    - Ver        3001  3002  -
-2    - Sum        3000  3001  4000
+1    - Ver        3000  3002  -
+2    - Sum        3001  3000  4000
 3    - Print      4000  -     -
 4    - PrintNl    -     -     -
 5    - End        -     -     -
