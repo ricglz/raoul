@@ -130,11 +130,11 @@ impl Variable {
         }
     }
 
-    pub fn from_function(function: Function, address: usize) -> Self {
+    pub fn from_function(function: &Function, address: usize) -> Self {
         Variable {
             address,
             data_type: function.return_type,
-            name: function.name,
+            name: function.name.clone(),
             dimensions: (None, None),
         }
     }

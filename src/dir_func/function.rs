@@ -114,8 +114,8 @@ impl Function {
         )
     }
 
-    pub fn try_create<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
-        match v.kind {
+    pub fn try_create<'a>(v: &AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
+        match v.kind.clone() {
             AstNodeKind::Function {
                 name,
                 return_type,

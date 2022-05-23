@@ -28,7 +28,7 @@ use args::parse_arguments;
 
 fn parse_ast<'a>(ast: &'a AstNode, debug: bool) -> Results<'a, QuadrupleManager> {
     let mut dir_func = DirFunc::new();
-    dir_func.build_dir_func(ast.clone())?;
+    dir_func.build_dir_func(ast)?;
     if debug {
         println!("Dir func created sucessfully");
         println!("{:#?}", dir_func);

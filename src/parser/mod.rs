@@ -183,7 +183,7 @@ impl LanguageParser {
     }
 
     fn func_call(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(id)] => {
                 let kind = AstNodeKind::FuncCall { name: String::from(id), exprs: Vec::new() };
@@ -216,7 +216,7 @@ impl LanguageParser {
 
     // Expressions
     fn expr(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [and_term(value)] => value,
             [and_term(lhs), and_term(rhs)] => {
@@ -231,7 +231,7 @@ impl LanguageParser {
     }
 
     fn and_term(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [comp_term(value)] => value,
             [comp_term(lhs), comp_term(rhs)] => {
@@ -246,7 +246,7 @@ impl LanguageParser {
     }
 
     fn comp_term(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [rel_term(value)] => value,
             [rel_term(lhs), comp_op(operator), rel_term(rhs)] => {
@@ -261,7 +261,7 @@ impl LanguageParser {
     }
 
     fn rel_term(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [art_term(value)] => value,
             [art_term(lhs), rel_op(operator), art_term(rhs)] => {
@@ -276,7 +276,7 @@ impl LanguageParser {
     }
 
     fn art_term(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [fact_term(value)] => value,
             [fact_term(lhs), art_op(operator), fact_term(rhs)] => {
@@ -291,7 +291,7 @@ impl LanguageParser {
     }
 
     fn fact_term(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [operand(value)] => value,
             [operand(lhs), fact_op(operator), operand(rhs)] => {
@@ -306,7 +306,7 @@ impl LanguageParser {
     }
 
     fn operand(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [operand_value(value)] => value,
             [not(operator), operand_value(operand)] => {
@@ -337,10 +337,7 @@ impl LanguageParser {
     }
 
     fn read(input: Node) -> Result<AstNode> {
-        Ok(AstNode {
-            kind: AstNodeKind::Read,
-            span: input.as_span().clone(),
-        })
+        Ok(AstNode::new(AstNodeKind::Read, &input.as_span()))
     }
 
     fn assignment_exp(input: Node) -> Result<AstNode> {
@@ -361,7 +358,7 @@ impl LanguageParser {
     }
 
     fn declare_arr(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [declare_arr_type(data_type), int_cte(dim1)] => {
                 let kind = AstNodeKind::ArrayDeclaration { data_type, dim1: dim1.into(), dim2: None };
@@ -375,7 +372,7 @@ impl LanguageParser {
     }
 
     fn list_cte(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [exprs(exprs)] => {
                 AstNode { kind: AstNodeKind::Array(exprs), span }
@@ -384,7 +381,7 @@ impl LanguageParser {
     }
 
     fn mat_cte(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [list_cte(exprs)..] => {
                 AstNode { kind: AstNodeKind::Array(exprs.collect()), span }
@@ -400,30 +397,30 @@ impl LanguageParser {
     }
 
     fn arr_val(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(name), expr(idx_1)] => {
                 let name = String::from(name);
                 let idx_1 = Box::new(idx_1);
                 let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: None };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
             [id(name), expr(idx_1), expr(idx_2)] => {
                 let name = String::from(name);
                 let idx_1 = Box::new(idx_1);
                 let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: Some(Box::new(idx_2)) };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
 
     // Dataframe
     fn read_csv(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [possible_str(file)] => {
                 let node = Box::new(file);
-                AstNode::new(AstNodeKind::ReadCSV(node), span)
+                AstNode::new(AstNodeKind::ReadCSV(node), &span)
             },
         ))
     }
@@ -444,14 +441,14 @@ impl LanguageParser {
     }
 
     fn pure_dataframe_op(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [pure_dataframe_key(operator), id(id)] => {
                 let name = String::from(id);
                 let kind = AstNodeKind::PureDataframeOp {
                     name, operator
                 };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
@@ -497,7 +494,7 @@ impl LanguageParser {
     }
 
     fn unary_dataframe_op(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [unary_dataframe_key(operator), id(id), possible_str(col)] => {
                 let name = String::from(id);
@@ -505,13 +502,13 @@ impl LanguageParser {
                 let kind = AstNodeKind::UnaryDataframeOp {
                     name, column, operator
                 };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
 
     fn correlation(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(id), possible_str(col_1), possible_str(col_2)] => {
                 let name = String::from(id);
@@ -520,7 +517,7 @@ impl LanguageParser {
                 let kind = AstNodeKind::Correlation {
                     name, column_1, column_2
                 };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
@@ -534,7 +531,7 @@ impl LanguageParser {
     }
 
     fn plot(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(id), possible_str(col_1), possible_str(col_2)] => {
                 let name = String::from(id);
@@ -543,27 +540,27 @@ impl LanguageParser {
                 let kind = AstNodeKind::Plot {
                     name, column_1, column_2
                 };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
 
     fn histogram(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(id), possible_str(col), expr(bins)] => {
                 let name = String::from(id);
                 let column = Box::new(col);
                 let bins = Box::new(bins);
                 let kind = AstNodeKind::Histogram { name, column, bins };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
 
     // Condition
     fn else_block(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [block_or_statement(statements)] => {
                 let kind = AstNodeKind::ElseBlock { statements };
@@ -574,7 +571,7 @@ impl LanguageParser {
     }
 
     fn decision(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [expr(expr), block_or_statement(statements)] => {
                 let kind = AstNodeKind::Decision {
@@ -597,7 +594,7 @@ impl LanguageParser {
 
     // Loops
     fn while_loop(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [expr(expr), block_or_statement(statements)] => {
                 let kind = AstNodeKind::While {
@@ -610,20 +607,18 @@ impl LanguageParser {
     }
 
     fn for_loop(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [assignment(assignment), expr(stop_expr), block_or_statement(statements)] => {
-                let assignment_clone = assignment.clone();
-                let expr_clone = stop_expr.clone();
-                let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment_clone.kind)), assignment_clone.span);
+                let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment.kind.clone())), &assignment.span);
                 let expr_kind = AstNodeKind::BinaryOperation {
                     operator: Operator::Lte,
                     lhs: Box::new(id_node),
-                    rhs: Box::new(stop_expr),
+                    rhs: Box::new(stop_expr.clone()),
                 };
-                let expr = Box::new(AstNode::new(expr_kind, expr_clone.span));
+                let expr = Box::new(AstNode::new(expr_kind, &stop_expr.span));
                 let kind = AstNodeKind::For { assignment: Box::new(assignment), expr, statements };
-                AstNode::new(kind, span)
+                AstNode::new(kind, &span)
             },
         ))
     }
@@ -637,7 +632,7 @@ impl LanguageParser {
     }
 
     fn assignment(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [global(_), assignee(id), assignment_exp(value)] => {
                 let kind = AstNodeKind::Assignment { global: true, assignee: id, value: Box::new(value) };
@@ -651,7 +646,7 @@ impl LanguageParser {
     }
 
     fn global_assignment(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [assignee(id), assignment_exp(value)] => {
                 let kind = AstNodeKind::Assignment { global: true, assignee: id, value: Box::new(value) };
@@ -661,7 +656,7 @@ impl LanguageParser {
     }
 
     fn write(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [exprs(exprs)] => {
                 AstNode { kind: AstNodeKind::Write { exprs }, span }
@@ -670,7 +665,7 @@ impl LanguageParser {
     }
 
     fn return_statement(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [expr(expr)] => {
                 AstNode { kind: AstNodeKind::Return(Box::new(expr)), span }
@@ -713,7 +708,7 @@ impl LanguageParser {
 
     // Function
     fn func_arg(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(id), atomic_types(arg_type)] => {
                 let kind = AstNodeKind::Argument { arg_type, name: String::from(id) };
@@ -729,7 +724,7 @@ impl LanguageParser {
     }
 
     fn function(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [id(id), func_args(arguments), types(return_type), block(body)] => {
                 let kind = AstNodeKind::Function {arguments, name: String::from(id), body, return_type};
@@ -749,7 +744,7 @@ impl LanguageParser {
     }
 
     fn program(input: Node) -> Result<AstNode> {
-        let span = input.as_span().clone();
+        let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [global_assignments(nodes), function(functions).., _, block(body), _] => {
                 let kind = AstNodeKind::Main {

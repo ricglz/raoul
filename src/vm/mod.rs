@@ -75,9 +75,9 @@ fn cast_to_f64(v: &AnyValue) -> f64 {
     }
 }
 
-fn safe_address(value: Option<VariableValue>) -> VMResult<VariableValue> {
+fn safe_address(value: &Option<VariableValue>) -> VMResult<VariableValue> {
     match value {
-        Some(v) => Ok(v),
+        Some(v) => Ok(v.clone()),
         None => Err("Found initialized value"),
     }
 }
@@ -180,7 +180,7 @@ impl VM {
             0 => safe_address(self.global_memory.get(address)),
             1 => safe_address(self.local_addresses().get(address)),
             2 => safe_address(self.temp_addresses().get(address)),
-            3 => Ok(self.constant_memory.get(address)),
+            3 => Ok(self.constant_memory.get(address).clone()),
             _ => {
                 let address = self.pointer_memory.get(address);
                 self.get_value(address)

@@ -63,7 +63,7 @@ fn get_amount(dimensions: Dimensions) -> usize {
 }
 
 pub trait GenericAddressManager {
-    fn get_address_counter(&self) -> AddressCounter;
+    fn get_address_counter(&self) -> &AddressCounter;
     fn get_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize>;
     fn size(&self) -> usize;
     fn get_base(&self) -> usize;
@@ -91,8 +91,8 @@ impl AddressManager {
 
 impl GenericAddressManager for AddressManager {
     #[inline]
-    fn get_address_counter(&self) -> AddressCounter {
-        self.counter.clone()
+    fn get_address_counter(&self) -> &AddressCounter {
+        &self.counter
     }
     fn get_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
         if data_type == Types::Dataframe {
@@ -196,7 +196,7 @@ impl Default for TempAddressManager {
 
 impl GenericAddressManager for TempAddressManager {
     #[inline]
-    fn get_address_counter(&self) -> AddressCounter {
+    fn get_address_counter(&self) -> &AddressCounter {
         self.address_manager.get_address_counter()
     }
     #[inline]
@@ -279,7 +279,7 @@ impl ConstantMemory {
         Some((address, data_type))
     }
 
-    pub fn get(&self, address: usize) -> VariableValue {
+    pub fn get(&self, address: usize) -> &VariableValue {
         let (contextless_address, type_determinant, address_type) =
             get_address_info(address, self.base);
         self.memory
@@ -287,7 +287,6 @@ impl ConstantMemory {
             .unwrap()
             .get(contextless_address - type_determinant * THRESHOLD)
             .unwrap()
-            .clone()
     }
 }
 
@@ -340,9 +339,9 @@ impl Memory {
         (type_index + pointer, address_type)
     }
 
-    pub fn get(&self, address: usize) -> Option<VariableValue> {
+    pub fn get(&self, address: usize) -> &Option<VariableValue> {
         let index = self.get_index(address).0;
-        self.space.get(index).unwrap().clone()
+        self.space.get(index).unwrap()
     }
 
     pub fn write(&mut self, address: usize, uncast: &VariableValue) -> VMResult<()> {

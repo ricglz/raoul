@@ -458,7 +458,7 @@ impl QuadrupleManager {
         if dim_2.is_none() {
             RaoulError::create_results(exprs.into_iter().enumerate().map(
                 |(i, expr)| -> Results<()> {
-                    let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), expr.span.clone()));
+                    let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), &expr.span));
                     let (variable_address, _) =
                         self.get_array_val_operand(&name, node, &*idx_1, None)?;
                     self.add_assign_quad(variable_address, &expr)
@@ -467,11 +467,10 @@ impl QuadrupleManager {
         } else {
             RaoulError::create_results(exprs.into_iter().enumerate().map(
                 |(i, exprs)| -> Results<()> {
-                    let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), node.span.clone()));
+                    let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), &node.span));
                     RaoulError::create_results(exprs.expand_array().into_iter().enumerate().map(
                         |(j, expr)| -> Results<()> {
-                            let idx_2 =
-                                Box::new(AstNode::new(AstNodeKind::from(j), expr.span.clone()));
+                            let idx_2 = Box::new(AstNode::new(AstNodeKind::from(j), &expr.span));
                             let (variable_address, _) =
                                 self.get_array_val_operand(&name, node, &*idx_1, Some(idx_2))?;
                             self.add_assign_quad(variable_address, &expr)

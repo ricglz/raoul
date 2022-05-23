@@ -67,8 +67,8 @@ impl<'a> AstNode<'a> {
         }
     }
 
-    pub fn new(kind: AstNodeKind<'a>, span: Span<'a>) -> AstNode<'a> {
-        AstNode { kind, span }
+    pub fn new(kind: AstNodeKind<'a>, span: &Span<'a>) -> AstNode<'a> {
+        AstNode { kind, span: span.clone() }
     }
 
     pub fn is_array(&self) -> bool {

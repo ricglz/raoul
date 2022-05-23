@@ -54,8 +54,7 @@ impl DirFunc {
         }
     }
 
-    fn insert_function_from_node<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
-        let node_clone = node.clone();
+    fn insert_function_from_node<'a>(&mut self, node: &AstNode<'a>) -> Results<'a, ()> {
         let mut function = Function::try_create(node, &mut self.global_fn)?;
         if function.return_type != Types::Void {
             let address = self
@@ -66,43 +65,42 @@ impl DirFunc {
                 Some(address) => {
                     let result = self
                         .global_fn
-                        .insert_variable(Variable::from_function(function.clone(), address));
+                        .insert_variable(Variable::from_function(&function, address));
                     if let Err(kind) = result {
-                        return Err(vec![RaoulError::new(&node_clone, kind)]);
+                        return Err(vec![RaoulError::new(node, kind)]);
                     }
                     function.address = address;
                 }
                 None => {
                     let kind = RaoulErrorKind::MemoryExceded;
-                    return Err(vec![RaoulError::new(&node_clone, kind)]);
+                    return Err(vec![RaoulError::new(node, kind)]);
                 }
             }
         }
-        match self.insert_function(function, &node_clone) {
+        match self.insert_function(function, node) {
             Ok(_) => Ok(()),
             Err(error) => Err(vec![error]),
         }
     }
 
-    pub fn build_dir_func<'a>(&mut self, node: AstNode<'a>) -> Results<'a, ()> {
-        let clone = node.clone();
-        match node.kind {
+    pub fn build_dir_func<'a>(&mut self, node: &AstNode<'a>) -> Results<'a, ()> {
+        match &node.kind {
             AstNodeKind::Main {
                 functions,
                 assignments,
                 ..
             } => {
-                RaoulError::create_results(assignments.into_iter().map(|node| -> Results<()> {
-                    let variable = Variable::from_global(&node, &mut self.global_fn)?;
+                RaoulError::create_results(assignments.iter().map(|node| -> Results<()> {
+                    let variable = Variable::from_global(node, &mut self.global_fn)?;
                     match self.global_fn.insert_variable(variable) {
                         Ok(_) => Ok(()),
-                        Err(kind) => Err(RaoulError::new_vec(&node, kind)),
+                        Err(kind) => Err(RaoulError::new_vec(node, kind)),
                     }
                 }))?;
                 RaoulError::create_results(
                     functions
-                        .into_iter()
-                        .chain(Some(clone))
+                        .iter()
+                        .chain(Some(node))
                         .map(|node| self.insert_function_from_node(node)),
                 )
             }
