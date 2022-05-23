@@ -77,28 +77,34 @@ impl From<&VariableValue> for Types {
     }
 }
 
-impl From<AstNodeKind<'_>> for VariableValue {
-    fn from(v: AstNodeKind) -> Self {
+impl From<&AstNodeKind<'_>> for VariableValue {
+    fn from(v: &AstNodeKind) -> Self {
         match v {
-            AstNodeKind::Integer(value) => VariableValue::Integer(value),
-            AstNodeKind::Float(value) => VariableValue::Float(value),
-            AstNodeKind::String(value) => VariableValue::String(value),
-            AstNodeKind::Bool(value) => VariableValue::Bool(value),
+            AstNodeKind::Integer(value) => VariableValue::Integer(*value),
+            AstNodeKind::Float(value) => VariableValue::Float(*value),
+            AstNodeKind::String(value) => VariableValue::String(value.clone()),
+            AstNodeKind::Bool(value) => VariableValue::Bool(*value),
             _ => unreachable!(),
         }
     }
 }
 
-impl TryFrom<VariableValue> for f64 {
+impl From<AstNodeKind<'_>> for VariableValue {
+    fn from(v: AstNodeKind) -> Self {
+        Self::from(&v)
+    }
+}
+
+impl TryFrom<&VariableValue> for f64 {
     type Error = &'static str;
 
-    fn try_from(v: VariableValue) -> VMResult<Self> {
-        if let VariableValue::Float(a) = &v {
+    fn try_from(v: &VariableValue) -> VMResult<Self> {
+        if let VariableValue::Float(a) = v {
             return Ok(*a);
         }
         let string = match v {
             VariableValue::Integer(a) => a.to_string(),
-            VariableValue::String(a) => a,
+            VariableValue::String(a) => a.clone(),
             _ => unreachable!(),
         };
         match string.parse::<Self>() {
@@ -108,11 +114,11 @@ impl TryFrom<VariableValue> for f64 {
     }
 }
 
-impl TryFrom<&VariableValue> for f64 {
+impl TryFrom<VariableValue> for f64 {
     type Error = &'static str;
 
-    fn try_from(v: &VariableValue) -> VMResult<Self> {
-        Self::try_from(v.clone())
+    fn try_from(v: VariableValue) -> VMResult<Self> {
+        Self::try_from(&v)
     }
 }
 

@@ -610,7 +610,7 @@ impl LanguageParser {
         let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [assignment(assignment), expr(stop_expr), block_or_statement(statements)] => {
-                let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment.kind.clone())), &assignment.span);
+                let id_node = AstNode::new(AstNodeKind::Id(String::from(&assignment)), &assignment.span);
                 let expr_kind = AstNodeKind::BinaryOperation {
                     operator: Operator::Lte,
                     lhs: Box::new(id_node),

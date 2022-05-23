@@ -105,13 +105,13 @@ pub enum AstNodeKind<'a> {
     },
 }
 
-impl<'a> From<AstNodeKind<'a>> for String {
-    fn from(val: AstNodeKind) -> Self {
+impl From<&AstNodeKind<'_>> for String {
+    fn from(val: &AstNodeKind) -> Self {
         match val {
             AstNodeKind::Integer(n) => n.to_string(),
-            AstNodeKind::Id(s) | AstNodeKind::String(s) => s,
+            AstNodeKind::Id(s) | AstNodeKind::String(s) => s.clone(),
             AstNodeKind::Assignment { assignee, .. } => assignee.into(),
-            AstNodeKind::ArrayVal { name, .. } => name,
+            AstNodeKind::ArrayVal { name, .. } => name.clone(),
             node => unreachable!("Node {:?}, cannot be a string", node),
         }
     }

@@ -34,7 +34,7 @@ fn parse_ast<'a>(ast: &'a AstNode, debug: bool) -> Results<'a, QuadrupleManager>
         println!("{:#?}", dir_func);
     }
     let mut quad_manager = QuadrupleManager::new(dir_func);
-    quad_manager.parse(ast.clone())?;
+    quad_manager.parse(ast)?;
     if debug {
         println!("Quads created sucessfully");
         println!("{}", quad_manager);

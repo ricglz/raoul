@@ -14,9 +14,15 @@ pub struct AstNode<'a> {
     pub span: Span<'a>,
 }
 
+impl<'a> From<&AstNode<'a>> for String {
+    fn from(val: &AstNode) -> Self {
+        Self::from(&val.kind)
+    }
+}
+
 impl<'a> From<AstNode<'a>> for String {
     fn from(val: AstNode) -> Self {
-        val.kind.into()
+        Self::from(&val)
     }
 }
 
