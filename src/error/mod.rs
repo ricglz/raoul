@@ -2,6 +2,7 @@
 pub mod error_kind;
 
 use core::fmt;
+use std::fmt::Debug;
 
 use pest::error::{Error, ErrorVariant};
 use pest::Span;
@@ -56,6 +57,17 @@ impl RaoulError<'_> {
             Ok(())
         } else {
             Err(errors)
+        }
+    }
+
+    pub fn create_partition<'a, T: Debug, I: IntoIterator<Item = Results<'a, T>>>(
+        iter: I,
+    ) -> Results<'a, Vec<T>> {
+        let (oks, errors): (Vec<_>, Vec<_>) = iter.into_iter().partition(Results::is_ok);
+        if errors.is_empty() {
+            Ok(oks.into_iter().map(Results::unwrap).collect())
+        } else {
+            Err(errors.into_iter().flat_map(Results::unwrap_err).collect())
         }
     }
 }

@@ -29,13 +29,18 @@ pub struct VMContext {
 }
 
 impl VMContext {
-    pub fn new(function: Function) -> Self {
+    pub fn new(function: &Function) -> Self {
         let size = function.size();
         let address = function.address;
         let local_memory = Memory::new(&function.local_addresses);
         let temp_memory = Memory::new(&function.temp_addresses);
         let quad_pos = function.first_quad;
-        let args = function.args.into_iter().map(|v| v.address).collect();
+        let args = function
+            .args
+            .clone()
+            .into_iter()
+            .map(|v| v.address)
+            .collect();
         Self {
             address,
             args,
@@ -100,7 +105,7 @@ impl VM {
         let pointer_memory = quad_manager.pointer_memory.clone();
         let global_memory = Memory::new(&global_fn.addresses);
         let quad_list = quad_manager.quad_list.clone();
-        let main_function = functions.get("main").unwrap().clone();
+        let main_function = functions.get("main").unwrap();
         let stack_size = main_function.size();
         let initial_context = VMContext::new(main_function);
         Self {
@@ -121,7 +126,7 @@ impl VM {
         }
     }
 
-    fn add_call_stack(&mut self, function: Function) -> VMResult<()> {
+    fn add_call_stack(&mut self, function: &Function) -> VMResult<()> {
         self.stack_size += function.size();
         if self.stack_size > STACK_SIZE_CAP || self.contexts_stack.len() == STACK_SIZE_CAP {
             return Err("Stack overflow!");
@@ -136,13 +141,13 @@ impl VM {
     }
 
     #[inline]
-    fn local_addresses(&self) -> Memory {
-        self.current_context().local_memory.clone()
+    fn local_addresses(&self) -> &Memory {
+        &self.current_context().local_memory
     }
 
     #[inline]
-    fn temp_addresses(&self) -> Memory {
-        self.current_context().temp_memory.clone()
+    fn temp_addresses(&self) -> &Memory {
+        &self.current_context().temp_memory
     }
 
     #[inline]
@@ -166,8 +171,8 @@ impl VM {
     }
 
     #[inline]
-    fn get_function(&self, first_quad: usize) -> Function {
-        self.functions.get(&first_quad).unwrap().clone()
+    fn get_function(&self, first_quad: usize) -> &Function {
+        self.functions.get(&first_quad).unwrap()
     }
 
     fn get_current_quad(&self) -> Quadruple {
@@ -294,8 +299,8 @@ impl VM {
     fn process_era(&mut self) -> VMResult<()> {
         let quad = self.get_current_quad();
         let first_quad = quad.op_2.unwrap();
-        let function = self.get_function(first_quad);
-        self.add_call_stack(function)
+        let function = self.get_function(first_quad).clone();
+        self.add_call_stack(&function)
     }
 
     fn process_go_sub(&mut self) {
@@ -311,8 +316,8 @@ impl VM {
     }
 
     #[inline]
-    fn current_call(&self) -> VMContext {
-        self.call_stack.last().unwrap().clone()
+    fn current_call(&self) -> &VMContext {
+        self.call_stack.last().unwrap()
     }
 
     #[inline]

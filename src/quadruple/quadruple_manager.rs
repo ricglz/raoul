@@ -147,7 +147,7 @@ impl QuadrupleManager {
         node: &AstNode<'a>,
         exprs: &[AstNode<'a>],
         args: &[Variable],
-    ) -> Results<'a, Vec<(usize, Types)>> {
+    ) -> Results<'a, Vec<Operand>> {
         if args.len() != exprs.len() {
             let kind = RaoulErrorKind::UnmatchArgsAmount {
                 expected: args.len(),
@@ -155,21 +155,14 @@ impl QuadrupleManager {
             };
             return Err(vec![RaoulError::new(node, kind)]);
         }
-        let (addresses, errors): (Vec<_>, Vec<_>) = exprs
-            .iter()
-            .enumerate()
-            .map(|(i, node)| -> Results<(usize, Types)> {
+        let addresses = RaoulError::create_partition(exprs.iter().enumerate().map(
+            |(i, node)| -> Results<(usize, Types)> {
                 let (v, v_type) = self.parse_expr(node)?;
-                let arg_type = args.get(i).unwrap().data_type;
-                v_type.assert_cast(arg_type, node)?;
+                v_type.assert_cast(args.get(i).unwrap().data_type, node)?;
                 Ok((v, v_type))
-            })
-            .partition(Results::is_ok);
-        if errors.is_empty() {
-            Ok(addresses.into_iter().map(Results::unwrap).collect())
-        } else {
-            Err(errors.into_iter().flat_map(Results::unwrap_err).collect())
-        }
+            },
+        ))?;
+        Ok(addresses)
     }
 
     fn add_era_quad(&mut self, name: &str) {
@@ -468,12 +461,12 @@ impl QuadrupleManager {
             RaoulError::create_results(exprs.into_iter().enumerate().map(
                 |(i, exprs)| -> Results<()> {
                     let idx_1 = Box::new(AstNode::new(AstNodeKind::from(i), &node.span));
-                    RaoulError::create_results(exprs.expand_array().into_iter().enumerate().map(
+                    RaoulError::create_results(exprs.expand_array().iter().enumerate().map(
                         |(j, expr)| -> Results<()> {
                             let idx_2 = Box::new(AstNode::new(AstNodeKind::from(j), &expr.span));
                             let (variable_address, _) =
                                 self.get_array_val_operand(&name, node, &*idx_1, Some(idx_2))?;
-                            self.add_assign_quad(variable_address, &expr)
+                            self.add_assign_quad(variable_address, expr)
                         },
                     ))
                 },

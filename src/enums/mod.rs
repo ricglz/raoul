@@ -118,7 +118,6 @@ impl Types {
         variables: &VariablesTable,
         global: &VariablesTable,
     ) -> Results<'a, Types> {
-        let clone = v.clone();
         match &v.kind {
             AstNodeKind::Integer(_) | AstNodeKind::PureDataframeOp { .. } => Ok(Types::Int),
             AstNodeKind::Float(_)
@@ -130,7 +129,7 @@ impl Types {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
-                        &clone,
+                        v,
                         RaoulErrorKind::UndeclaredVar(name.to_string()),
                     )),
                 }
@@ -139,38 +138,34 @@ impl Types {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
-                        &clone,
+                        v,
                         RaoulErrorKind::UndeclaredFunction(name.to_string()),
                     )),
                 }
             }
             AstNodeKind::ArrayDeclaration { data_type, .. } => Ok(*data_type),
             AstNodeKind::Array(exprs) => {
-                let (types, errors): (Vec<_>, Vec<_>) = exprs
-                    .iter()
-                    .map(|node| Types::from_node(node, variables, global))
-                    .partition(Results::is_ok);
-                if !errors.is_empty() {
-                    return Err(errors.into_iter().flat_map(Results::unwrap_err).collect());
-                }
-                let first_type = types.get(0).unwrap().clone().unwrap();
-                RaoulError::create_results(types.into_iter().enumerate().map(|(i, v)| {
-                    let data_type = v.unwrap();
-                    let node = exprs.get(i).unwrap().clone();
-                    data_type.assert_cast(first_type, &node)
+                let types = RaoulError::create_partition(
+                    exprs
+                        .iter()
+                        .map(|node| Types::from_node(node, variables, global)),
+                )?;
+                let first_type = *(types.get(0).unwrap());
+                RaoulError::create_results(types.into_iter().enumerate().map(|(i, data_type)| {
+                    data_type.assert_cast(first_type, exprs.get(i).unwrap())
                 }))?;
                 Ok(first_type)
             }
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;
                 let rhs_type = Types::from_node(&*rhs, variables, global)?;
-                lhs_type.assert_bin_op(*operator, rhs_type, &clone)
+                lhs_type.assert_bin_op(*operator, rhs_type, v)
             }
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
                     let operand_type = Types::from_node(&*operand, variables, global)?;
                     let res_type = Types::Bool;
-                    operand_type.assert_cast(res_type, &clone)?;
+                    operand_type.assert_cast(res_type, v)?;
                     Ok(res_type)
                 }
                 _ => unreachable!("{:?}", operator),
