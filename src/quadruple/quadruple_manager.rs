@@ -25,7 +25,7 @@ pub struct QuadrupleManager {
     pub quad_list: Vec<Quadruple>,
 }
 
-type Operand = (usize, Types);
+pub type Operand = (usize, Types);
 
 fn safe_address<'a, T>(option: Option<T>, node: &AstNode<'a>) -> Results<'a, T> {
     match option {
@@ -146,7 +146,7 @@ impl QuadrupleManager {
         &mut self,
         node: &AstNode<'a>,
         exprs: &[AstNode<'a>],
-        args: &[Variable],
+        args: &[Operand],
     ) -> Results<'a, Vec<Operand>> {
         if args.len() != exprs.len() {
             let kind = RaoulErrorKind::UnmatchArgsAmount {
@@ -158,7 +158,7 @@ impl QuadrupleManager {
         let addresses = RaoulError::create_partition(exprs.iter().enumerate().map(
             |(i, node)| -> Results<(usize, Types)> {
                 let (v, v_type) = self.parse_expr(node)?;
-                v_type.assert_cast(args.get(i).unwrap().data_type, node)?;
+                v_type.assert_cast(args.get(i).unwrap().1, node)?;
                 Ok((v, v_type))
             },
         ))?;

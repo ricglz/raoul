@@ -35,12 +35,7 @@ impl VMContext {
         let local_memory = Memory::new(&function.local_addresses);
         let temp_memory = Memory::new(&function.temp_addresses);
         let quad_pos = function.first_quad;
-        let args = function
-            .args
-            .clone()
-            .into_iter()
-            .map(|v| v.address)
-            .collect();
+        let args = function.args.iter().map(|v| v.0).collect();
         Self {
             address,
             args,

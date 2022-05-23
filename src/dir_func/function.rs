@@ -6,6 +6,7 @@ use crate::{
     ast::AstNode,
     enums::Types,
     error::{error_kind::RaoulErrorKind, RaoulError, Results},
+    quadruple::quadruple_manager::Operand,
 };
 
 use super::variable::{Dimensions, Variable};
@@ -48,7 +49,7 @@ pub trait Scope {
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
     pub address: usize,
-    pub args: Vec<Variable>,
+    pub args: Vec<Operand>,
     pub first_quad: usize,
     pub local_addresses: AddressManager,
     pub name: String,
@@ -79,21 +80,20 @@ impl Function {
     ) -> Results<'a, ()> {
         match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => {
-                let variable_clone = variable.clone();
+                let address = variable.address;
+                let data_type = variable.data_type;
                 let result = if global {
                     global_fn.insert_variable(variable)
                 } else {
                     self.insert_variable(variable)
                 };
-                match result {
-                    Ok(_) => {
-                        if argument {
-                            self.args.push(variable_clone);
-                        }
-                        Ok(())
-                    }
-                    Err(kind) => Err(RaoulError::new_vec(node, kind)),
+                if let Err(kind) = result {
+                    return Err(RaoulError::new_vec(node, kind));
                 }
+                if argument {
+                    self.args.push((address, data_type));
+                }
+                Ok(())
             }
             Err(errors) => Err(errors),
         }
