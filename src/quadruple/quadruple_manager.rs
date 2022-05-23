@@ -155,10 +155,10 @@ impl QuadrupleManager {
             };
             return Err(vec![RaoulError::new(node, kind)]);
         }
-        let addresses = RaoulError::create_partition(exprs.iter().enumerate().map(
-            |(i, node)| -> Results<(usize, Types)> {
+        let addresses = RaoulError::create_partition(exprs.iter().zip(args).map(
+            |(node, (_, arg_type))| -> Results<(usize, Types)> {
                 let (v, v_type) = self.parse_expr(node)?;
-                v_type.assert_cast(args.get(i).unwrap().1, node)?;
+                v_type.assert_cast(*arg_type, node)?;
                 Ok((v, v_type))
             },
         ))?;

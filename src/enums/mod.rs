@@ -151,9 +151,12 @@ impl Types {
                         .map(|node| Types::from_node(node, variables, global)),
                 )?;
                 let first_type = *(types.get(0).unwrap());
-                RaoulError::create_results(types.into_iter().enumerate().map(|(i, data_type)| {
-                    data_type.assert_cast(first_type, exprs.get(i).unwrap())
-                }))?;
+                RaoulError::create_results(
+                    types
+                        .into_iter()
+                        .zip(exprs)
+                        .map(|(data_type, node)| data_type.assert_cast(first_type, node)),
+                )?;
                 Ok(first_type)
             }
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {

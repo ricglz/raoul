@@ -253,7 +253,7 @@ impl<'a> AstNodeKind<'a> {
                 let dim2 = exprs.get(0).unwrap().get_dimensions()?.0;
                 let errors: Vec<_> = exprs
                     .iter()
-                    .map(|expr| -> Result<(), Dimensions> {
+                    .map(|expr| {
                         let expr_dim_1 = expr.get_dimensions()?.0;
                         if expr_dim_1 == dim2 {
                             Ok(())
