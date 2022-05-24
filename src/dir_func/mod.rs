@@ -17,9 +17,11 @@ pub mod function;
 pub mod variable;
 pub mod variable_value;
 
-#[derive(PartialEq, Debug)]
+pub type FunctionTable = HashMap<String, Function>;
+
+#[derive(PartialEq, Debug, Clone)]
 pub struct DirFunc {
-    pub functions: HashMap<String, Function>,
+    pub functions: FunctionTable,
     pub global_fn: GlobalScope,
 }
 
