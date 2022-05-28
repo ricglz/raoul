@@ -393,13 +393,13 @@ impl LanguageParser {
                 let name = String::from(name);
                 let idx_1 = Box::new(idx_1);
                 let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: None };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
             [id(name), expr(idx_1), expr(idx_2)] => {
                 let name = String::from(name);
                 let idx_1 = Box::new(idx_1);
                 let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: Some(Box::new(idx_2)) };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -438,7 +438,7 @@ impl LanguageParser {
                 let kind = AstNodeKind::PureDataframeOp {
                     name, operator
                 };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -492,7 +492,7 @@ impl LanguageParser {
                 let kind = AstNodeKind::UnaryDataframeOp {
                     name, column, operator
                 };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -507,7 +507,7 @@ impl LanguageParser {
                 let kind = AstNodeKind::Correlation {
                     name, column_1, column_2
                 };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -530,7 +530,7 @@ impl LanguageParser {
                 let kind = AstNodeKind::Plot {
                     name, column_1, column_2
                 };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -543,7 +543,7 @@ impl LanguageParser {
                 let column = Box::new(col);
                 let bins = Box::new(bins);
                 let kind = AstNodeKind::Histogram { name, column, bins };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -608,7 +608,7 @@ impl LanguageParser {
                 };
                 let expr = Box::new(AstNode::new(expr_kind, &stop_expr.span));
                 let kind = AstNodeKind::For { assignment: Box::new(assignment), expr, statements };
-                AstNode::new(kind, &span)
+                AstNode { kind, span }
             },
         ))
     }
@@ -697,13 +697,13 @@ impl LanguageParser {
         ))
     }
 
-    fn block<'a>(input: Node<'a>) -> Result<Vec<AstNode<'a>>> {
+    fn block(input: Node) -> Result<Vec<AstNode>> {
         Ok(match_nodes!(input.into_children();
             [statement(statements)..] => statements.collect(),
         ))
     }
 
-    fn block_or_statement<'a>(input: Node<'a>) -> Result<Vec<AstNode<'a>>> {
+    fn block_or_statement(input: Node) -> Result<Vec<AstNode>> {
         Ok(match_nodes!(input.into_children();
             [inline_statement(statements)] => vec![statements],
             [block(block)] => block,
