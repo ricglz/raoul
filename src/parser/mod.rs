@@ -196,13 +196,20 @@ impl LanguageParser {
         ))
     }
 
-    fn possible_str(input: Node) -> Result<AstNode> {
+    fn non_cte(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
             [expr(expr)] => expr,
-            [string_value(string)] => string,
             [id(id)] => id,
             [func_call(call)] => call,
             [arr_val(id)] => id,
+            [dataframe_value_ops(id)] => id,
+        ))
+    }
+
+    fn possible_str(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [non_cte(expr)] => expr,
+            [string_value(string)] => string,
         ))
     }
 
@@ -319,14 +326,11 @@ impl LanguageParser {
     fn operand_value(input: Node) -> Result<AstNode> {
         Ok(match_nodes!(input.into_children();
             [expr(expr)] => expr,
+            [non_cte(expr)] => expr,
             [int_cte(number)] => number,
             [float_cte(number)] => number,
             [string_value(string)] => string,
             [bool_cte(value)] => value,
-            [id(id)] => id,
-            [func_call(call)] => call,
-            [arr_val(id)] => id,
-            [dataframe_value_ops(id)] => id,
         ))
     }
 
@@ -336,24 +340,10 @@ impl LanguageParser {
         ))
     }
 
-    fn read(input: Node) -> Result<AstNode> {
-        Ok(AstNode::new(AstNodeKind::Read, &input.as_span()))
-    }
-
-    fn assignment_exp(input: Node) -> Result<AstNode> {
-        Ok(match_nodes!(input.into_children();
-            [expr(value)] => value,
-            [read(value)] => value,
-            [declare_arr(value)] => value,
-            [arr_cte(arr)] => arr,
-            [read_csv(v)] => v,
-        ))
-    }
-
     // Arrays
     fn declare_arr_type(input: Node) -> Result<Types> {
         Ok(match_nodes!(input.into_children();
-            [types(data_type)] => data_type,
+            [atomic_types(data_type)] => data_type,
         ))
     }
 
@@ -628,6 +618,20 @@ impl LanguageParser {
         Ok(match_nodes!(input.into_children();
             [id(id)] => Box::new(id),
             [arr_val(id)] => Box::new(id),
+        ))
+    }
+
+    fn read(input: Node) -> Result<AstNode> {
+        Ok(AstNode::new(AstNodeKind::Read, &input.as_span()))
+    }
+
+    fn assignment_exp(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [expr(value)] => value,
+            [read(value)] => value,
+            [declare_arr(value)] => value,
+            [arr_cte(arr)] => arr,
+            [read_csv(v)] => v,
         ))
     }
 

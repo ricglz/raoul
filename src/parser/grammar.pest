@@ -133,8 +133,8 @@ STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
 ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
 arr_index    = _{ L_SQUARE ~ expr ~ R_SQUARE }
 arr_val      = { id ~ arr_index{1,2} }
-NON_CTE      = _{ dataframe_value_ops | func_call | arr_val | id }
-VAR_VAL      = _{ ATOM_CTE | NON_CTE }
+non_cte      = { dataframe_value_ops | func_call | arr_val | id }
+VAR_VAL      = _{ ATOM_CTE | non_cte }
 
 expr          = { and_term ~ (OR ~ and_term)* }
 and_term      = { comp_term ~ (AND ~ comp_term)* }
@@ -151,8 +151,8 @@ types          = { atomic_types | void}
 
 read = { INPUT ~ L_PAREN ~ R_PAREN }
 
-declare_arr_type = {DECLARE_KEY ~ "<" ~ types ~ ">" ~ L_PAREN}
-declare_arr      = { declare_arr_type ~ int_cte ~ (COMMA ~ int_cte)? ~ R_PAREN }
+declare_arr_type = {"<" ~ atomic_types ~ ">" }
+declare_arr      = {DECLARE_KEY ~ declare_arr_type ~ L_PAREN ~ int_cte ~ (COMMA ~ int_cte)? ~ R_PAREN }
 
 list_cte = { L_SQUARE ~ exprs ~ R_SQUARE }
 mat_cte  = {L_SQUARE ~ list_cte ~ ( COMMA ~ list_cte )* ~ R_SQUARE }
@@ -185,7 +185,7 @@ while_loop = {WHILE ~ COND_EXPR ~ block_or_statement}
 
 for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block_or_statement}
 
-possible_str        = {STRING_CTE | NON_CTE}
+possible_str        = {STRING_CTE | non_cte}
 read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ R_PAREN}
 pure_dataframe_key  = { get_rows | get_columns }
 pure_dataframe_op   = { pure_dataframe_key ~ L_PAREN ~ id ~ R_PAREN }
