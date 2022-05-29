@@ -1,0 +1,31 @@
+func fibo(n: int): int {
+  if (n <= 1) return n;
+  a = 0;
+  b = 1;
+  for (i = 2 to n) {
+    next = a + b;
+    a = b;
+    b = next;
+  }
+  return next;
+}
+
+func recursiveFibo(n: int): int {
+  if (n <= 1) return n;
+  return recursiveFibo(n - 2) + recursiveFibo(n - 1);
+}
+
+func main(): void {
+  option = -1;
+  while (option != 0 AND option != 1) {
+    print("What option you want to use");
+    print("  0 = Iterative");
+    print("  1 = Recursive");
+    option = input();
+  }
+  print("What fibonacci number you want to calculate?");
+  n = input();
+  if (option == 0) print(fibo(n));
+  else if (option == 1) print(recursiveFibo(n));
+  else print("This should not happen");
+}

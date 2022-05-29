@@ -1,0 +1,25 @@
+func factorial(n: int): int {
+  accum = 1;
+  for (i = 2 to n) accum = accum * i;
+  return accum;
+}
+
+func recursiveFactorial(n: int): int {
+  if (n == 0) return 1;
+  return n * recursiveFactorial(n - 1);
+}
+
+func main(): void {
+  option = -1;
+  while (option != 0 AND option != 1) {
+    print("What option you want to use");
+    print("  0 = Iterative");
+    print("  1 = Recursive");
+    option = input();
+  }
+  print("What factorial number you want to calculate?");
+  n = input();
+  if (option == 0) print(factorial(n));
+  else if (option == 1) print(recursiveFactorial(n));
+  else print("This should not happen");
+}
