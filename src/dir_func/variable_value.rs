@@ -17,7 +17,7 @@ impl VariableValue {
     pub fn from_stdin() -> Self {
         let mut line = String::new();
         stdin().read_line(&mut line).unwrap();
-        Self::String(line)
+        Self::String(line.replace("\n", ""))
     }
 
     pub fn is_number(&self) -> bool {
@@ -109,7 +109,10 @@ impl TryFrom<&VariableValue> for f64 {
         };
         match string.parse::<Self>() {
             Ok(a) => Ok(a),
-            Err(_) => Err("Could not parse to float"),
+            Err(_) => {
+                println!("Given: {string}");
+                Err("Could not parse to float")
+            }
         }
     }
 }
@@ -188,7 +191,10 @@ impl TryFrom<VariableValue> for i64 {
         };
         match string.parse::<Self>() {
             Ok(a) => Ok(a),
-            Err(_) => Err("Could not parse to float"),
+            Err(_) => {
+                println!("Given: {string}");
+                Err("Could not parse to int")
+            }
         }
     }
 }
