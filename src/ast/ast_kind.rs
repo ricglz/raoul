@@ -52,18 +52,14 @@ pub enum AstNodeKind<'a> {
         name: String,
         return_type: Types,
     },
-    Write {
-        exprs: Nodes<'a>,
-    },
+    Write(Nodes<'a>),
     Read,
     Decision {
         expr: BoxedNode<'a>,
         statements: Nodes<'a>,
         else_block: Option<BoxedNode<'a>>,
     },
-    ElseBlock {
-        statements: Nodes<'a>,
-    },
+    ElseBlock(Nodes<'a>),
     While {
         expr: BoxedNode<'a>,
         statements: Nodes<'a>,
@@ -180,7 +176,7 @@ impl fmt::Debug for AstNodeKind<'_> {
                     name, return_type, arguments, body
                 )
             }
-            Self::Write { exprs } => write!(f, "Write({:?})", exprs),
+            Self::Write(exprs) => write!(f, "Write({:?})", exprs),
             Self::Read => write!(f, "Read"),
             Self::BinaryOperation { operator, lhs, rhs } => {
                 write!(f, "BinaryOperation({:?}, {:?}, {:?})", operator, lhs, rhs)
@@ -192,7 +188,7 @@ impl fmt::Debug for AstNodeKind<'_> {
             } => {
                 write!(f, "Decision({expr:?}, {statements:?}, {else_block:?})")
             }
-            Self::ElseBlock { statements } => write!(f, "ElseBlock({:?})", statements),
+            Self::ElseBlock(statements) => write!(f, "ElseBlock({:?})", statements),
             Self::While { expr, statements } => write!(f, "While({:?}, {:?})", expr, statements),
             Self::For {
                 expr,

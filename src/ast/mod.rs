@@ -48,7 +48,7 @@ impl<'a> AstNode<'a> {
     pub fn expand_node(v: &AstNode<'a>) -> Nodes<'a> {
         match &v.kind {
             AstNodeKind::Decision { statements, .. }
-            | AstNodeKind::ElseBlock { statements }
+            | AstNodeKind::ElseBlock(statements)
             | AstNodeKind::While { statements, .. } => {
                 statements.iter().flat_map(AstNode::expand_node).collect()
             }

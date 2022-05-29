@@ -553,7 +553,7 @@ impl LanguageParser {
         let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [block_or_statement(statements)] => {
-                let kind = AstNodeKind::ElseBlock { statements };
+                let kind = AstNodeKind::ElseBlock(statements);
                 AstNode {kind, span}
             },
             [decision(decision)] => decision,
@@ -663,7 +663,7 @@ impl LanguageParser {
         let span = input.as_span();
         Ok(match_nodes!(input.into_children();
             [exprs(exprs)] => {
-                AstNode { kind: AstNodeKind::Write { exprs }, span }
+                AstNode { kind: AstNodeKind::Write(exprs), span }
             },
         ))
     }

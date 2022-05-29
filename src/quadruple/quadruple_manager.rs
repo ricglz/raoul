@@ -545,7 +545,7 @@ impl QuadrupleManager {
                 global,
                 value,
             } => self.parse_assignment(&*assignee, *global, &*value, node),
-            AstNodeKind::Write { exprs } => {
+            AstNodeKind::Write(exprs) => {
                 RaoulError::create_results(exprs.iter().map(|expr| -> Results<()> {
                     let (address, _) = self.parse_expr(expr)?;
                     self.add_quad(Quadruple::new_arg(Operator::Print, address));
@@ -576,7 +576,7 @@ impl QuadrupleManager {
                 }
                 Ok(())
             }
-            AstNodeKind::ElseBlock { statements } => self.parse_body(statements),
+            AstNodeKind::ElseBlock(statements) => self.parse_body(statements),
             AstNodeKind::While { expr, statements } => {
                 self.jump_list.push(self.quad_list.len());
                 let (res_address, _) = self.assert_expr_type(&*expr, Types::Bool)?;
