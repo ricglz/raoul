@@ -1,4 +1,4 @@
-use super::AstNode;
+use super::{BoxedNode, Nodes};
 use crate::{
     dir_func::variable::Dimensions,
     enums::{Operator, Types},
@@ -12,7 +12,7 @@ pub enum AstNodeKind<'a> {
     Float(f64),
     String(String),
     Bool(bool),
-    Array(Vec<AstNode<'a>>),
+    Array(Nodes<'a>),
     ArrayDeclaration {
         data_type: Types,
         dim1: usize,
@@ -20,88 +20,88 @@ pub enum AstNodeKind<'a> {
     },
     ArrayVal {
         name: String,
-        idx_1: Box<AstNode<'a>>,
-        idx_2: Option<Box<AstNode<'a>>>,
+        idx_1: BoxedNode<'a>,
+        idx_2: Option<BoxedNode<'a>>,
     },
     Assignment {
-        assignee: Box<AstNode<'a>>,
+        assignee: BoxedNode<'a>,
         global: bool,
-        value: Box<AstNode<'a>>,
+        value: BoxedNode<'a>,
     },
     UnaryOperation {
         operator: Operator,
-        operand: Box<AstNode<'a>>,
+        operand: BoxedNode<'a>,
     },
     BinaryOperation {
         operator: Operator,
-        lhs: Box<AstNode<'a>>,
-        rhs: Box<AstNode<'a>>,
+        lhs: BoxedNode<'a>,
+        rhs: BoxedNode<'a>,
     },
     Main {
-        assignments: Vec<AstNode<'a>>,
-        body: Vec<AstNode<'a>>,
-        functions: Vec<AstNode<'a>>,
+        assignments: Nodes<'a>,
+        body: Nodes<'a>,
+        functions: Nodes<'a>,
     },
     Argument {
         arg_type: Types,
         name: String,
     },
     Function {
-        arguments: Vec<AstNode<'a>>,
-        body: Vec<AstNode<'a>>,
+        arguments: Nodes<'a>,
+        body: Nodes<'a>,
         name: String,
         return_type: Types,
     },
     Write {
-        exprs: Vec<AstNode<'a>>,
+        exprs: Nodes<'a>,
     },
     Read,
     Decision {
-        expr: Box<AstNode<'a>>,
-        statements: Vec<AstNode<'a>>,
-        else_block: Option<Box<AstNode<'a>>>,
+        expr: BoxedNode<'a>,
+        statements: Nodes<'a>,
+        else_block: Option<BoxedNode<'a>>,
     },
     ElseBlock {
-        statements: Vec<AstNode<'a>>,
+        statements: Nodes<'a>,
     },
     While {
-        expr: Box<AstNode<'a>>,
-        statements: Vec<AstNode<'a>>,
+        expr: BoxedNode<'a>,
+        statements: Nodes<'a>,
     },
     For {
-        assignment: Box<AstNode<'a>>,
-        expr: Box<AstNode<'a>>,
-        statements: Vec<AstNode<'a>>,
+        assignment: BoxedNode<'a>,
+        expr: BoxedNode<'a>,
+        statements: Nodes<'a>,
     },
     FuncCall {
         name: String,
-        exprs: Vec<AstNode<'a>>,
+        exprs: Nodes<'a>,
     },
-    Return(Box<AstNode<'a>>),
-    ReadCSV(Box<AstNode<'a>>),
+    Return(BoxedNode<'a>),
+    ReadCSV(BoxedNode<'a>),
     PureDataframeOp {
         name: String,
         operator: Operator,
     },
     UnaryDataframeOp {
-        column: Box<AstNode<'a>>,
+        column: BoxedNode<'a>,
         name: String,
         operator: Operator,
     },
     Correlation {
         name: String,
-        column_1: Box<AstNode<'a>>,
-        column_2: Box<AstNode<'a>>,
+        column_1: BoxedNode<'a>,
+        column_2: BoxedNode<'a>,
     },
     Plot {
         name: String,
-        column_1: Box<AstNode<'a>>,
-        column_2: Box<AstNode<'a>>,
+        column_1: BoxedNode<'a>,
+        column_2: BoxedNode<'a>,
     },
     Histogram {
-        column: Box<AstNode<'a>>,
+        column: BoxedNode<'a>,
         name: String,
-        bins: Box<AstNode<'a>>,
+        bins: BoxedNode<'a>,
     },
 }
 

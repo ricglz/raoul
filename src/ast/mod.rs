@@ -45,7 +45,7 @@ impl<'a> From<AstNode<'a>> for usize {
 }
 
 impl<'a> AstNode<'a> {
-    pub fn expand_node(v: &AstNode<'a>) -> Vec<AstNode<'a>> {
+    pub fn expand_node(v: &AstNode<'a>) -> Nodes<'a> {
         match &v.kind {
             AstNodeKind::Decision { statements, .. }
             | AstNodeKind::ElseBlock { statements }
@@ -65,7 +65,7 @@ impl<'a> AstNode<'a> {
         }
     }
 
-    pub fn expand_array(&self) -> &Vec<AstNode<'a>> {
+    pub fn expand_array(&self) -> &Nodes<'a> {
         match &self.kind {
             AstNodeKind::Array(exprs) => exprs,
             _ => unreachable!(),
@@ -97,3 +97,6 @@ impl fmt::Debug for AstNode<'_> {
         write!(f, "{:?}", self.kind)
     }
 }
+
+pub type BoxedNode<'a> = Box<AstNode<'a>>;
+pub type Nodes<'a> = Vec<AstNode<'a>>;

@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     address::{Address, ConstantMemory, GenericAddressManager, PointerMemory},
-    ast::{ast_kind::AstNodeKind, AstNode},
+    ast::{ast_kind::AstNodeKind, AstNode, BoxedNode},
     dir_func::{
         function::{Function, VariablesTable},
         variable::Variable,
@@ -284,7 +284,7 @@ impl QuadrupleManager {
         name: &str,
         node: &AstNode<'a>,
         idx_1: &AstNode<'a>,
-        idx_2: Option<Box<AstNode<'a>>>,
+        idx_2: Option<BoxedNode<'a>>,
     ) -> Results<'a, Operand> {
         let idx_1_op = &self.assert_expr_type(idx_1, Types::Int)?;
         let idx_2_op = match idx_2 {
