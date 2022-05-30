@@ -1,0 +1,6 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/invalid/dynamic/array-list-negative.ra
+---
+[]

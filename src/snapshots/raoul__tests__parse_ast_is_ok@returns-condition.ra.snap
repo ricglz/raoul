@@ -1,0 +1,30 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/returns-condition.ra
+---
+0 - Goto       -     -     16   
+1 - Lt         3000  3001  2750 
+2 - GotoF      2750  -     4    
+3 - Return     3000  -     -    
+4 - Return     3001  -     -    
+5 - EndProc    -     -     -    
+6 - Lt         3000  3001  2750 
+7 - GotoF      2750  -     10   
+8 - Return     3002  -     -    
+9 - Goto       -     -     15   
+10 - Lt         3000  3002  2750 
+11 - GotoF      2750  -     14   
+12 - Return     3003  -     -    
+13 - Goto       -     -     15   
+14 - Return     3004  -     -    
+15 - EndProc    -     -     -    
+16 - Era        1     1     -    
+17 - GoSub      1     -     -    
+18 - Era        1     6     -    
+19 - GoSub      6     -     -    
+20 - Print      0     -     -    
+21 - Print      1     -     -    
+22 - PrintNl    -     -     -    
+23 - End        -     -     -    
+

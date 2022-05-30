@@ -1,0 +1,5 @@
+func main(): void {
+  a = declare_arr<int>(3);
+  a[3] = 2;
+  print(a[3]);
+}

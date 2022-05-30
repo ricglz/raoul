@@ -1,0 +1,10 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/mat-inconsistent-size.ra
+---
+Main(([], [
+    Assignment(false, Id(a), Array([Array([Integer(1)]), Array([Integer(2), Integer(3)])])),
+    Assignment(false, ArrayDeclaration(a, Integer(1), Some(Integer(2))), Integer(1)),
+    Write([ArrayDeclaration(a, Integer(1), Some(Integer(2)))]),
+]))

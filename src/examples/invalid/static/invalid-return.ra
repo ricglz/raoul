@@ -1,0 +1,8 @@
+func test(): int {
+  return false;
+}
+
+func main(): void {
+  a = test();
+  print(a);
+}

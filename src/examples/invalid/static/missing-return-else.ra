@@ -1,0 +1,11 @@
+func test(): int {
+  if (0 < 1) {
+    print("hola");
+  } else {
+    return 1;
+  }
+}
+
+func main(): void {
+  print(test());
+}

@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/redefine-variable-type.ra
+---
+[
+     --> 3:3
+      |
+    3 |   a = "2";␊
+      |   ^-----^
+      |
+      = "a" was originally defined as INT and you're attempting to redefined it as a STRING,
+]

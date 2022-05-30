@@ -51,7 +51,10 @@ impl DirFunc {
         let node_clone = node.clone();
         let function = Function::try_create(node, &mut self.global_fn)?;
         if function.return_type != Types::VOID {
-            let address = self.global_fn.addresses.get_address(&function.return_type);
+            let address = self
+                .global_fn
+                .addresses
+                .get_address(&function.return_type, (None, None));
             match address {
                 Some(address) => {
                     let result = self

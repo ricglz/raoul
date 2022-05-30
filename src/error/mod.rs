@@ -33,6 +33,10 @@ impl RaoulError<'_> {
         }
     }
 
+    pub fn new_vec<'a>(node: AstNode<'a>, kind: RaoulErrorKind) -> Vec<RaoulError<'a>> {
+        vec![RaoulError::new(node, kind)]
+    }
+
     pub fn is_invalid(&self) -> bool {
         return self.kind.to_owned() == RaoulErrorKind::Invalid;
     }

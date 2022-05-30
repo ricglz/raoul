@@ -30,7 +30,7 @@ mod tests {
 
     #[test]
     fn valid_files() {
-        let paths = read_dir("examples/valid").unwrap();
+        let paths = read_dir("src/examples/valid").unwrap();
         for path in paths {
             let file_path = path.expect("File must exist").path();
             let file = file_path.to_str().unwrap();
@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn invalid_file() {
-        let filename = "examples/invalid/syntax-error.ra";
+        let filename = "src/examples/invalid/syntax/syntax-error.ra";
         assert!(parse_file(&filename, true).is_err());
     }
 }

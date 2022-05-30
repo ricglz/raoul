@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/array-simple.ra
+---
+[
+    "1",
+    "2",
+    "3",
+    "2",
+    "1",
+    "\n",
+]

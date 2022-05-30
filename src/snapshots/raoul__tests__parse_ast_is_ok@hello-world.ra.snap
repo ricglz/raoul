@@ -1,0 +1,10 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/hello-world.ra
+---
+0 - Goto       -     -     1    
+1 - Print      3500  -     -    
+2 - PrintNl    -     -     -    
+3 - End        -     -     -    
+

@@ -1,0 +1,9 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/while.ra
+---
+[
+    "10",
+    "\n",
+]

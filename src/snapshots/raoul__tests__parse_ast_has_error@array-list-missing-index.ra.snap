@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/array-list-missing-index.ra
+---
+[
+     --> 3:9
+      |
+    3 |   print(a);␊
+      |         ^
+      |
+      = We can't handle using the complete array,
+]

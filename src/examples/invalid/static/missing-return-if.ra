@@ -1,0 +1,10 @@
+func test(): int {
+  if (1 < 2) {
+    return 1;
+  }
+}
+
+func main(): void {
+  a = test();
+  print(a);
+}

@@ -4,76 +4,84 @@ use crate::{
     ast::AstNode,
     enums::Types,
     error::error_kind::RaoulErrorKind,
-    error::{RaoulError, Result},
+    error::{RaoulError, Results},
 };
 
-use super::function::{Function, GlobalScope};
+use super::function::{Function, GlobalScope, Scope};
+
+pub type Dimensions = (Option<usize>, Option<usize>);
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Variable {
-    pub data_type: Types,
-    pub name: String,
     pub address: usize,
+    pub data_type: Types,
+    pub dimensions: Dimensions,
+    pub name: String,
 }
 
 impl Variable {
     pub fn from_node<'a>(
         v: AstNode<'a>,
-        current_function: &mut Function,
+        current_fn: &mut Function,
         global_fn: &mut GlobalScope,
-    ) -> Result<'a, (Variable, bool)> {
+    ) -> Results<'a, (Variable, bool)> {
         let node = v.clone();
         match v.kind {
             AstNodeKind::Assignment {
-                name,
-                value: node_value,
+                assignee,
+                value,
                 global,
             } => {
-                let data_type = Types::from_node(
-                    *node_value,
-                    &current_function.variables,
-                    &global_fn.variables,
-                )?;
+                let name: String = assignee.into();
+                let data_type =
+                    Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
+                let res = value.get_dimensions();
+                if let Err((expected, given)) = res {
+                    let kind = RaoulErrorKind::InconsistentSize { expected, given };
+                    return Err(RaoulError::new_vec(node, kind));
+                }
+                let dimensions = res.unwrap();
                 let address = match global {
-                    true => global_fn.addresses.get_address(&data_type),
-                    false => current_function.local_addresses.get_address(&data_type),
+                    true => global_fn.get_variable_address(&name, &data_type, dimensions),
+                    false => current_fn.get_variable_address(&name, &data_type, dimensions),
                 };
                 match address {
                     Some(address) => Ok((
                         Variable {
                             data_type,
+                            dimensions,
                             name,
                             address,
                         },
                         global,
                     )),
-                    None => {
-                        let kind = RaoulErrorKind::MemoryExceded;
-                        Err(RaoulError::new(node, kind))
-                    }
+                    None => Err(RaoulError::new_vec(node, RaoulErrorKind::MemoryExceded)),
                 }
             }
             AstNodeKind::Argument {
                 arg_type: data_type,
                 name,
             } => {
-                let address = current_function.local_addresses.get_address(&data_type);
+                let address = current_fn
+                    .local_addresses
+                    .get_address(&data_type, (None, None));
                 match address {
                     Some(address) => Ok((
                         Variable {
+                            address,
                             data_type,
                             name,
-                            address,
+                            dimensions: (None, None),
                         },
                         false,
                     )),
                     None => {
                         let kind = RaoulErrorKind::MemoryExceded;
-                        Err(RaoulError::new(node, kind))
+                        Err(RaoulError::new_vec(node, kind))
                     }
                 }
             }
-            _ => Err(RaoulError::new(v, RaoulErrorKind::Invalid)),
+            _ => Err(RaoulError::new_vec(v, RaoulErrorKind::Invalid)),
         }
     }
 
@@ -82,6 +90,7 @@ impl Variable {
             address,
             data_type: function.return_type,
             name: function.name,
+            dimensions: (None, None),
         }
     }
 }

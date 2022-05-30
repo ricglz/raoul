@@ -94,6 +94,21 @@ impl From<&VariableValue> for bool {
     }
 }
 
+impl From<usize> for VariableValue {
+    fn from(v: usize) -> Self {
+        Self::Integer(v.try_into().unwrap())
+    }
+}
+
+impl From<VariableValue> for usize {
+    fn from(v: VariableValue) -> Self {
+        match v {
+            VariableValue::Integer(v) => v.try_into().unwrap(),
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl fmt::Debug for VariableValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
@@ -143,13 +158,19 @@ impl Mul for VariableValue {
 }
 
 impl Div for VariableValue {
-    type Output = Self;
+    type Output = Result<Self, &'static str>;
 
     fn div(self, other: Self) -> Self::Output {
         if let (Self::Integer(a), Self::Integer(b)) = (self.clone(), other.clone()) {
-            Self::Integer(a / b)
+            match b {
+                0 => Err("Attempt to divide by zero"),
+                b => Ok(Self::Integer(a / b)),
+            }
         } else {
-            Self::Float(f64::from(self) / f64::from(other))
+            match (f64::from(self), f64::from(other)) {
+                (_, b) if b == 0.0 => Err("Attempt to divide by zero"),
+                (a, b) => Ok(Self::Float(a / b)),
+            }
         }
     }
 }
@@ -163,13 +184,7 @@ impl PartialOrd for VariableValue {
                 a.partial_cmp(&b)
             }
             _ => match (self, other) {
-                (Self::Bool(a), Self::Bool(b)) => {
-                    if a == b {
-                        Some(std::cmp::Ordering::Equal)
-                    } else {
-                        Some(std::cmp::Ordering::Less)
-                    }
-                }
+                (Self::Bool(a), Self::Bool(b)) => a.partial_cmp(b),
                 _ => None,
             },
         }

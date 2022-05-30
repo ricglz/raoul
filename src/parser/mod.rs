@@ -319,6 +319,7 @@ impl LanguageParser {
             [bool_cte(value)] => value,
             [id(id)] => id,
             [func_call(call)] => call,
+            [arr_val(id)] => id,
         ))
     }
 
@@ -343,6 +344,72 @@ impl LanguageParser {
         Ok(match_nodes!(input.into_children();
             [expr(value)] => value,
             [read(value)] => value,
+            [declare_arr(value)] => value,
+            [arr_cte(arr)] => arr,
+        ))
+    }
+
+    // Arrays
+    fn declare_arr_type(input: Node) -> Result<Types> {
+        Ok(match_nodes!(input.into_children();
+            [types(data_type)] => data_type,
+        ))
+    }
+
+    fn declare_arr(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [declare_arr_type(data_type), int_cte(dim1)] => {
+                let kind = AstNodeKind::ArrayDeclaration { data_type, dim1: dim1.into(), dim2: None };
+                AstNode {kind, span}
+            },
+            [declare_arr_type(data_type), int_cte(dim1), int_cte(dim2)] => {
+                let kind = AstNodeKind::ArrayDeclaration { data_type, dim1: dim1.into(), dim2: Some(dim2.into()) };
+                AstNode {kind, span}
+            },
+        ))
+    }
+
+    fn list_cte(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [exprs(exprs)] => {
+                AstNode { kind: AstNodeKind::Array(exprs), span }
+            },
+        ))
+    }
+
+    fn mat_cte(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [list_cte(exprs)..] => {
+                AstNode { kind: AstNodeKind::Array(exprs.collect()), span }
+            },
+        ))
+    }
+
+    fn arr_cte(input: Node) -> Result<AstNode> {
+        Ok(match_nodes!(input.into_children();
+            [list_cte(node)] => node,
+            [mat_cte(node)] => node,
+        ))
+    }
+
+    fn arr_val(input: Node) -> Result<AstNode> {
+        let span = input.as_span().clone();
+        Ok(match_nodes!(input.into_children();
+            [id(name), expr(idx_1)] => {
+                let name = String::from(name);
+                let idx_1 = Box::new(idx_1);
+                let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: None };
+                AstNode::new(kind, span)
+            },
+            [id(name), expr(idx_1), expr(idx_2)] => {
+                let name = String::from(name);
+                let idx_1 = Box::new(idx_1);
+                let kind = AstNodeKind::ArrayVal { name, idx_1, idx_2: Some(Box::new(idx_2)) };
+                AstNode::new(kind, span)
+            },
         ))
     }
 
@@ -402,7 +469,7 @@ impl LanguageParser {
                 let expr_clone = stop_expr.clone();
                 let id_node = AstNode::new(AstNodeKind::Id(String::from(assignment_clone.kind)), assignment_clone.span);
                 let expr_kind = AstNodeKind::BinaryOperation {
-                    operator: Operator::Lt,
+                    operator: Operator::Lte,
                     lhs: Box::new(id_node),
                     rhs: Box::new(stop_expr),
                 };
@@ -414,15 +481,22 @@ impl LanguageParser {
     }
 
     // Inline statements
+    fn assignee(input: Node) -> Result<Box<AstNode>> {
+        Ok(match_nodes!(input.into_children();
+            [id(id)] => Box::new(id),
+            [arr_val(id)] => Box::new(id),
+        ))
+    }
+
     fn assignment(input: Node) -> Result<AstNode> {
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
-            [global(_), id(id), assignment_exp(value)] => {
-                let kind = AstNodeKind::Assignment { global: true, name: String::from(id), value: Box::new(value) };
+            [global(_), assignee(id), assignment_exp(value)] => {
+                let kind = AstNodeKind::Assignment { global: true, assignee: id, value: Box::new(value) };
                 AstNode { kind, span }
             },
-            [id(id), assignment_exp(value)] => {
-                let kind = AstNodeKind::Assignment { global: false, name: String::from(id), value: Box::new(value) };
+            [assignee(id), assignment_exp(value)] => {
+                let kind = AstNodeKind::Assignment { global: false, assignee: id, value: Box::new(value) };
                 AstNode { kind, span }
             },
         ))
@@ -486,10 +560,6 @@ impl LanguageParser {
     }
 
     fn function(input: Node) -> Result<AstNode> {
-        // TODO: Still misses some conditions
-        if *input.user_data() {
-            println!("function");
-        }
         let span = input.as_span().clone();
         Ok(match_nodes!(input.into_children();
             [id(id), func_args(arguments), types(return_type), block(body)] => {

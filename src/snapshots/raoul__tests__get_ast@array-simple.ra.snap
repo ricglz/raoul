@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/array-simple.ra
+---
+Main(([], [
+    Assignment(false, Id(c), ArrayDeclaration(INT, 3, None)),
+    Assignment(false, ArrayDeclaration(c, Integer(0), None), Integer(1)),
+    Assignment(false, ArrayDeclaration(c, Integer(1), None), Integer(2)),
+    Assignment(false, ArrayDeclaration(c, Integer(2), None), Integer(3)),
+    Write([ArrayDeclaration(c, Integer(0), None), ArrayDeclaration(c, Integer(1), None), ArrayDeclaration(c, Integer(2), None), ArrayDeclaration(c, Integer(1), None), ArrayDeclaration(c, Integer(0), None)]),
+]))

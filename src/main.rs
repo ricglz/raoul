@@ -22,7 +22,7 @@ mod test_parser;
 #[macro_use]
 extern crate pest_derive;
 
-use std::process::exit;
+use std::{io::Stdin, process::exit};
 
 use args::parse_args;
 
@@ -37,8 +37,7 @@ fn parse_ast<'a>(ast: AstNode<'a>, debug: bool) -> Results<'a, QuadrupleManager>
     quad_manager.parse(ast.clone())?;
     if debug {
         println!("Quads created sucessfully");
-        println!("{:#?}", quad_manager.memory);
-        println!("{:?}", quad_manager);
+        println!("{}", quad_manager);
     }
     Ok(quad_manager)
 }
@@ -69,8 +68,11 @@ fn main() {
         exit(1);
     }
     let quad_manager = res.unwrap();
-    let mut vm = VM::new(&quad_manager);
-    vm.run();
+    let mut vm: VM<Stdin> = VM::new(&quad_manager, debug);
+    if let Err(error) = vm.run() {
+        println!("[Error]: {error}");
+        exit(1);
+    }
 }
 
 #[cfg(test)]

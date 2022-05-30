@@ -1,0 +1,17 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/assignment.ra
+---
+0 - Goto       -     -     3    
+1 - Assignment 3000  -     1000 
+2 - EndProc    -     -     -    
+3 - Assignment 3001  -     1000 
+4 - Assignment 3000  -     0    
+5 - Assignment 3000  -     1000 
+6 - Assignment 3001  -     1001 
+7 - Print      1000  -     -    
+8 - Print      0     -     -    
+9 - PrintNl    -     -     -    
+10 - End        -     -     -    
+

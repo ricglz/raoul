@@ -1,0 +1,16 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/assignment.ra
+---
+Main(([
+    Function(my_function, VOID, [], [
+        Assignment(false, Id(b), Integer(2)),
+    ]),
+], [
+    Assignment(false, Id(a), Integer(1)),
+    Assignment(true, Id(c), Integer(2)),
+    Assignment(false, Id(a), Integer(2)),
+    Assignment(false, Id(b), Integer(1)),
+    Write([Id(a), Id(c)]),
+]))
