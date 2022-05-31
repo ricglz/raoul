@@ -6,6 +6,7 @@ use crate::{
     ast::AstNode,
     enums::Types,
     error::{error_kind::RaoulErrorKind, RaoulError, Results},
+    quadruple::quadruple_manager::Operand,
 };
 
 use super::variable::{Dimensions, Variable};
@@ -18,24 +19,24 @@ pub trait Scope {
     fn _insert_variable(&mut self, name: String, variable: Variable);
     fn insert_variable(&mut self, variable: Variable) -> InsertResult {
         let name = variable.name.clone();
-        match self.get_variable(&name) {
-            None => Ok(self._insert_variable(variable.name.clone(), variable)),
-            Some(stored_var) => match stored_var.data_type == variable.data_type {
-                true => Ok(()),
-                false => Err(RaoulErrorKind::RedefinedType {
+        if let Some(stored_var) = self.get_variable(&name) {
+            if !variable.data_type.can_cast(stored_var.data_type) {
+                return Err(RaoulErrorKind::RedefinedType {
                     name,
                     from: stored_var.data_type,
                     to: variable.data_type,
-                }),
-            },
+                });
+            }
+        } else {
+            self._insert_variable(name, variable);
         }
+        Ok(())
     }
-    fn _get_variable_address(&mut self, data_type: &Types, dimensions: Dimensions)
-        -> Option<usize>;
+    fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize>;
     fn get_variable_address(
         &mut self,
         name: &str,
-        data_type: &Types,
+        data_type: Types,
         dimensions: Dimensions,
     ) -> Option<usize> {
         match self.get_variable(name) {
@@ -47,18 +48,20 @@ pub trait Scope {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Function {
-    pub args: Vec<Variable>,
+    pub address: usize,
+    pub args: Vec<Operand>,
+    pub first_quad: usize,
     pub local_addresses: AddressManager,
     pub name: String,
     pub return_type: Types,
     pub temp_addresses: TempAddressManager,
     pub variables: VariablesTable,
-    pub first_quad: usize,
 }
 
 impl Function {
     fn new(name: String, return_type: Types) -> Self {
         Self {
+            address: usize::MAX,
             args: Vec::new(),
             local_addresses: AddressManager::new(TOTAL_SIZE),
             name,
@@ -71,91 +74,62 @@ impl Function {
 
     fn insert_variable_from_node<'a>(
         &mut self,
-        node: AstNode<'a>,
+        node: &AstNode<'a>,
         global_fn: &mut GlobalScope,
         argument: bool,
     ) -> Results<'a, ()> {
-        let clone = node.clone();
         match Variable::from_node(node, self, global_fn) {
             Ok((variable, global)) => {
-                let variable_clone = variable.clone();
-                let result = match global {
-                    true => global_fn.insert_variable(variable),
-                    false => self.insert_variable(variable),
+                let address = variable.address;
+                let data_type = variable.data_type;
+                let result = if global {
+                    global_fn.insert_variable(variable)
+                } else {
+                    self.insert_variable(variable)
                 };
-                match result {
-                    Ok(_) => {
-                        if argument {
-                            self.args.push(variable_clone);
-                        }
-                        Ok(())
-                    }
-                    Err(kind) => Err(RaoulError::new_vec(clone, kind)),
+                if let Err(kind) = result {
+                    return Err(RaoulError::new_vec(node, kind));
                 }
+                if argument {
+                    self.args.push((address, data_type));
+                }
+                Ok(())
             }
             Err(errors) => Err(errors),
         }
     }
 
-    fn insert<'a>(
+    fn insert_from_nodes<'a>(
         &mut self,
-        nodes: Vec<AstNode<'a>>,
+        nodes: &[AstNode<'a>],
         global_fn: &mut GlobalScope,
-        argument: bool,
-    ) -> Vec<RaoulError<'a>> {
-        nodes
-            .into_iter()
-            .flat_map(AstNode::expand_node)
-            .filter_map(|node| {
-                self.insert_variable_from_node(node.to_owned(), global_fn, argument)
-                    .err()
-            })
-            .flatten()
-            .filter(|e| !e.is_invalid())
-            .collect()
-    }
-
-    fn insert_variable_from_nodes<'a>(
-        &mut self,
-        nodes: Vec<AstNode<'a>>,
-        global_fn: &mut GlobalScope,
+        is_arg: bool,
     ) -> Results<'a, ()> {
-        let errors = self.insert(nodes, global_fn, false);
-        match errors.is_empty() {
-            true => Ok(()),
-            false => Err(errors),
-        }
+        RaoulError::create_results(
+            nodes
+                .iter()
+                .flat_map(AstNode::expand_node)
+                .filter(AstNode::is_declaration)
+                .map(|node| self.insert_variable_from_node(&node, global_fn, is_arg)),
+        )
     }
 
-    fn insert_args_from_nodes<'a>(
-        &mut self,
-        nodes: Vec<AstNode<'a>>,
-        global_fn: &mut GlobalScope,
-    ) -> Results<'a, ()> {
-        let errors = self.insert(nodes, global_fn, true);
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-
-    pub fn try_create<'a>(v: AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
-        match v.kind {
+    pub fn try_create<'a>(v: &AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Function> {
+        match v.kind.clone() {
             AstNodeKind::Function {
                 name,
                 return_type,
-                body,
-                arguments,
+                ref body,
+                ref arguments,
             } => {
                 let mut function = Function::new(name, return_type);
-                function.insert_args_from_nodes(arguments, global_fn)?;
-                function.insert_variable_from_nodes(body, global_fn)?;
+                function.insert_from_nodes(arguments, global_fn, true)?;
+                function.insert_from_nodes(body, global_fn, false)?;
                 Ok(function)
             }
-            AstNodeKind::Main { body, .. } => {
-                let mut function = Function::new("main".to_string(), Types::VOID);
-                function.insert_variable_from_nodes(body, global_fn)?;
+            AstNodeKind::Main { ref body, .. } => {
+                let mut function = Function::new("main".to_string(), Types::Void);
+                function.insert_from_nodes(body, global_fn, false)?;
                 Ok(function)
             }
             _ => unreachable!(),
@@ -178,17 +152,14 @@ impl Scope for Function {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    fn _get_variable_address(
-        &mut self,
-        data_type: &Types,
-        dimensions: Dimensions,
-    ) -> Option<usize> {
+    fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
         self.local_addresses.get_address(data_type, dimensions)
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct GlobalScope {
+    has_dataframe: bool,
     pub addresses: AddressManager,
     pub variables: VariablesTable,
 }
@@ -198,7 +169,23 @@ impl GlobalScope {
         Self {
             addresses: AddressManager::new(0),
             variables: HashMap::new(),
+            has_dataframe: false,
         }
+    }
+
+    pub fn add_dataframe(&mut self) -> bool {
+        if self.has_dataframe {
+            false
+        } else {
+            self.has_dataframe = true;
+            true
+        }
+    }
+}
+
+impl Default for GlobalScope {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -209,11 +196,7 @@ impl Scope for GlobalScope {
     fn _insert_variable(&mut self, name: String, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    fn _get_variable_address(
-        &mut self,
-        data_type: &Types,
-        dimensions: Dimensions,
-    ) -> Option<usize> {
+    fn _get_variable_address(&mut self, data_type: Types, dimensions: Dimensions) -> Option<usize> {
         self.addresses.get_address(data_type, dimensions)
     }
 }

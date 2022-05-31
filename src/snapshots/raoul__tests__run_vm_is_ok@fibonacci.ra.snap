@@ -1,0 +1,10 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/non-plot/fibonacci.ra
+---
+[
+    "5",
+    "5",
+    "\n",
+]

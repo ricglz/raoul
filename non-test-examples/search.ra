@@ -1,0 +1,31 @@
+a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+func binarySearch(left: int, right: int, target: int): int {
+  if (right < left) return -1;
+  mid = left + (right - left) / 2;
+  if (a[mid] == target) return mid;
+  if (a[mid] > target) return binarySearch(left, mid - 1, target);
+  return binarySearch(mid + 1, right, target);
+}
+
+func linearSearch(target: int): int {
+  i = 0;
+  while (a[i] != target && i < 10) i++;
+  if (i == 10) return -1;
+  return i;
+}
+
+func main(): void {
+  option = -1;
+  while (option != 0 AND option != 1) {
+    print("What option you want to use");
+    print("  0 = Binary Search");
+    print("  1 = Linear Search");
+    option = input();
+  }
+  print("Value to search:");
+  value = input();
+  if (option == 0) print(binarySearch(0, 9, value));
+  else if (option == 1) print(recursiveFactorial(n));
+  else print("This should not happen");
+}

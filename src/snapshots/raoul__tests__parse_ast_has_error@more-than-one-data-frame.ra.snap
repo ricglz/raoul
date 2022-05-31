@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/more-than-one-data-frame.ra
+---
+[
+     --> 3:3
+      |
+    3 |   dataframe_2 = read_csv("song_data_clean.csv");␊
+      |   ^-------------------------------------------^
+      |
+      = Only one dataframe is allowed per program,
+]

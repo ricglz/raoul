@@ -1,0 +1,21 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/factorial.ra
+---
+Main(([], [
+    Function(factorial, Int, [Argument(Int, n)], [
+        Assignment(false, Id(accum), Integer(1)),
+        For(BinaryOperation(Lte, Id(i), Id(n)), [Assignment(false, Id(accum), BinaryOperation(Times, Id(accum), Id(i)))], Assignment(false, Id(i), Integer(2))),
+        Return(Id(accum)),
+    ]),
+    Function(recursiveFactorial, Int, [Argument(Int, n)], [
+        Decision(BinaryOperation(Eq, Id(n), Integer(0)), [Return(Integer(1))], None),
+        Return(BinaryOperation(Times, Id(n), FunctionCall(recursiveFactorial, [BinaryOperation(Minus, Id(n), Integer(1))]))),
+    ]),
+], [
+    Assignment(false, Id(n), Integer(5)),
+    Assignment(false, Id(a), FunctionCall(factorial, [Id(n)])),
+    Assignment(false, Id(b), FunctionCall(recursiveFactorial, [Id(n)])),
+    Write([Id(a), Id(b)]),
+]))

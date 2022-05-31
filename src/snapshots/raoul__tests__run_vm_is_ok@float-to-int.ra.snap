@@ -1,9 +1,9 @@
 ---
 source: src/tests.rs
 expression: vm.messages
-input_file: src/examples/valid/read.ra
+input_file: src/examples/valid/non-plot/float-to-int.ra
 ---
 [
-    "test",
+    "2",
     "\n",
 ]

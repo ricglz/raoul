@@ -1,0 +1,21 @@
+func main(): void {
+  d = 10;
+  a = 1;
+  while (a < d) {
+    print(a);
+    a = a + 1;
+  }
+  for (i = 0 to a) {
+    print(i);
+  }
+  if (i >= a) {
+    c = 9001;
+  }
+  if (c >= 9001) {
+    print("It's over 9000!");
+  } else if (c >= 1000) {
+    print("It's over 1000!");
+  } else {
+    print("It's something!");
+  }
+}

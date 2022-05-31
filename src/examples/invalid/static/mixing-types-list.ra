@@ -1,0 +1,4 @@
+func main(): void {
+  a = [false, "3", false];
+  print(a[0], a[1], a[2]);
+}

@@ -3,19 +3,19 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/invalid/dynamic/array-list-negative.ra
 ---
-0 - Goto       -     -     1    
-1 - Ver        3001  3002  -    
-2 - Sum        3000  3001  4000 
-3 - Assignment 3001  -     4000 
-4 - Ver        3001  3002  -    
-5 - Sum        3000  3001  4001 
-6 - Minus      4001  3003  2000 
-7 - Ver        2000  3002  -    
-8 - Sum        3000  2000  4002 
-9 - Assignment 3001  -     4002 
-10 - Ver        3001  3002  -    
-11 - Sum        3000  3001  4003 
-12 - Print      4003  -     -    
-13 - PrintNl    -     -     -    
-14 - End        -     -     -    
+0    - Goto       -     -     1
+1    - Ver        3000  3002  -
+2    - Sum        3001  3000  4000
+3    - Assignment 3000  -     4000
+4    - Ver        3000  3002  -
+5    - Sum        3001  3000  4001
+6    - Minus      4001  3003  2000
+7    - Ver        2000  3002  -
+8    - Sum        3001  2000  4002
+9    - Assignment 3000  -     4002
+10   - Ver        3000  3002  -
+11   - Sum        3001  3000  4003
+12   - Print      4003  -     -
+13   - PrintNl    -     -     -
+14   - End        -     -     -
 

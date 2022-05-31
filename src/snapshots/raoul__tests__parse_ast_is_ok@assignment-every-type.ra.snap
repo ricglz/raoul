@@ -3,16 +3,16 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/valid/assignment-every-type.ra
 ---
-0 - Goto       -     -     2    
-1 - EndProc    -     -     -    
-2 - Assignment 3000  -     1000 
-3 - Assignment 3250  -     1250 
-4 - Assignment 3500  -     1500 
-5 - Assignment 3750  -     1750 
-6 - Print      1000  -     -    
-7 - Print      1250  -     -    
-8 - Print      1500  -     -    
-9 - Print      1750  -     -    
-10 - PrintNl    -     -     -    
-11 - End        -     -     -    
+0    - Goto       -     -     2
+1    - EndProc    -     -     -
+2    - Assignment 3000  -     1000
+3    - Assignment 3250  -     1250
+4    - Assignment 3500  -     1500
+5    - Assignment 3750  -     1750
+6    - Print      1000  -     -
+7    - Print      1250  -     -
+8    - Print      1500  -     -
+9    - Print      1750  -     -
+10   - PrintNl    -     -     -
+11   - End        -     -     -
 

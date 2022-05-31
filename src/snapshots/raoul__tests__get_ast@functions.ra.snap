@@ -1,13 +1,13 @@
 ---
 source: src/tests.rs
 expression: ast
-input_file: src/examples/valid/functions.ra
+input_file: src/examples/valid/non-plot/functions.ra
 ---
-Main(([
-    Function(test, VOID, [], [
+Main(([], [
+    Function(test, Void, [], [
         Assignment(false, Id(a), Integer(1)),
     ]),
-    Function(test2, INT, [Argument(INT, a)], [
+    Function(test2, Int, [Argument(Int, a)], [
         Return(Id(a)),
     ]),
 ], [

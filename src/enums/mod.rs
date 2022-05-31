@@ -9,104 +9,108 @@ use crate::error::{RaoulError, Results};
 
 #[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
 pub enum Types {
-    INT,
-    VOID,
-    FLOAT,
-    STRING,
-    BOOL,
+    Int,
+    Void,
+    Float,
+    String,
+    Bool,
+    Dataframe,
 }
 
 impl Types {
-    pub fn is_boolish(&self) -> bool {
-        match self {
-            Types::INT | Types::BOOL => true,
-            _ => false,
-        }
+    #[inline]
+    pub fn is_boolish(self) -> bool {
+        matches!(self, Types::Int | Types::Bool)
     }
 
-    fn is_number(&self) -> bool {
-        match self {
-            Types::INT | Types::FLOAT | Types::STRING => true,
-            _ => false,
-        }
+    #[inline]
+    fn is_number(self) -> bool {
+        matches!(self, Types::Int | Types::Float | Types::String)
     }
 
-    pub fn can_cast(&self, to: Types) -> bool {
-        match to {
-            Types::BOOL => self.is_boolish(),
-            Types::FLOAT => self.is_number(),
-            _ => to == self.to_owned(),
+    pub fn can_cast(self, to: Types) -> bool {
+        if self.is_number() && to.is_number() {
+            return true;
         }
+        if self.is_boolish() && to.is_boolish() {
+            return true;
+        }
+        self == to
+    }
+
+    pub fn assert_cast<'a>(self, to: Types, node: &AstNode<'a>) -> Results<'a, ()> {
+        if self.can_cast(to) {
+            return Ok(());
+        }
+        let error = RaoulError::new_vec(node, RaoulErrorKind::InvalidCast { from: self, to });
+        Err(error)
     }
 
     pub fn binary_operator_type(
+        self,
         operator: Operator,
-        lhs_type: Types,
         rhs_type: Types,
-    ) -> std::result::Result<Types, RaoulErrorKind> {
+    ) -> Result<Types, (Types, Types)> {
         match operator {
             Operator::Not | Operator::Or | Operator::And => {
-                let res_type = Types::BOOL;
-                match (lhs_type.is_boolish(), rhs_type.is_boolish()) {
-                    (true, true) => Ok(res_type),
-                    (true, false) => Err(RaoulErrorKind::InvalidCast {
-                        from: rhs_type,
-                        to: res_type,
-                    }),
-                    _ => Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: res_type,
-                    }),
+                let type_res = Types::Bool;
+                match (self.is_boolish(), rhs_type.is_boolish()) {
+                    (true, true) => Ok(type_res),
+                    (true, false) => Err((rhs_type, type_res)),
+                    _ => Err((self, type_res)),
                 }
             }
             Operator::Gte | Operator::Lte | Operator::Gt | Operator::Lt => {
-                let res_type = Types::BOOL;
-                match (lhs_type.is_number(), rhs_type.is_number()) {
-                    (true, true) => Ok(res_type),
-                    (true, false) => Err(RaoulErrorKind::InvalidCast {
-                        from: rhs_type,
-                        to: res_type,
-                    }),
-                    _ => Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: res_type,
-                    }),
+                let type_res = Types::Bool;
+                match (self.is_number(), rhs_type.is_number()) {
+                    (true, true) => Ok(type_res),
+                    (true, false) => Err((rhs_type, type_res)),
+                    _ => Err((self, type_res)),
                 }
             }
-            Operator::Eq | Operator::Ne => match lhs_type == rhs_type {
-                true => Ok(Types::BOOL),
-                false => Err(RaoulErrorKind::InvalidCast {
-                    from: lhs_type,
-                    to: rhs_type,
-                }),
-            },
-            Operator::Sum | Operator::Minus | Operator::Times | Operator::Div => {
-                if lhs_type == rhs_type && lhs_type == Types::INT {
-                    return Ok(Types::INT);
+            Operator::Eq | Operator::Ne => {
+                if self.can_cast(rhs_type) {
+                    return Ok(Types::Bool);
                 }
-                let res_type = Types::FLOAT;
-                match (lhs_type.is_number(), rhs_type.is_number()) {
-                    (true, true) => Ok(res_type),
-                    (true, false) => Err(RaoulErrorKind::InvalidCast {
-                        from: rhs_type,
-                        to: res_type,
-                    }),
-                    _ => Err(RaoulErrorKind::InvalidCast {
-                        from: lhs_type,
-                        to: res_type,
-                    }),
+                Err((self, rhs_type))
+            }
+            Operator::Sum | Operator::Minus | Operator::Times | Operator::Div => {
+                if self == rhs_type && self == Types::Int {
+                    return Ok(Types::Int);
+                }
+                let type_res = Types::Float;
+                match (self.is_number(), rhs_type.is_number()) {
+                    (true, true) => Ok(type_res),
+                    (true, false) => Err((rhs_type, type_res)),
+                    _ => Err((self, type_res)),
                 }
             }
             _ => unreachable!("{:?}", operator),
         }
     }
 
+    pub fn assert_bin_op<'a>(
+        self,
+        operator: Operator,
+        rhs_type: Types,
+        node: &AstNode<'a>,
+    ) -> Results<'a, Types> {
+        match self.binary_operator_type(operator, rhs_type) {
+            Ok(data_type) => Ok(data_type),
+            Err((from, to)) => Err(RaoulError::new_vec(
+                node,
+                RaoulErrorKind::InvalidCast { from, to },
+            )),
+        }
+    }
+
+    #[inline]
     fn get_variable<'a>(
         name: &str,
         variables: &'a VariablesTable,
         global: &'a VariablesTable,
     ) -> Option<&'a Variable> {
-        variables.get(name).or(global.get(name))
+        variables.get(name).or_else(|| global.get(name))
     }
 
     pub fn from_node<'a>(
@@ -114,94 +118,63 @@ impl Types {
         variables: &VariablesTable,
         global: &VariablesTable,
     ) -> Results<'a, Types> {
-        let clone = v.clone();
         match &v.kind {
-            AstNodeKind::Integer(_) => Ok(Types::INT),
-            AstNodeKind::Float(_) => Ok(Types::FLOAT),
-            AstNodeKind::String(_) => Ok(Types::STRING),
-            AstNodeKind::Bool(_) => Ok(Types::BOOL),
-            AstNodeKind::Id(name) => match Types::get_variable(name, variables, global) {
-                Some(variable) => Ok(variable.data_type),
-                None => Err(RaoulError::new_vec(
-                    clone,
-                    RaoulErrorKind::UndeclaredVar {
-                        name: name.to_string(),
-                    },
-                )),
-            },
+            AstNodeKind::Integer(_) | AstNodeKind::PureDataframeOp { .. } => Ok(Types::Int),
+            AstNodeKind::Float(_)
+            | AstNodeKind::UnaryDataframeOp { .. }
+            | AstNodeKind::Correlation { .. } => Ok(Types::Float),
+            AstNodeKind::String(_) | AstNodeKind::Read => Ok(Types::String),
+            AstNodeKind::Bool(_) => Ok(Types::Bool),
+            AstNodeKind::Id(name) | AstNodeKind::ArrayVal { name, .. } => {
+                match Types::get_variable(name, variables, global) {
+                    Some(variable) => Ok(variable.data_type),
+                    None => Err(RaoulError::new_vec(
+                        v,
+                        RaoulErrorKind::UndeclaredVar(name.to_string()),
+                    )),
+                }
+            }
             AstNodeKind::FuncCall { name, .. } => {
                 match Types::get_variable(name, variables, global) {
                     Some(variable) => Ok(variable.data_type),
                     None => Err(RaoulError::new_vec(
-                        clone,
-                        RaoulErrorKind::UndeclaredFunction {
-                            name: name.to_string(),
-                        },
+                        v,
+                        RaoulErrorKind::UndeclaredFunction(name.to_string()),
                     )),
                 }
             }
             AstNodeKind::ArrayDeclaration { data_type, .. } => Ok(*data_type),
             AstNodeKind::Array(exprs) => {
-                let (types, errors): (Vec<_>, Vec<_>) = exprs
-                    .into_iter()
-                    .map(|node| Types::from_node(node, variables, global))
-                    .partition(|res| res.is_ok());
-                match errors.is_empty() {
-                    true => {
-                        let first_type = types.get(0).unwrap().clone().unwrap();
-                        let errors: Vec<_> = types
-                            .into_iter()
-                            .enumerate()
-                            .filter_map(|(i, v)| {
-                                let data_type = v.unwrap();
-                                let node = exprs.get(i).unwrap().clone();
-                                let res = match data_type.can_cast(first_type) {
-                                    true => Ok(()),
-                                    false => Err(RaoulError::new(
-                                        node,
-                                        RaoulErrorKind::InvalidCast {
-                                            from: data_type,
-                                            to: first_type,
-                                        },
-                                    )),
-                                };
-                                res.err()
-                            })
-                            .collect();
-                        match errors.is_empty() {
-                            true => Ok(first_type),
-                            false => Err(errors),
-                        }
-                    }
-                    false => Err(errors.into_iter().flat_map(|v| v.unwrap_err()).collect()),
-                }
+                let types = RaoulError::create_partition(
+                    exprs
+                        .iter()
+                        .map(|node| Types::from_node(node, variables, global)),
+                )?;
+                let first_type = *(types.get(0).unwrap());
+                RaoulError::create_results(
+                    types
+                        .into_iter()
+                        .zip(exprs)
+                        .map(|(data_type, node)| data_type.assert_cast(first_type, node)),
+                )?;
+                Ok(first_type)
             }
-            AstNodeKind::Read => Ok(Types::STRING),
             AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
                 let lhs_type = Types::from_node(&*lhs, variables, global)?;
                 let rhs_type = Types::from_node(&*rhs, variables, global)?;
-                match Types::binary_operator_type(*operator, lhs_type, rhs_type) {
-                    Err(kind) => Err(RaoulError::new_vec(clone, kind)),
-                    Ok(op_type) => Ok(op_type),
-                }
+                lhs_type.assert_bin_op(*operator, rhs_type, v)
             }
             AstNodeKind::UnaryOperation { operator, operand } => match operator {
                 Operator::Not => {
                     let operand_type = Types::from_node(&*operand, variables, global)?;
-                    match operand_type.is_boolish() {
-                        true => Ok(Types::BOOL),
-                        false => Err(RaoulError::new_vec(
-                            clone,
-                            RaoulErrorKind::InvalidCast {
-                                from: operand_type,
-                                to: Types::BOOL,
-                            },
-                        )),
-                    }
+                    let res_type = Types::Bool;
+                    operand_type.assert_cast(res_type, v)?;
+                    Ok(res_type)
                 }
                 _ => unreachable!("{:?}", operator),
             },
-            kind => unreachable!("{:?}", kind),
+            AstNodeKind::ReadCSV(_) => Ok(Self::Dataframe),
+            kind => unreachable!("{kind:?}"),
         }
     }
 }
@@ -242,14 +215,25 @@ pub enum Operator {
     Param,
     // Arrays
     Ver,
+    // Dataframe
+    Rows,
+    Columns,
+    Average,
+    Std,
+    Median,
+    Variance,
+    Min,
+    Max,
+    Range,
+    Corr,
+    ReadCSV,
+    Plot,
+    Histogram,
 }
 
 impl Operator {
-    pub fn is_goto(&self) -> bool {
-        match self {
-            Operator::Goto | Operator::GotoF => true,
-            _ => false,
-        }
+    pub fn is_goto(self) -> bool {
+        matches!(self, Operator::Goto | Operator::GotoF)
     }
 }
 

@@ -9,5 +9,5 @@ input_file: src/examples/invalid/static/invalid-cast.ra
     2 |   a = NOT "2";␊
       |       ^-----^
       |
-      = Cannot cast from STRING to BOOL,
+      = Cannot cast from String to Bool,
 ]

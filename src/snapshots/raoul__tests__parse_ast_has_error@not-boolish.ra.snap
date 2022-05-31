@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/not-boolish.ra
+---
+[
+     --> 2:7
+      |
+    2 |   if (1.0) {␊
+      |       ^-^
+      |
+      = Cannot cast from Float to Bool,
+]

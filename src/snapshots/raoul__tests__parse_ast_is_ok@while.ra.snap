@@ -3,14 +3,14 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/valid/while.ra
 ---
-0 - Goto       -     -     1    
-1 - Assignment 3000  -     1000 
-2 - Lt         1000  3001  2750 
-3 - GotoF      2750  -     7    
-4 - Sum        1000  3000  2000 
-5 - Assignment 2000  -     1000 
-6 - Goto       -     -     2    
-7 - Print      1000  -     -    
-8 - PrintNl    -     -     -    
-9 - End        -     -     -    
+0    - Goto       -     -     1
+1    - Assignment 3000  -     1000
+2    - Lt         1000  3001  2750
+3    - GotoF      2750  -     7
+4    - Sum        1000  3000  2000
+5    - Assignment 2000  -     1000
+6    - Goto       -     -     2
+7    - Print      1000  -     -
+8    - PrintNl    -     -     -
+9    - End        -     -     -
 

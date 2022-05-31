@@ -1,0 +1,12 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/invalid/dynamic/non-float-string.ra
+---
+0    - Goto       -     -     1
+1    - Times      3500  3000  2250
+2    - Assignment 2250  -     1250
+3    - Print      1250  -     -
+4    - PrintNl    -     -     -
+5    - End        -     -     -
+

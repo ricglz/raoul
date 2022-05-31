@@ -3,7 +3,7 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/static/undeclared-variable.ra
 ---
-Main(([], [
+Main(([], [], [
     Assignment(false, Id(a), Id(b)),
     Assignment(false, Id(c), Id(d)),
 ]))

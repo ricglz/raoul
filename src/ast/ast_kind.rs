@@ -1,4 +1,4 @@
-use super::AstNode;
+use super::{BoxedNode, Nodes};
 use crate::{
     dir_func::variable::Dimensions,
     enums::{Operator, Types},
@@ -12,7 +12,7 @@ pub enum AstNodeKind<'a> {
     Float(f64),
     String(String),
     Bool(bool),
-    Array(Vec<AstNode<'a>>),
+    Array(Nodes<'a>),
     ArrayDeclaration {
         data_type: Types,
         dim1: usize,
@@ -20,73 +20,94 @@ pub enum AstNodeKind<'a> {
     },
     ArrayVal {
         name: String,
-        idx_1: Box<AstNode<'a>>,
-        idx_2: Option<Box<AstNode<'a>>>,
+        idx_1: BoxedNode<'a>,
+        idx_2: Option<BoxedNode<'a>>,
     },
     Assignment {
-        assignee: Box<AstNode<'a>>,
+        assignee: BoxedNode<'a>,
         global: bool,
-        value: Box<AstNode<'a>>,
+        value: BoxedNode<'a>,
     },
     UnaryOperation {
         operator: Operator,
-        operand: Box<AstNode<'a>>,
+        operand: BoxedNode<'a>,
     },
     BinaryOperation {
         operator: Operator,
-        lhs: Box<AstNode<'a>>,
-        rhs: Box<AstNode<'a>>,
+        lhs: BoxedNode<'a>,
+        rhs: BoxedNode<'a>,
     },
     Main {
-        functions: Vec<AstNode<'a>>,
-        body: Vec<AstNode<'a>>,
+        assignments: Nodes<'a>,
+        body: Nodes<'a>,
+        functions: Nodes<'a>,
     },
     Argument {
         arg_type: Types,
         name: String,
     },
     Function {
-        arguments: Vec<AstNode<'a>>,
-        body: Vec<AstNode<'a>>,
+        arguments: Nodes<'a>,
+        body: Nodes<'a>,
         name: String,
         return_type: Types,
     },
-    Write {
-        exprs: Vec<AstNode<'a>>,
-    },
+    Write(Nodes<'a>),
     Read,
     Decision {
-        expr: Box<AstNode<'a>>,
-        statements: Vec<AstNode<'a>>,
-        else_block: Option<Box<AstNode<'a>>>,
+        expr: BoxedNode<'a>,
+        statements: Nodes<'a>,
+        else_block: Option<BoxedNode<'a>>,
     },
-    ElseBlock {
-        statements: Vec<AstNode<'a>>,
-    },
+    ElseBlock(Nodes<'a>),
     While {
-        expr: Box<AstNode<'a>>,
-        statements: Vec<AstNode<'a>>,
+        expr: BoxedNode<'a>,
+        statements: Nodes<'a>,
     },
     For {
-        assignment: Box<AstNode<'a>>,
-        expr: Box<AstNode<'a>>,
-        statements: Vec<AstNode<'a>>,
+        assignment: BoxedNode<'a>,
+        expr: BoxedNode<'a>,
+        statements: Nodes<'a>,
     },
     FuncCall {
         name: String,
-        exprs: Vec<AstNode<'a>>,
+        exprs: Nodes<'a>,
     },
-    Return(Box<AstNode<'a>>),
+    Return(BoxedNode<'a>),
+    ReadCSV(BoxedNode<'a>),
+    PureDataframeOp {
+        name: String,
+        operator: Operator,
+    },
+    UnaryDataframeOp {
+        column: BoxedNode<'a>,
+        name: String,
+        operator: Operator,
+    },
+    Correlation {
+        name: String,
+        column_1: BoxedNode<'a>,
+        column_2: BoxedNode<'a>,
+    },
+    Plot {
+        name: String,
+        column_1: BoxedNode<'a>,
+        column_2: BoxedNode<'a>,
+    },
+    Histogram {
+        column: BoxedNode<'a>,
+        name: String,
+        bins: BoxedNode<'a>,
+    },
 }
 
-impl<'a> From<AstNodeKind<'a>> for String {
-    fn from(val: AstNodeKind) -> Self {
+impl From<&AstNodeKind<'_>> for String {
+    fn from(val: &AstNodeKind) -> Self {
         match val {
             AstNodeKind::Integer(n) => n.to_string(),
-            AstNodeKind::Id(s) => s.to_string(),
-            AstNodeKind::String(s) => s.to_string(),
+            AstNodeKind::Id(s) | AstNodeKind::String(s) => s.clone(),
             AstNodeKind::Assignment { assignee, .. } => assignee.into(),
-            AstNodeKind::ArrayVal { name, .. } => name,
+            AstNodeKind::ArrayVal { name, .. } => name.clone(),
             node => unreachable!("Node {:?}, cannot be a string", node),
         }
     }
@@ -101,15 +122,21 @@ impl<'a> From<AstNodeKind<'a>> for usize {
     }
 }
 
+impl<'a> From<usize> for AstNodeKind<'a> {
+    fn from(i: usize) -> Self {
+        AstNodeKind::Integer(i.try_into().unwrap())
+    }
+}
+
 impl fmt::Debug for AstNodeKind<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
-            AstNodeKind::Id(s) => write!(f, "Id({})", s),
-            AstNodeKind::Integer(n) => write!(f, "Integer({})", n),
-            AstNodeKind::Float(n) => write!(f, "Float({})", n),
-            AstNodeKind::String(s) => write!(f, "String({})", s),
-            AstNodeKind::Bool(s) => write!(f, "Bool({})", s),
-            AstNodeKind::Array(s) => write!(f, "Array({s:?})"),
+            Self::Id(s) => write!(f, "Id({})", s),
+            Self::Integer(n) => write!(f, "Integer({})", n),
+            Self::Float(n) => write!(f, "Float({})", n),
+            Self::String(s) => write!(f, "String({})", s),
+            Self::Bool(s) => write!(f, "Bool({})", s),
+            Self::Array(s) => write!(f, "Array({s:?})"),
             Self::ArrayDeclaration {
                 data_type,
                 dim1,
@@ -118,26 +145,26 @@ impl fmt::Debug for AstNodeKind<'_> {
                 write!(f, "ArrayDeclaration({data_type:?}, {dim1}, {dim2:?})")
             }
             Self::ArrayVal { name, idx_1, idx_2 } => {
-                write!(f, "ArrayDeclaration({name}, {idx_1:?}, {idx_2:?})")
+                write!(f, "ArrayVal({name}, {idx_1:?}, {idx_2:?})")
             }
-            AstNodeKind::Assignment {
+            Self::Assignment {
                 assignee,
                 global,
                 value,
             } => write!(f, "Assignment({}, {:?}, {:?})", global, assignee, value),
-            AstNodeKind::UnaryOperation {
+            Self::UnaryOperation {
                 operator: operation,
                 operand,
             } => {
                 write!(f, "Unary({:?}, {:?})", operation, operand)
             }
-            AstNodeKind::Main { functions, body } => {
-                write!(f, "Main(({:#?}, {:#?}))", functions, body)
-            }
-            AstNodeKind::Argument { arg_type, name } => {
-                write!(f, "Argument({:?}, {})", arg_type, name)
-            }
-            AstNodeKind::Function {
+            Self::Main {
+                assignments,
+                body,
+                functions,
+            } => write!(f, "Main(({assignments:#?}, {:#?}, {:#?}))", functions, body),
+            Self::Argument { arg_type, name } => write!(f, "Argument({:?}, {})", arg_type, name),
+            Self::Function {
                 arguments,
                 body,
                 name,
@@ -149,45 +176,66 @@ impl fmt::Debug for AstNodeKind<'_> {
                     name, return_type, arguments, body
                 )
             }
-            AstNodeKind::Write { exprs } => write!(f, "Write({:?})", exprs),
-            AstNodeKind::Read => write!(f, "Read"),
-            AstNodeKind::BinaryOperation { operator, lhs, rhs } => {
+            Self::Write(exprs) => write!(f, "Write({:?})", exprs),
+            Self::Read => write!(f, "Read"),
+            Self::BinaryOperation { operator, lhs, rhs } => {
                 write!(f, "BinaryOperation({:?}, {:?}, {:?})", operator, lhs, rhs)
             }
-            AstNodeKind::Decision {
+            Self::Decision {
                 expr,
                 statements,
                 else_block,
             } => {
                 write!(f, "Decision({expr:?}, {statements:?}, {else_block:?})")
             }
-            AstNodeKind::ElseBlock { statements } => {
-                write!(f, "ElseBlock({:?})", statements)
-            }
-            AstNodeKind::While { expr, statements } => {
-                write!(f, "While({:?}, {:?})", expr, statements)
-            }
-            AstNodeKind::For {
+            Self::ElseBlock(statements) => write!(f, "ElseBlock({:?})", statements),
+            Self::While { expr, statements } => write!(f, "While({:?}, {:?})", expr, statements),
+            Self::For {
                 expr,
                 statements,
                 assignment,
             } => {
                 write!(f, "For({expr:?}, {statements:?}, {assignment:?})")
             }
-            AstNodeKind::FuncCall { name, exprs } => {
-                write!(f, "FunctionCall({name}, {exprs:?})")
+            Self::FuncCall { name, exprs } => write!(f, "FunctionCall({name}, {exprs:?})"),
+            Self::Return(expr) => write!(f, "Return({expr:?})"),
+            Self::ReadCSV(file) => write!(f, "ReadCSV({file:?})"),
+            Self::PureDataframeOp { name, operator } => {
+                write!(f, "PureDataframeOp({operator:?}, {name})")
             }
-            AstNodeKind::Return(expr) => write!(f, "Return({expr:?})"),
+            Self::UnaryDataframeOp {
+                operator,
+                name,
+                column,
+            } => {
+                write!(f, "UnaryDataframeOp({operator:?}, {name}, {column:?})")
+            }
+            Self::Correlation {
+                name,
+                column_1,
+                column_2,
+            } => {
+                write!(f, "Correlation({name}, {column_1:?}, {column_2:?})")
+            }
+            Self::Plot {
+                name,
+                column_1,
+                column_2,
+            } => write!(f, "Plot({name}, {column_1:?}, {column_2:?})"),
+            Self::Histogram { column, name, bins } => {
+                write!(f, "Histogram({column:?}, {name}, {bins:?})")
+            }
         }
     }
 }
 
 impl<'a> AstNodeKind<'a> {
     pub fn is_array(&self) -> bool {
-        match self {
-            Self::Array(_) | Self::ArrayDeclaration { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::Array(_) | Self::ArrayDeclaration { .. })
+    }
+
+    pub fn is_declaration(&self) -> bool {
+        matches!(self, Self::Assignment { .. } | Self::Argument { .. })
     }
 
     pub fn get_dimensions(&self) -> Result<Dimensions, Dimensions> {
@@ -195,24 +243,26 @@ impl<'a> AstNodeKind<'a> {
             return Ok((None, None));
         }
         match self {
-            Self::ArrayDeclaration { dim1, dim2, .. } => Ok((Some(*dim1), dim2.to_owned())),
+            Self::ArrayDeclaration { dim1, dim2, .. } => Ok((Some(*dim1), *dim2)),
             Self::Array(exprs) => {
                 let dim1 = Some(exprs.len());
                 let dim2 = exprs.get(0).unwrap().get_dimensions()?.0;
                 let errors: Vec<_> = exprs
-                    .into_iter()
-                    .map(|expr| -> Result<(), Dimensions> {
+                    .iter()
+                    .map(|expr| {
                         let expr_dim_1 = expr.get_dimensions()?.0;
-                        match expr_dim_1 == dim2 {
-                            true => Ok(()),
-                            false => Err((expr_dim_1, dim2)),
+                        if expr_dim_1 == dim2 {
+                            Ok(())
+                        } else {
+                            Err((expr_dim_1, dim2))
                         }
                     })
-                    .filter_map(|v| v.err())
+                    .filter_map(Result::err)
                     .collect();
-                match errors.is_empty() {
-                    true => Ok((dim1, dim2)),
-                    false => Err(errors.get(0).unwrap().clone()),
+                if errors.is_empty() {
+                    Ok((dim1, dim2))
+                } else {
+                    Err(*errors.get(0).unwrap())
                 }
             }
             _ => unreachable!("{self:?}"),

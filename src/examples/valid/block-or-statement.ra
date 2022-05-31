@@ -1,0 +1,8 @@
+func test(): int {
+  if (true) return 42;
+  return 248;
+}
+
+func main(): void {
+  print(test());
+}

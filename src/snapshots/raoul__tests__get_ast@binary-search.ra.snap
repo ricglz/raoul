@@ -1,0 +1,17 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/binary-search.ra
+---
+Main(([], [
+    Function(binarySearch, Int, [Argument(Int, left), Argument(Int, right), Argument(Int, target)], [
+        Decision(BinaryOperation(Lt, Id(right), Id(left)), [Return(Integer(-1))], None),
+        Assignment(false, Id(mid), BinaryOperation(Sum, Id(left), BinaryOperation(Div, BinaryOperation(Minus, Id(right), Id(left)), Integer(2)))),
+        Decision(BinaryOperation(Eq, ArrayVal(a, Id(mid), None), Id(target)), [Return(Id(mid))], None),
+        Decision(BinaryOperation(Gt, ArrayVal(a, Id(mid), None), Id(target)), [Return(FunctionCall(binarySearch, [Id(left), BinaryOperation(Minus, Id(mid), Integer(1)), Id(target)]))], None),
+        Return(FunctionCall(binarySearch, [BinaryOperation(Sum, Id(mid), Integer(1)), Id(right), Id(target)])),
+    ]),
+], [
+    Assignment(true, Id(a), Array([Integer(1), Integer(2), Integer(3), Integer(4), Integer(5), Integer(6), Integer(7), Integer(8), Integer(9), Integer(10)])),
+    Write([FunctionCall(binarySearch, [Integer(0), Integer(9), Integer(1)]), FunctionCall(binarySearch, [Integer(0), Integer(9), Integer(7)]), FunctionCall(binarySearch, [Integer(0), Integer(9), Integer(-1)])]),
+]))

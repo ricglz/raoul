@@ -1,6 +1,6 @@
 use clap::{Arg, ArgMatches, Command};
 
-pub fn parse_args() -> ArgMatches {
+pub fn parse_arguments() -> ArgMatches {
     Command::new("raoul")
         .version("1.0")
         .author("ricglz")

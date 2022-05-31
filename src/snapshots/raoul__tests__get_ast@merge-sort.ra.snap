@@ -1,0 +1,32 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/merge-sort.ra
+---
+Main(([
+    Assignment(true, Id(a), Array([Integer(4), Integer(1), Integer(5), Integer(12), Integer(42), Integer(13), Integer(69), Integer(25), Integer(3), Integer(0), Integer(2)])),
+    Assignment(true, Id(b), ArrayDeclaration(Int, 11, None)),
+    Assignment(true, Id(limit), Integer(11)),
+], [
+    Function(printArr, Void, [], [
+        For(BinaryOperation(Lte, Id(i), BinaryOperation(Minus, Id(limit), Integer(1))), [Write([ArrayVal(a, Id(i), None)])], Assignment(false, Id(i), Integer(0))),
+    ]),
+    Function(merge, Void, [Argument(Int, low), Argument(Int, mid), Argument(Int, high)], [
+        Assignment(false, Id(l1), Id(low)),
+        Assignment(false, Id(l2), BinaryOperation(Sum, Id(mid), Integer(1))),
+        Assignment(false, Id(i), Id(low)),
+        While(BinaryOperation(And, BinaryOperation(Lte, Id(l1), Id(mid)), BinaryOperation(Lte, Id(l2), Id(high))), [Decision(BinaryOperation(Lte, ArrayVal(a, Id(l1), None), ArrayVal(a, Id(l2), None)), [Assignment(true, ArrayVal(b, Id(i), None), ArrayVal(a, Id(l1), None)), Assignment(false, Id(l1), BinaryOperation(Sum, Id(l1), Integer(1)))], Some(ElseBlock([Assignment(true, ArrayVal(b, Id(i), None), ArrayVal(a, Id(l2), None)), Assignment(false, Id(l2), BinaryOperation(Sum, Id(l2), Integer(1)))]))), Assignment(false, Id(i), BinaryOperation(Sum, Id(i), Integer(1)))]),
+        While(BinaryOperation(Lte, Id(l1), Id(mid)), [Assignment(true, ArrayVal(b, Id(i), None), ArrayVal(a, Id(l1), None)), Assignment(false, Id(i), BinaryOperation(Sum, Id(i), Integer(1))), Assignment(false, Id(l1), BinaryOperation(Sum, Id(l1), Integer(1)))]),
+        While(BinaryOperation(Lte, Id(l2), Id(high)), [Assignment(true, ArrayVal(b, Id(i), None), ArrayVal(a, Id(l2), None)), Assignment(false, Id(i), BinaryOperation(Sum, Id(i), Integer(1))), Assignment(false, Id(l2), BinaryOperation(Sum, Id(l2), Integer(1)))]),
+        For(BinaryOperation(Lte, Id(i), Id(high)), [Assignment(true, ArrayVal(a, Id(i), None), ArrayVal(b, Id(i), None))], Assignment(false, Id(i), Id(low))),
+    ]),
+    Function(sort, Void, [Argument(Int, low), Argument(Int, high)], [
+        Decision(BinaryOperation(Lt, Id(low), Id(high)), [Assignment(false, Id(mid), BinaryOperation(Div, BinaryOperation(Sum, Id(low), Id(high)), Integer(2))), FunctionCall(sort, [Id(low), Id(mid)]), FunctionCall(sort, [BinaryOperation(Sum, Id(mid), Integer(1)), Id(high)]), FunctionCall(merge, [Id(low), Id(mid), Id(high)])], None),
+    ]),
+], [
+    Write([String(Before)]),
+    FunctionCall(printArr, []),
+    FunctionCall(sort, [Integer(0), BinaryOperation(Minus, Id(limit), Integer(1))]),
+    Write([String(After)]),
+    FunctionCall(printArr, []),
+]))

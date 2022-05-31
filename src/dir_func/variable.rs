@@ -19,43 +19,88 @@ pub struct Variable {
     pub name: String,
 }
 
+fn get_value_dimensions<'a>(value: &AstNode<'a>, node: &AstNode<'a>) -> Results<'a, Dimensions> {
+    match value.get_dimensions() {
+        Ok(dimensions) => Ok(dimensions),
+        Err((expected, given)) => {
+            let kind = RaoulErrorKind::InconsistentSize { expected, given };
+            Err(RaoulError::new_vec(node, kind))
+        }
+    }
+}
+
+fn assert_dataframe<'a>(
+    data_type: Types,
+    global_fn: &mut GlobalScope,
+    node: &AstNode<'a>,
+) -> Results<'a, ()> {
+    if data_type != Types::Dataframe {
+        return Ok(());
+    }
+    if global_fn.add_dataframe() {
+        Ok(())
+    } else {
+        Err(RaoulError::new_vec(node, RaoulErrorKind::OnlyOneDataframe))
+    }
+}
+
 impl Variable {
+    pub fn from_global<'a>(v: &AstNode<'a>, global_fn: &mut GlobalScope) -> Results<'a, Variable> {
+        match &v.kind {
+            AstNodeKind::Assignment {
+                assignee, value, ..
+            } => {
+                let data_type =
+                    Types::from_node(&*value, &global_fn.variables, &global_fn.variables)?;
+                assert_dataframe(data_type, global_fn, v)?;
+                let dimensions = get_value_dimensions(value, v)?;
+                let name: String = assignee.into();
+                match global_fn.get_variable_address(&name, data_type, dimensions) {
+                    Some(address) => Ok(Variable {
+                        address,
+                        data_type,
+                        dimensions,
+                        name,
+                    }),
+                    None => Err(RaoulError::new_vec(v, RaoulErrorKind::MemoryExceded)),
+                }
+            }
+            kind => unreachable!("{kind:?}"),
+        }
+    }
+
     pub fn from_node<'a>(
-        v: AstNode<'a>,
+        v: &AstNode<'a>,
         current_fn: &mut Function,
         global_fn: &mut GlobalScope,
     ) -> Results<'a, (Variable, bool)> {
-        let node = v.clone();
-        match v.kind {
+        match v.kind.clone() {
             AstNodeKind::Assignment {
                 assignee,
                 value,
                 global,
             } => {
-                let name: String = assignee.into();
                 let data_type =
                     Types::from_node(&*value, &current_fn.variables, &global_fn.variables)?;
-                let res = value.get_dimensions();
-                if let Err((expected, given)) = res {
-                    let kind = RaoulErrorKind::InconsistentSize { expected, given };
-                    return Err(RaoulError::new_vec(node, kind));
-                }
-                let dimensions = res.unwrap();
-                let address = match global {
-                    true => global_fn.get_variable_address(&name, &data_type, dimensions),
-                    false => current_fn.get_variable_address(&name, &data_type, dimensions),
+                assert_dataframe(data_type, global_fn, v)?;
+                let dimensions = get_value_dimensions(&value, v)?;
+                let name: String = assignee.into();
+                let address = if global {
+                    global_fn.get_variable_address(&name, data_type, dimensions)
+                } else {
+                    current_fn.get_variable_address(&name, data_type, dimensions)
                 };
                 match address {
                     Some(address) => Ok((
                         Variable {
+                            address,
                             data_type,
                             dimensions,
                             name,
-                            address,
                         },
                         global,
                     )),
-                    None => Err(RaoulError::new_vec(node, RaoulErrorKind::MemoryExceded)),
+                    None => Err(RaoulError::new_vec(v, RaoulErrorKind::MemoryExceded)),
                 }
             }
             AstNodeKind::Argument {
@@ -64,7 +109,7 @@ impl Variable {
             } => {
                 let address = current_fn
                     .local_addresses
-                    .get_address(&data_type, (None, None));
+                    .get_address(data_type, (None, None));
                 match address {
                     Some(address) => Ok((
                         Variable {
@@ -77,19 +122,19 @@ impl Variable {
                     )),
                     None => {
                         let kind = RaoulErrorKind::MemoryExceded;
-                        Err(RaoulError::new_vec(node, kind))
+                        Err(RaoulError::new_vec(v, kind))
                     }
                 }
             }
-            _ => Err(RaoulError::new_vec(v, RaoulErrorKind::Invalid)),
+            _ => unreachable!(),
         }
     }
 
-    pub fn from_function(function: Function, address: usize) -> Self {
+    pub fn from_function(function: &Function, address: usize) -> Self {
         Variable {
             address,
             data_type: function.return_type,
-            name: function.name,
+            name: function.name.clone(),
             dimensions: (None, None),
         }
     }

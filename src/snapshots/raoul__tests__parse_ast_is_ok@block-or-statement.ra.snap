@@ -1,0 +1,17 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/block-or-statement.ra
+---
+0    - Goto       -     -     5
+1    - GotoF      3750  -     3
+2    - Return     3000  -     -
+3    - Return     3001  -     -
+4    - EndProc    -     -     -
+5    - Era        0     1     -
+6    - GoSub      1     -     -
+7    - Assignment 0     -     2000
+8    - Print      2000  -     -
+9    - PrintNl    -     -     -
+10   - End        -     -     -
+

@@ -1,0 +1,46 @@
+a = [4, 1, 5, 12, 42, 13, 69, 25, 3, 0, 2];
+limit = 11;
+
+func printArr(): void {
+  for (i = 0 to limit - 1) print(a[i]);
+}
+
+func swap(x: int, y: int): void {
+    temp = a[x];
+    global a[x] = a[y];
+    global a[y] = temp;
+}
+
+func partition(low: int, high: int): int {
+    pivot = a[high];
+    i = low - 1;
+
+    for (j = low to high) {
+        if (a[j] < pivot) {
+            i = i + 1;
+            swap(i, j);
+        }
+    }
+
+    swap(i + 1, high);
+    return i + 1;
+}
+
+func sort(low: int, high: int): void {
+    if (low < high) {
+        pi = partition(low, high);
+
+        sort(low, pi - 1);
+        sort(pi + 1, high);
+    }
+}
+
+func main(): void {
+  print("Values:");
+  for (i = 0 to limit - 1) {
+    global a[i] = input();
+  }
+  sort(0, limit - 1);
+  print("Result: ");
+  printArr();
+}

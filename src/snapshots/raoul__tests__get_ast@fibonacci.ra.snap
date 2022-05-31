@@ -1,0 +1,21 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/valid/non-plot/fibonacci.ra
+---
+Main(([], [
+    Function(fibo, Int, [Argument(Int, n)], [
+        Decision(BinaryOperation(Lte, Id(n), Integer(1)), [Return(Id(n))], None),
+        Assignment(false, Id(a), Integer(0)),
+        Assignment(false, Id(b), Integer(1)),
+        For(BinaryOperation(Lte, Id(i), Id(n)), [Assignment(false, Id(next), BinaryOperation(Sum, Id(a), Id(b))), Assignment(false, Id(a), Id(b)), Assignment(false, Id(b), Id(next))], Assignment(false, Id(i), Integer(2))),
+        Return(Id(next)),
+    ]),
+    Function(recursiveFibo, Int, [Argument(Int, n)], [
+        Decision(BinaryOperation(Lte, Id(n), Integer(1)), [Return(Id(n))], None),
+        Return(BinaryOperation(Sum, FunctionCall(recursiveFibo, [BinaryOperation(Minus, Id(n), Integer(2))]), FunctionCall(recursiveFibo, [BinaryOperation(Minus, Id(n), Integer(1))]))),
+    ]),
+], [
+    Assignment(false, Id(n), Integer(5)),
+    Write([FunctionCall(fibo, [Id(n)]), FunctionCall(recursiveFibo, [Id(n)])]),
+]))

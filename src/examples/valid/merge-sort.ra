@@ -1,0 +1,56 @@
+a = [4, 1, 5, 12, 42, 13, 69, 25, 3, 0, 2];
+b = declare_arr<int>(11);
+limit = 11;
+
+func printArr(): void {
+  for (i = 0 to limit - 1) print(a[i]);
+}
+
+func merge(low: int, mid: int, high: int): void {
+  l1 = low;
+  l2 = mid + 1;
+  i = low;
+
+  while (l1 <= mid AND l2 <= high) {
+    if(a[l1] <= a[l2]) {
+      global b[i] = a[l1];
+      l1 = l1 + 1;
+    }
+    else {
+      global b[i] = a[l2];
+      l2 = l2 + 1;
+    }
+    i = i + 1;
+  }
+
+  while (l1 <= mid) {
+    global b[i] = a[l1];
+    i = i + 1;
+    l1 = l1 + 1;
+  }
+
+  while (l2 <= high) {
+    global b[i] = a[l2];
+    i = i + 1;
+    l2 = l2 + 1;
+  }
+
+  for (i = low to high) global a[i] = b[i];
+}
+
+func sort(low: int, high: int): void {
+  if(low < high) {
+    mid = (low + high) / 2;
+    sort(low, mid);
+    sort(mid + 1, high);
+    merge(low, mid, high);
+  }
+}
+
+func main(): void {
+  print("Before");
+  printArr();
+  sort(0, limit - 1);
+  print("After");
+  printArr();
+}

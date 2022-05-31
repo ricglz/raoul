@@ -1,0 +1,28 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/functions-2.ra
+---
+0    - Goto       -     -     12
+1    - Print      1250  -     -
+2    - PrintNl    -     -     -
+3    - EndProc    -     -     -
+4    - Times      1250  3000  2250
+5    - Assignment 2250  -     1251
+6    - Era        1     1     -
+7    - Param      1251  -     0
+8    - GoSub      1     -     -
+9    - Sum        1251  3001  2250
+10   - Return     2250  -     -
+11   - EndProc    -     -     -
+12   - Assignment 3000  -     1000
+13   - Era        3     4     -
+14   - Param      1000  -     0
+15   - GoSub      4     -     -
+16   - Assignment 250   -     2250
+17   - Assignment 2250  -     1250
+18   - Era        1     1     -
+19   - Param      1250  -     0
+20   - GoSub      1     -     -
+21   - End        -     -     -
+

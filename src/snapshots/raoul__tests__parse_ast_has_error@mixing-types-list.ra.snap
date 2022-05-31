@@ -1,0 +1,13 @@
+---
+source: src/tests.rs
+expression: res.unwrap_err()
+input_file: src/examples/invalid/static/mixing-types-list.ra
+---
+[
+     --> 2:16
+      |
+    2 |   a = [false, "3", false];␊
+      |                ^
+      |
+      = Cannot cast from String to Bool,
+]

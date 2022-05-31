@@ -1,0 +1,7 @@
+func test(a: float): void {
+  a = false;
+}
+
+func main(): void {
+  test(1.0);
+}

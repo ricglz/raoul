@@ -3,18 +3,13 @@ use core::fmt;
 use crate::enums::Types;
 
 #[derive(PartialEq, Eq, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub enum RaoulErrorKind {
-    Invalid,
     MemoryExceded,
-    UndeclaredVar {
-        name: String,
-    },
-    UndeclaredFunction {
-        name: String,
-    },
-    RedeclaredFunction {
-        name: String,
-    },
+    UndeclaredVar(String),
+    UndeclaredFunction(String),
+    UndeclaredFunction2(String),
+    RedeclaredFunction(String),
     RedefinedType {
         name: String,
         from: Types,
@@ -36,34 +31,33 @@ pub enum RaoulErrorKind {
         expected: Option<usize>,
         given: Option<usize>,
     },
+    OnlyOneDataframe,
 }
 
 impl fmt::Debug for RaoulErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Invalid => unreachable!(),
             Self::UsePrimitive => write!(f, "We can't handle using the complete array"),
-            Self::UndeclaredVar { name } => write!(f, "Variable \"{name}\" was not declared"),
-            Self::UndeclaredFunction { name } => {
+            Self::UndeclaredVar(name) => write!(f, "Variable \"{name}\" was not declared"),
+            Self::UndeclaredFunction(name) => {
                 write!(
                     f,
-                    "Function \"{}\" was not declared or does not return a non-void value",
-                    name
+                    "Function \"{name}\" was not declared or does not return a non-void value",
                 )
             }
-            Self::RedeclaredFunction { name } => {
+            Self::UndeclaredFunction2(name) => {
+                write!(f, "Function \"{name}\" was not declared")
+            }
+            Self::RedeclaredFunction(name) => {
                 write!(f, "Function \"{name}\" was already declared before")
             }
             Self::RedefinedType { name, from, to } => {
                 write!(
                     f,
-                    "\"{}\" was originally defined as {:?} and you're attempting to redefined it as a {:?}",
-                    name,
-                    from,
-                    to,
+                    "\"{name}\" was originally defined as {from:?} and you're attempting to redefined it as a {to:?}",
                 )
             }
-            Self::InvalidCast { from, to } => write!(f, "Cannot cast from {:?} to {:?}", from, to),
+            Self::InvalidCast { from, to } => write!(f, "Cannot cast from {from:?} to {to:?}"),
             Self::MemoryExceded => write!(f, "Memory was exceded"),
             Self::UnmatchArgsAmount { expected, given } => {
                 write!(
@@ -79,11 +73,12 @@ impl fmt::Debug for RaoulErrorKind {
             Self::InconsistentSize { expected, given } => {
                 write!(
                     f,
-                    "Expecting matrix with second dimmension being {} but received {}",
+                    "Expecting matrix with second dimension being {} but received {}",
                     expected.unwrap_or(0),
                     given.unwrap_or(0)
                 )
             }
+            Self::OnlyOneDataframe => write!(f, "Only one dataframe is allowed per program"),
         }
     }
 }

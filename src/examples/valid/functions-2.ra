@@ -1,0 +1,17 @@
+func printer(text: float): void {
+    print(text);
+}
+
+func func1(bar: float): float{
+    j = bar * 100;
+    printer(j);
+
+    return(j+1);
+}
+
+
+func main(): void{
+    foo = 100;
+    baz = func1(foo);
+    printer(baz);
+}

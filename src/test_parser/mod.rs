@@ -6,7 +6,7 @@ use pest::Parser;
 struct MyParser;
 
 fn parse(source: &str) -> Result<(), Error<Rule>> {
-    if let Err(err) = MyParser::parse(Rule::program, &source) {
+    if let Err(err) = MyParser::parse(Rule::program, source) {
         Err(err)
     } else {
         Ok(())
@@ -41,6 +41,6 @@ mod tests {
     #[test]
     fn invalid_file() {
         let filename = "src/examples/invalid/syntax/syntax-error.ra";
-        assert!(parse_file(&filename, true).is_err());
+        assert!(parse_file(filename, true).is_err());
     }
 }

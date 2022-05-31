@@ -1,9 +1,0 @@
----
-source: src/tests.rs
-expression: ast
-input_file: src/examples/valid/read.ra
----
-Main(([], [
-    Assignment(false, Id(a), Read),
-    Write([Id(a)]),
-]))

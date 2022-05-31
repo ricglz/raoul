@@ -3,11 +3,11 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/static/redefined-function.ra
 ---
-Main(([
-    Function(test, VOID, [], [
+Main(([], [
+    Function(test, Void, [], [
         Assignment(false, Id(a), Integer(1)),
     ]),
-    Function(test, INT, [], [
+    Function(test, Int, [], [
         Assignment(false, Id(a), Integer(1)),
     ]),
 ], [

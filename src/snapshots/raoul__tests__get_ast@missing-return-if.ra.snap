@@ -3,8 +3,8 @@ source: src/tests.rs
 expression: ast
 input_file: src/examples/invalid/static/missing-return-if.ra
 ---
-Main(([
-    Function(test, INT, [], [
+Main(([], [
+    Function(test, Int, [], [
         Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(1))], None),
     ]),
 ], [

@@ -1,14 +1,14 @@
 ---
 source: src/tests.rs
 expression: ast
-input_file: src/examples/valid/returns-condition.ra
+input_file: src/examples/valid/non-plot/returns-condition.ra
 ---
-Main(([
-    Function(test, INT, [], [
+Main(([], [
+    Function(test, Int, [], [
         Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(1))], None),
         Return(Integer(2)),
     ]),
-    Function(second_test, INT, [], [
+    Function(second_test, Int, [], [
         Decision(BinaryOperation(Lt, Integer(1), Integer(2)), [Return(Integer(3))], Some(Decision(BinaryOperation(Lt, Integer(1), Integer(3)), [Return(Integer(4))], Some(ElseBlock([Return(Integer(5))]))))),
     ]),
 ], [

@@ -1,4 +1,5 @@
 WHITESPACE = _{" " | NEWLINE}
+COMMENT = _{ (("//" ~ (!NEWLINE ~ ANY)*) | ("/*" ~ ( "/**/" | (!"*/" ~ ANY) )* ~ "*/")) }
 
 // Tokens
 DOT        = _{"."}
@@ -36,7 +37,6 @@ bool      = {"bool"}
 float     = {"float"}
 int       = {"int"}
 string    = {"string"}
-DATAFRAME = {"Dataframe"}
 void      = {"void"}
 
 FUNC   = _{"func"}
@@ -54,13 +54,22 @@ TRUE  = _{"true"}
 FALSE = _{"false"}
 
 READ_CSV_KEY = _{"read_csv"}
-AVERAGE_KEY  = _{"average"}
-STD_KEY      = _{"std"}
-MODE_KEY     = _{"mode"}
-VARIANCE_KEY = _{"variance"}
-CORRELATION_KEY = {"correlation"}
-PLOT_KEY = {"plot"}
-HISTOGRAM_KEY = {"histogram"}
+
+get_rows    = {"get_rows"}
+get_columns = {"get_columns"}
+
+average  = {"average"}
+std      = {"std"}
+median   = {"median"}
+variance = {"variance"}
+min      = {"min"}
+max      = {"max"}
+range    = {"range"}
+
+CORREL = _{"correlation"}
+
+PLOT_KEY      = _{"plot"}
+HISTOGRAM_KEY = _{"histogram"}
 
 RETURN_KEY = _{"return"}
 
@@ -75,35 +84,40 @@ comp_op = { eq | ne }
 rel_op  = { gte | lte | gt | lt }
 
 KEYWORD_TYPE = _{
-  AND             |
-  OR              |
-  not             |
-  bool            |
-  float           |
-  int             |
-  string          |
-  void            |
-  FUNC            |
-  MAIN            |
-  IF              |
-  ELSE            |
-  PRINT           |
-  WHILE           |
-  FOR             |
-  TO              |
-  global          |
-  INPUT           |
-  TRUE            |
-  FALSE           |
-  READ_CSV_KEY    |
-  AVERAGE_KEY     |
-  STD_KEY         |
-  MODE_KEY        |
-  VARIANCE_KEY    |
-  CORRELATION_KEY |
-  PLOT_KEY        |
-  HISTOGRAM_KEY   |
-  RETURN_KEY      |
+  AND           |
+  OR            |
+  not           |
+  bool          |
+  float         |
+  int           |
+  string        |
+  void          |
+  FUNC          |
+  MAIN          |
+  IF            |
+  ELSE          |
+  PRINT         |
+  WHILE         |
+  FOR           |
+  TO            |
+  global        |
+  INPUT         |
+  TRUE          |
+  FALSE         |
+  READ_CSV_KEY  |
+  get_rows      |
+  get_columns   |
+  average       |
+  std           |
+  median        |
+  variance      |
+  min           |
+  max           |
+  range         |
+  CORREL        |
+  PLOT_KEY      |
+  HISTOGRAM_KEY |
+  RETURN_KEY    |
   DECLARE_KEY
 }
 KEYWORD = _{ KEYWORD_TYPE ~ !ID_SUFFIX }
@@ -119,8 +133,8 @@ STRING_CTE   = _{ PUSH(STR_MARK) ~ string_value ~ POP }
 ATOM_CTE     = _{ bool_cte | float_cte | int_cte | STRING_CTE }
 arr_index    = _{ L_SQUARE ~ expr ~ R_SQUARE }
 arr_val      = { id ~ arr_index{1,2} }
-NON_CTE      = _{ DATAFRAME_VALUE_OPS | func_call | arr_val | id }
-VAR_VAL      = _{ ATOM_CTE | NON_CTE }
+non_cte      = { dataframe_value_ops | func_call | arr_val | id }
+VAR_VAL      = _{ ATOM_CTE | non_cte }
 
 expr          = { and_term ~ (OR ~ and_term)* }
 and_term      = { comp_term ~ (AND ~ comp_term)* }
@@ -137,18 +151,21 @@ types          = { atomic_types | void}
 
 read = { INPUT ~ L_PAREN ~ R_PAREN }
 
-declare_arr_type = {DECLARE_KEY ~ "<" ~ types ~ ">" ~ L_PAREN}
-declare_arr      = { declare_arr_type ~ int_cte ~ (COMMA ~ int_cte)? ~ R_PAREN }
+declare_arr_type = {"<" ~ atomic_types ~ ">" }
+declare_arr      = {DECLARE_KEY ~ declare_arr_type ~ L_PAREN ~ int_cte ~ (COMMA ~ int_cte)? ~ R_PAREN }
 
 list_cte = { L_SQUARE ~ exprs ~ R_SQUARE }
 mat_cte  = {L_SQUARE ~ list_cte ~ ( COMMA ~ list_cte )* ~ R_SQUARE }
 arr_cte  = { list_cte | mat_cte }
 
-assignment_exp = { read | READ_CSV | expr | declare_arr | arr_cte }
-assignee       = { arr_val | id }
-assignment     = { global? ~ assignee ~ ASGN ~ assignment_exp }
+assignment_exp    = { read | read_csv | expr | declare_arr | arr_cte }
+assignee          = { arr_val | id }
+assignment_base   = _{ assignee ~ ASGN ~ assignment_exp }
+assignment        = { global? ~ assignment_base }
+global_assignment = { assignment_base ~ SEMI_COLON }
 
 block = { L_BRACKET ~ statement* ~ R_BRACKET }
+block_or_statement = { block | inline_statement }
 
 func_arg      = { id ~ COLON ~ atomic_types }
 func_args     = { func_arg ~ (COMMA ~ func_arg)* }
@@ -158,35 +175,35 @@ MAIN_FUNCTION = _{ FUNC ~ MAIN ~ L_PAREN ~ R_PAREN ~ COLON ~ void ~ block }
 func_call     = { id ~ L_PAREN ~ exprs? ~ R_PAREN }
 
 COND_EXPR  = _{ L_PAREN ~ expr ~ R_PAREN }
-if_block   = _{ IF ~ COND_EXPR ~ block }
-else_block = { ELSE ~ (block | decision) }
+if_block   = _{ IF ~ COND_EXPR ~ block_or_statement }
+else_block = { ELSE ~ (block_or_statement | decision) }
 decision   = { if_block ~ else_block? }
 
 write = {PRINT ~ L_PAREN ~ exprs? ~ R_PAREN }
 
-while_loop = {WHILE ~ COND_EXPR ~ block}
+while_loop = {WHILE ~ COND_EXPR ~ block_or_statement}
 
-for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block}
+for_loop = {FOR ~ L_PAREN ~ assignment ~ TO ~ expr ~ R_PAREN ~ block_or_statement}
 
-POSSIBLE_STR        = {STRING_CTE | NON_CTE}
-READ_CSV_EXTRA      = {(COMMA ~ id){2}}
-READ_CSV            = {READ_CSV_KEY ~ L_PAREN ~ POSSIBLE_STR ~ READ_CSV_EXTRA? ~ R_PAREN}
-ONE_COLUMN_FUNC     = {L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ R_PAREN}
-AVERAGE             = {AVERAGE_KEY ~ ONE_COLUMN_FUNC}
-STD                 = {STD_KEY ~ ONE_COLUMN_FUNC}
-MODE                = {MODE_KEY ~ ONE_COLUMN_FUNC}
-VARIANCE            = {VARIANCE_KEY ~ ONE_COLUMN_FUNC}
-TWO_COLUMNS_FUNC    = {L_PAREN ~ id ~ (COMMA ~ POSSIBLE_STR){2} ~ R_PAREN}
-CORRELATION         = {CORRELATION_KEY ~ TWO_COLUMNS_FUNC}
-PLOT                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
-HISTOGRAM           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ POSSIBLE_STR ~ COMMA ~ expr ~ R_PAREN}
-DATAFRAME_VALUE_OPS = _{AVERAGE | STD | MODE | VARIANCE | CORRELATION}
-DATAFRAME_VOID_OPS  = _{PLOT | HISTOGRAM}
+possible_str        = {STRING_CTE | non_cte}
+read_csv            = {READ_CSV_KEY ~ L_PAREN ~ possible_str ~ R_PAREN}
+pure_dataframe_key  = { get_rows | get_columns }
+pure_dataframe_op   = { pure_dataframe_key ~ L_PAREN ~ id ~ R_PAREN }
+unary_dataframe_key = { average | std | median | variance | min | max | range }
+unary_dataframe_op  = { unary_dataframe_key ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ R_PAREN }
+TWO_COLUMNS_FUNC    = _{L_PAREN ~ id ~ (COMMA ~ possible_str){2} ~ R_PAREN}
+correlation         = {CORREL ~ TWO_COLUMNS_FUNC}
+dataframe_value_ops = {pure_dataframe_op | unary_dataframe_op | correlation}
+plot                = {PLOT_KEY ~ TWO_COLUMNS_FUNC}
+histogram           = {HISTOGRAM_KEY ~ L_PAREN ~ id ~ COMMA ~ possible_str ~ COMMA ~ expr ~ R_PAREN}
+DATAFRAME_VOID_OPS  = _{plot | histogram}
 
 return_statement = { RETURN_KEY ~ expr }
 
 BLOCK_STATEMENT  = _{ decision | while_loop | for_loop }
 INLINE_STATEMENT = _{ DATAFRAME_VOID_OPS | assignment | write | return_statement | func_call }
-statement        = { INLINE_STATEMENT ~ SEMI_COLON | BLOCK_STATEMENT }
+inline_statement = { INLINE_STATEMENT ~ SEMI_COLON }
+statement        = { inline_statement | BLOCK_STATEMENT }
 
-program = { SOI ~ function* ~ MAIN_FUNCTION ~ EOI }
+global_assignments = { global_assignment* }
+program = { SOI ~ global_assignments ~ function* ~ MAIN_FUNCTION ~ EOI }

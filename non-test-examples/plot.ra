@@ -1,0 +1,4 @@
+func main(): void {
+  dataframe = read_csv("song_data_clean.csv");
+  plot(dataframe, "song_duration_ms", "danceability");
+}

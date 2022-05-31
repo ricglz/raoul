@@ -1,0 +1,18 @@
+func binarySearch(left: int, right: int, target: int): int {
+  if (right < left) {
+    return -1;
+  }
+  mid = left + (right - left) / 2;
+  if (a[mid] == target) {
+    return mid;
+  }
+  if (a[mid] > target) {
+    return binarySearch(left, mid - 1, target);
+  }
+  return binarySearch(mid + 1, right, target);
+}
+
+func main(): void {
+  global a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  print(binarySearch(0, 9, 1), binarySearch(0, 9, 7), binarySearch(0, 9, -1));
+}

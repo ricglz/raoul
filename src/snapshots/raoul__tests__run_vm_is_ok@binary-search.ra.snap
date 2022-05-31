@@ -1,0 +1,11 @@
+---
+source: src/tests.rs
+expression: vm.messages
+input_file: src/examples/valid/non-plot/binary-search.ra
+---
+[
+    "0",
+    "6",
+    "-1",
+    "\n",
+]

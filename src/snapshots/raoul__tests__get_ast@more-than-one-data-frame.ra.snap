@@ -1,0 +1,9 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/more-than-one-data-frame.ra
+---
+Main(([], [], [
+    Assignment(false, Id(dataframe), ReadCSV(String(song_data_clean.csv))),
+    Assignment(false, Id(dataframe_2), ReadCSV(String(song_data_clean.csv))),
+]))

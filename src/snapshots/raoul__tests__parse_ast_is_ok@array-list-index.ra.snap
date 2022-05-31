@@ -3,13 +3,13 @@ source: src/tests.rs
 expression: quad_manager
 input_file: src/examples/invalid/dynamic/array-list-index.ra
 ---
-0 - Goto       -     -     1    
-1 - Ver        3001  3001  -    
-2 - Sum        3000  3001  4000 
-3 - Assignment 3002  -     4000 
-4 - Ver        3001  3001  -    
-5 - Sum        3000  3001  4001 
-6 - Print      4001  -     -    
-7 - PrintNl    -     -     -    
-8 - End        -     -     -    
+0    - Goto       -     -     1
+1    - Ver        3000  3000  -
+2    - Sum        3001  3000  4000
+3    - Assignment 3002  -     4000
+4    - Ver        3000  3000  -
+5    - Sum        3001  3000  4001
+6    - Print      4001  -     -
+7    - PrintNl    -     -     -
+8    - End        -     -     -
 

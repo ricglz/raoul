@@ -1,12 +1,12 @@
 ---
 source: src/tests.rs
 expression: ast
-input_file: src/examples/valid/array-simple.ra
+input_file: src/examples/valid/non-plot/array-simple.ra
 ---
-Main(([], [
-    Assignment(false, Id(c), ArrayDeclaration(INT, 3, None)),
-    Assignment(false, ArrayDeclaration(c, Integer(0), None), Integer(1)),
-    Assignment(false, ArrayDeclaration(c, Integer(1), None), Integer(2)),
-    Assignment(false, ArrayDeclaration(c, Integer(2), None), Integer(3)),
-    Write([ArrayDeclaration(c, Integer(0), None), ArrayDeclaration(c, Integer(1), None), ArrayDeclaration(c, Integer(2), None), ArrayDeclaration(c, Integer(1), None), ArrayDeclaration(c, Integer(0), None)]),
+Main(([], [], [
+    Assignment(false, Id(c), ArrayDeclaration(Int, 3, None)),
+    Assignment(false, ArrayVal(c, Integer(0), None), Integer(1)),
+    Assignment(false, ArrayVal(c, Integer(1), None), Integer(2)),
+    Assignment(false, ArrayVal(c, Integer(2), None), Integer(3)),
+    Write([ArrayVal(c, Integer(0), None), ArrayVal(c, Integer(1), None), ArrayVal(c, Integer(2), None), ArrayVal(c, Integer(1), None), ArrayVal(c, Integer(0), None)]),
 ]))

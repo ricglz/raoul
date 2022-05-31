@@ -9,5 +9,5 @@ input_file: src/examples/invalid/static/invalid-return.ra
     2 |   return false;␊
       |          ^---^
       |
-      = Cannot cast from BOOL to INT,
+      = Cannot cast from Bool to String,
 ]

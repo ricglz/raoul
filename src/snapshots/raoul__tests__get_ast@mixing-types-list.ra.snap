@@ -1,0 +1,9 @@
+---
+source: src/tests.rs
+expression: ast
+input_file: src/examples/invalid/static/mixing-types-list.ra
+---
+Main(([], [], [
+    Assignment(false, Id(a), Array([Bool(false), String(3), Bool(false)])),
+    Write([ArrayVal(a, Integer(0), None), ArrayVal(a, Integer(1), None), ArrayVal(a, Integer(2), None)]),
+]))

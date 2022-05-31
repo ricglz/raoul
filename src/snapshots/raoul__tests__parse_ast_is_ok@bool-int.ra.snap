@@ -1,0 +1,24 @@
+---
+source: src/tests.rs
+expression: quad_manager
+input_file: src/examples/valid/bool-int.ra
+---
+0    - Goto       -     -     1
+1    - Eq         3000  3750  2750
+2    - GotoF      2750  -     5
+3    - Print      3000  -     -
+4    - PrintNl    -     -     -
+5    - Eq         3000  3250  2750
+6    - GotoF      2750  -     9
+7    - Print      3001  -     -
+8    - PrintNl    -     -     -
+9    - Eq         3000  3500  2750
+10   - GotoF      2750  -     13
+11   - Print      3002  -     -
+12   - PrintNl    -     -     -
+13   - Assignment 3000  -     1000
+14   - Assignment 3751  -     1000
+15   - Print      1000  -     -
+16   - PrintNl    -     -     -
+17   - End        -     -     -
+
