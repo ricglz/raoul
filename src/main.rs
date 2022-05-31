@@ -26,7 +26,7 @@ use std::process::exit;
 
 use args::parse_arguments;
 
-fn parse_ast<'a>(ast: &'a AstNode, debug: bool) -> Results<'a, QuadrupleManager> {
+fn parse_ast<'a>(ast: &'a AstNode, debug: bool, quads: bool) -> Results<'a, QuadrupleManager> {
     let mut dir_func = DirFunc::new();
     dir_func.build_dir_func(ast)?;
     if debug {
@@ -35,7 +35,7 @@ fn parse_ast<'a>(ast: &'a AstNode, debug: bool) -> Results<'a, QuadrupleManager>
     }
     let mut quad_manager = QuadrupleManager::new(dir_func);
     quad_manager.parse(ast)?;
-    if debug {
+    if debug || quads {
         println!("Quads created sucessfully");
         println!("{}", quad_manager);
     }
@@ -47,6 +47,7 @@ fn main() {
     let matches = parse_arguments();
     let filename = matches.value_of("file").expect("required");
     let debug = matches.is_present("debug");
+    let quads = matches.is_present("quads");
     if debug {
         println!("Starting parsing");
     }
@@ -61,7 +62,7 @@ fn main() {
         println!("Parsing ended sucessfully");
         println!("AST:\n{:?}", ast);
     }
-    let res = parse_ast(&ast, debug);
+    let res = parse_ast(&ast, debug, quads);
     if let Err(errors) = res {
         for error in errors {
             println!("{:?}", error);
