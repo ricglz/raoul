@@ -1,4 +1,19 @@
 func main(): void {
   dataframe = read_csv("song_data_clean.csv");
+  rows = get_rows(dataframe);
+  columns = get_columns(dataframe);
+  print(rows, columns);
+
+  col = "danceability";
+
+  print(average(dataframe, "song_duration_ms"));
+  print(std(dataframe, col));
+  print(median(dataframe, col));
+  print(variance(dataframe, col));
+  print(min(dataframe, col));
+  print(max(dataframe, col));
+  print(range(dataframe, col));
+
+  print(correlation(dataframe, col, "song_duration_ms"));
   histogram(dataframe, "danceability", 5);
 }
