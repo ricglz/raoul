@@ -242,7 +242,7 @@ There is a bunch a possible valid and invalid files in the
 
 # More Documentation
 
-<!-- TODO: Add documentation -->
+For more details, check [Documentation](./Documentation.pdf)
 
 # Mini Tutorial
 
