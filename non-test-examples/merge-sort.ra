@@ -48,7 +48,7 @@ func sort(low: int, high: int): void {
 }
 
 func main(): void {
-  print("Values:");
+  print("Values (11):");
   for (i = 0 to limit - 1) {
     global a[i] = input();
   }
